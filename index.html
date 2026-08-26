@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Fee & Result Management Portal</title>
+    <!-- Tailwind CSS for modern design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide">🎓 IT Sen. Sec. School Portal</h1>
+            <div id="user-status" class="flex items-center space-x-4">
+                <span id="logged-user" class="text-sm bg-indigo-800 px-3 py-1 rounded-full">Not Logged In</span>
+                <button onclick="openLoginModal()" id="login-btn" class="bg-emerald-500 hover:bg-emerald-600 px-4 py-1.5 rounded text-sm font-semibold transition">Login</button>
+                <button onclick="logout()" id="logout-btn" class="hidden bg-rose-500 hover:bg-rose-600 px-4 py-1.5 rounded text-sm font-semibold transition">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Tabs -->
+        <div class="flex space-x-2 border-b border-slate-200 mb-6">
+            <button onclick="switchTab('students')" class="tab-btn px-4 py-2 font-semibold text-indigo-600 border-b-2 border-indigo-600 focus:outline-none">Students Directory</button>
+            <button onclick="switchTab('fees')" class="tab-btn px-4 py-2 font-semibold text-slate-500 hover:text-indigo-600 focus:outline-none">Fee Management</button>
+            <button onclick="switchTab('results')" class="tab-btn px-4 py-2 font-semibold text-slate-500 hover:text-indigo-600 focus:outline-none">Result Cards</button>
+        </div>
+
+        <!-- TAB 1: STUDENTS -->
+        <section id="tab-students" class="tab-content">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h2 class="text-lg font-bold mb-4 text-indigo-900">Add New Student</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="adm_no" placeholder="Admission No (e.g. 26706)" class="border p-2 rounded">
+                    <input type="text" id="student_name" placeholder="Student Name" class="border p-2 rounded">
+                    <input type="text" id="class_section" placeholder="Class & Section (e.g. NRY-A)" class="border p-2 rounded">
+                    <input type="text" id="father_name" placeholder="Father Name" class="border p-2 rounded">
+                    <input type="text" id="village" placeholder="Village / Address" class="border p-2 rounded">
+                    <input type="text" id="mobile" placeholder="Mobile Number" class="border p-2 rounded">
+                    <input type="text" id="aadhaar" placeholder="Aadhaar No" class="border p-2 rounded">
+                    <button onclick="addStudent()" class="bg-indigo-600 text-white font-semibold rounded p-2 hover:bg-indigo-700 transition">Save Student</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700">Enrolled Students List</h3>
+                    <input type="text" id="search-student" placeholder="Search student..." onkeyup="filterStudents()" class="border px-3 py-1 rounded text-sm">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-xs uppercase text-slate-600 border-b">
+                                <th class="p-3">Adm No</th>
+                                <th class="p-3">Student Name</th>
+                                <th class="p-3">Class</th>
+                                <th class="p-3">Father Name</th>
+                                <th class="p-3">Village</th>
+                                <th class="p-3">Mobile</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-table-body" class="text-sm divide-y divide-slate-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: FEES -->
+        <section id="tab-fees" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h2 class="text-lg font-bold mb-4 text-indigo-900">Record Fee Payment</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="fee_adm_no" placeholder="Admission No" class="border p-2 rounded">
+                    <select id="fee_month" class="border p-2 rounded">
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                        <option value="September">September</option>
+                        <option value="October">October</option>
+                        <option value="November">November</option>
+                        <option value="December">December</option>
+                        <option value="January">January</option>
+                        <option value="February">February</option>
+                        <option value="March">March</option>
+                    </select>
+                    <input type="number" id="fee_amount" placeholder="Total Fee Amount" class="border p-2 rounded">
+                    <input type="number" id="paid_amount" placeholder="Paid Amount" class="border p-2 rounded">
+                    <button onclick="recordFee()" class="bg-emerald-600 text-white font-semibold rounded p-2 hover:bg-emerald-700 transition md:col-span-4">Save Fee Record</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div class="p-4 border-b"><h3 class="font-bold text-slate-700">Fee Ledger History</h3></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-xs uppercase text-slate-600 border-b">
+                                <th class="p-3">Adm No</th>
+                                <th class="p-3">Month</th>
+                                <th class="p-3">Fee (₹)</th>
+                                <th class="p-3">Paid (₹)</th>
+                                <th class="p-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fees-table-body" class="text-sm divide-y divide-slate-100">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: RESULTS -->
+        <section id="tab-results" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h2 class="text-lg font-bold mb-4 text-indigo-900">Enter Exam Marks</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <input type="text" id="res_adm_no" placeholder="Admission No" class="border p-2 rounded">
+                    <input type="text" id="res_exam" placeholder="Exam Name (e.g., Final Term)" class="border p-2 rounded">
+                    <select id="res_subject" class="border p-2 rounded">
+                        <option value="ENGLISH">ENGLISH</option>
+                        <option value="HINDI">HINDI</option>
+                        <option value="PUNJABI">PUNJABI</option>
+                        <option value="MATH">MATH</option>
+                        <option value="RHYMES">RHYMES</option>
+                        <option value="DRAWING">DRAWING</option>
+                        <option value="CONVERSATION">CONVERSATION</option>
+                        <option value="DIVINITY">DIVINITY</option>
+                    </select>
+                    <input type="number" id="res_marks" placeholder="Marks Obtained (out of 100)" class="border p-2 rounded">
+                    <button onclick="saveResult()" class="bg-indigo-600 text-white font-semibold rounded p-2 hover:bg-indigo-700 transition md:col-span-4">Save Mark Entry</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-6">
+                <h2 class="text-lg font-bold mb-4 text-indigo-900">Generate Student Result Card</h2>
+                <div class="flex gap-4 mb-6">
+                    <input type="text" id="card_adm_no" placeholder="Enter Admission No" class="border p-2 rounded w-1/3">
+                    <button onclick="generateReportCard()" class="bg-emerald-600 text-white px-6 py-2 rounded font-semibold hover:bg-emerald-700 transition">View Report Card</button>
+                </div>
+                <div id="report-card-container" class="border p-6 rounded-lg bg-slate-50 hidden">
+                    <!-- Dynamic Report Card Display -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-xl w-96 shadow-lg">
+            <h2 class="text-xl font-bold mb-4 text-indigo-900">Staff & Admin Login</h2>
+            <input type="text" id="login-username" placeholder="Username" class="border w-full p-2 rounded mb-3">
+            <input type="password" id="login-password" placeholder="Password" class="border w-full p-2 rounded mb-4">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeLoginModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancel</button>
+                <button onclick="login()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
+        const SUPABASE_URL = 'https://ryywpybzkmyuzjwfrdgt.supabase.co/rest/v1/';
+        const SUPABASE_ANON_KEY = 'sb_publishable_pcBLQfpU5eFbNiJdwz3xXA_zttWLytY';
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+
+        // Tab Switching Function
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+                btn.classList.add('text-slate-500');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            event.currentTarget.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            event.currentTarget.classList.remove('text-slate-500');
+        }
+
+        // Modal Controls
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
+
+        // Login Logic
+        async function login() {
+            const u = document.getElementById('login-username').value;
+            const p = document.getElementById('login-password').value;
+            
+            const { data, error } = await _supabase
+                .from('portal_users')
+                .select('*')
+                .eq('username', u)
+                .eq('password', p)
+                .single();
+
+            if (data) {
+                currentUser = data;
+                document.getElementById('logged-user').innerText = `${data.username} (${data.role})`;
+                document.getElementById('login-btn').classList.add('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
+                closeLoginModal();
+                alert('Login Successful!');
+            } else {
+                alert('Invalid Username or Password');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('logged-user').innerText = 'Not Logged In';
+            document.getElementById('login-btn').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.add('hidden');
+            alert('Logged out successfully.');
+        }
+
+        // Load Data on startup
+        window.onload = function() {
+            loadStudents();
+            loadFees();
+        }
+
+        // Student Functions
+        async function addStudent() {
+            const adm_no = document.getElementById('adm_no').value;
+            const student_name = document.getElementById('student_name').value;
+            const class_section = document.getElementById('class_section').value;
+            const father_name = document.getElementById('father_name').value;
+            const village = document.getElementById('village').value;
+            const mobile = document.getElementById('mobile').value;
+            const aadhaar = document.getElementById('aadhaar').value;
+
+            const { error } = await _supabase.from('students').insert([{ adm_no, student_name, class_section, father_name, village, mobile, aadhaar }]);
+            if (error) { alert('Error: ' + error.message); } else { alert('Student Added Successfully!'); loadStudents(); }
+        }
+
+        async function loadStudents() {
+            const { data, error } = await _supabase.from('students').select('*').order('id', { ascending: false });
+            const tbody = document.getElementById('students-table-body');
+            tbody.innerHTML = '';
+            if (data) {
+                data.forEach(s => {
+                    tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3 font-medium">${s.adm_no}</td><td class="p-3">${s.student_name}</td><td class="p-3">${s.class_section}</td><td class="p-3">${s.father_name || ''}</td><td class="p-3">${s.village || ''}</td><td class="p-3">${s.mobile || ''}</td></tr>`;
+                });
+            }
+        }
+
+        // Fee Functions
+        async function recordFee() {
+            const adm_no = document.getElementById('fee_adm_no').value;
+            const month = document.getElementById('fee_month').value;
+            const fee_amount = parseFloat(document.getElementById('fee_amount').value);
+            const paid_amount = parseFloat(document.getElementById('paid_amount').value);
+            let status = 'Unpaid';
+            if (paid_amount >= fee_amount) status = 'Paid';
+            else if (paid_amount > 0) status = 'Partial';
+
+            const { error } = await _supabase.from('fee_records').insert([{ adm_no, month, fee_amount, paid_amount, status }]);
+            if (error) { alert('Error: ' + error.message); } else { alert('Fee Recorded!'); loadFees(); }
+        }
+
+        async function loadFees() {
+            const { data, error } = await _supabase.from('fee_records').select('*').order('id', { ascending: false });
+            const tbody = document.getElementById('fees-table-body');
+            tbody.innerHTML = '';
+            if (data) {
+                data.forEach(f => {
+                    let badgeColor = f.status === 'Paid' ? 'bg-green-100 text-green-700' : (f.status === 'Partial' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700');
+                    tbody.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-3">${f.adm_no}</td><td class="p-3">${f.month}</td><td class="p-3">₹${f.fee_amount}</td><td class="p-3">₹${f.paid_amount}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs font-semibold ${badgeColor}">${f.status}</span></td></tr>`;
+                });
+            }
+        }
+
+        // Result Functions
+        async function saveResult() {
+            const adm_no = document.getElementById('res_adm_no').value;
+            const exam_name = document.getElementById('res_exam').value;
+            const subject = document.getElementById('res_subject').value;
+            const marks_obtained = parseFloat(document.getElementById('res_marks').value);
+            
+            // Grading logic (matching your school's standards)
+            let grade = 'E';
+            if (marks_obtained >= 90) grade = 'A+';
+            else if (marks_obtained >= 80) grade = 'A';
+            else if (marks_obtained >= 70) grade = 'B+';
+            else if (marks_obtained >= 60) grade = 'B';
+            else if (marks_obtained >= 50) grade = 'C+';
+            else if (marks_obtained >= 40) grade = 'C';
+            else if (marks_obtained >= 33) grade = 'D';
+
+            const { error } = await _supabase.from('results').insert([{ adm_no, exam_name, subject, marks_obtained, max_marks: 100, grade }]);
+            if (error) { alert('Error: ' + error.message); } else { alert('Marks Saved Successfully!'); }
+        }
+
+        async function generateReportCard() {
+            const adm_no = document.getElementById('card_adm_no').value;
+            const container = document.getElementById('report-card-container');
+            
+            // Fetch Student Info
+            const { data: student } = await _supabase.from('students').select('*').eq('adm_no', adm_no).single();
+            // Fetch Results
+            const { data: marks } = await _supabase.from('results').select('*').eq('adm_no', adm_no);
+
+            if (!student) {
+                alert('Student not found!');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            let html = `
+                <div class="text-center border-b pb-4 mb-4">
+                    <h3 class="text-xl font-bold text-indigo-900">IT SENIOR SECONDARY SCHOOL, BHAGWANPURA</h3>
+                    <p class="text-sm text-slate-500">Academic Session Result Card</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                    <div><strong>Student Name:</strong> ${student.student_name}</div>
+                    <div><strong>Admission No:</strong> ${student.adm_no}</div>
+                    <div><strong>Class & Sec:</strong> ${student.class_section}</div>
+                    <div><strong>Father Name:</strong> ${student.father_name}</div>
+                </div>
+                <table class="w-full text-left border mb-4">
+                    <thead>
+                        <tr class="bg-indigo-50 text-xs uppercase border-b">
+                            <th class="p-2 border">Subject</th>
+                            <th class="p-2 border">Max Marks</th>
+                            <th class="p-2 border">Obtained Marks</th>
+                            <th class="p-2 border">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            let totalObtained = 0;
+            let totalMax = 0;
+            if (marks && marks.length > 0) {
+                marks.forEach(m => {
+                    totalObtained += m.marks_obtained;
+                    totalMax += m.max_marks;
+                    html += `<tr>
+                        <td class="p-2 border">${m.subject}</td>
+                        <td class="p-2 border">${m.max_marks}</td>
+                        <td class="p-2 border">${m.marks_obtained}</td>
+                        <td class="p-2 border font-bold">${m.grade}</td>
+                    </tr>`;
+                });
+            } else {
+                html += `<tr><td colspan="4" class="p-4 text-center text-slate-500">No marks entered yet for this student.</td></tr>`;
+            }
+
+            html += `
+                    </tbody>
+                </table>
+                <div class="flex justify-between items-center font-bold text-sm">
+                    <div>Total Marks: ${totalObtained} / ${totalMax}</div>
+                    <button onclick="window.print()" class="bg-slate-800 text-white px-4 py-1.5 rounded text-xs print:hidden">Print Report Card</button>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
