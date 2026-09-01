@@ -2128,8 +2128,8 @@
         name: s.name,
         fatherName: s.father_name,
         className: s.class_name,
-        contact1: s.contact1,
-        contact2: s.contact2,
+        contact1: s.contact1 || s['contact 1'] || '-',
+        contact2: s.contact2 || s['contact 2'] || '-',
         village: s.village,
         villageTown: s.village_town || s.village,
         isActive: true,
@@ -2319,8 +2319,8 @@
     document.getElementById('selfVillageTown').value = s.village_town || s.village;
     document.getElementById('selfSameAsVan').checked = (s.village_town === s.village || !s.village_town);
     document.getElementById('selfVillageTown').readOnly = document.getElementById('selfSameAsVan').checked;
-    document.getElementById('selfContact1').value = (s.contact1 && s.contact1 !== '-') ? s.contact1 : '';
-    document.getElementById('selfContact2').value = (s.contact2 && s.contact2 !== '-') ? s.contact2 : '';
+    document.getElementById('selfContact1').value = (s.contact1 || s['contact 1'] || '');
+    document.getElementById('selfContact2').value = (s.contact2 || s['contact 2'] || '');
 
     document.getElementById('selfStudentUpdateForm').style.display = 'block';
   }
@@ -2331,7 +2331,6 @@
 
     const data = Object.fromEntries(new FormData(document.getElementById('selfStudentUpdateForm')).entries());
     
-    // Cascading class fee recalculation
     await handleClassChangeInEdit(data.className, data.admNo);
 
     const { error } = await supabaseClient.from('students').update({
@@ -2611,13 +2610,11 @@
     
     document.getElementById('adminNavBtn').style.display = isAdmin ? 'flex' : 'none';
 
-    // Show or hide Total Collected and Pending Dues metrics based on admin role
     const adminMetrics = document.querySelectorAll('.admin-dashboard-metric');
     adminMetrics.forEach(el => {
       el.style.display = isAdmin ? 'block' : 'none';
     });
 
-    // Update grid columns dynamically for non-admins vs admins
     const gridContainer = document.getElementById('dashboardGridContainer');
     if (gridContainer) {
       gridContainer.style.gridTemplateColumns = isAdmin ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)';
@@ -2784,7 +2781,6 @@
     const masterTerm2 = classRec ? classRec.term2 : 0;
     const masterTerm3 = classRec ? classRec.term3 : 0;
 
-    // Van Charges set according to Van Station (village field)
     const vRec = masterVillages.find(v => v.name.toUpperCase() === (student.village || '').trim().toUpperCase());
     const villageMonthlyRate = vRec ? vRec.monthly : 0;
 
@@ -2899,8 +2895,8 @@
         dob: student.dob || '-',
         village: student.village || '-',
         villageTown: student.village_town || student.village || '-',
-        contact1: student.contact1 || '-',
-        contact2: student.contact2 || '-',
+        contact1: student.contact1 || student['contact 1'] || '-',
+        contact2: student.contact2 || student['contact 2'] || '-',
         rollNo: student.roll_no || '',
         doa: student.doa || '-',
         uid: student.uid || '-',
@@ -3025,7 +3021,6 @@
     setButtonLoading('btnUpdateStudentParticularsAction', true);
     const data = Object.fromEntries(new FormData(document.getElementById('editStudentForm')).entries());
     
-    // Cascading class fee recalculation
     await handleClassChangeInEdit(data.className, data.admNo);
 
     const { error } = await supabaseClient.from('students').update({
@@ -3823,7 +3818,7 @@
         fatherName: s.father_name,
         village: s.village,
         villageTown: s.village_town || s.village,
-        contact1: s.contact1,
+        contact1: s.contact1 || s['contact 1'] || '-',
         rollNo: s.roll_no || '',
         isActive,
         isStruckOff: isStruck
@@ -4317,8 +4312,8 @@
         dob: s.dob || '-',
         village: s.village || '-',
         villageTown: s.village_town || s.village || '-',
-        contact1: s.contact1 || '-',
-        contact2: s.contact2 || '-',
+        contact1: s.contact1 || s['contact 1'] || '-',
+        contact2: s.contact2 || s['contact 2'] || '-',
         rollNo: s.roll_no || '',
         doa: s.doa || '-',
         totalFee: Number(fd.grand_total || 0),
@@ -4600,340 +4595,4 @@
           <td>${r.adm_no}</td>
           <td>${r.name}</td>
           <td>${r.class_name}</td>
-          <td class="fw-bold ${r.amount_paid < 0 ? 'text-danger' : 'text-success'}">₹ ${r.amount_paid}</td>
-          <td><span class="badge bg-light text-dark border">${r.payment_mode}</span></td>
-          <td class="text-center">
-            <div class="btn-group btn-group-sm">
-              <button class="btn btn-primary fw-bold" onclick='triggerReprintForRecord(${JSON.stringify(recordObj)})' title="Reprint Slip">
-                <i class="fas fa-print"></i>
-              </button>
-              <button class="btn btn-warning fw-bold text-dark" onclick='openEditModeModal(${JSON.stringify(recordObj)})' title="Edit Payment Mode">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-danger fw-bold" onclick='confirmCancelReceipt("${r.receipt_no}")' title="Cancel Receipt">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    });
-
-    document.getElementById('adminResultsBox').style.display = 'block';
-  }
-
-  async function triggerReprintForRecord(record) {
-    const { data: s } = await supabaseClient.from('students').select('father_name').eq('adm_no', record.admNo).maybeSingle();
-    const father = s?.father_name || '-';
-
-    receiptPayloadCache = {
-      receiptNo: record.receiptNo,
-      date: record.date,
-      admNo: record.admNo,
-      name: record.name,
-      fatherName: father,
-      className: record.className,
-      paymentMode: record.paymentMode,
-      feeDescription: record.feeDescription || 'Institutional Fee Payment',
-      amountPaid: record.amountPaid,
-      balanceRemaining: record.balanceRemaining !== undefined ? record.balanceRemaining : 0,
-      collectedBy: record.collectedBy || currentUser.username || 'Staff',
-      logoUrl: document.getElementById('headerLogo').src
-    };
-    printReceipt();
-  }
-
-  function openEditModeModal(record) {
-    selectedAdminReceipt = record;
-    document.getElementById('adminEditReceiptNo').innerText = record.receiptNo;
-    document.getElementById('adminEditStudentName').innerText = record.name;
-    document.getElementById('adminNewPaymentMode').value = record.paymentMode;
-    new bootstrap.Modal(document.getElementById('adminEditModeModal')).show();
-  }
-
-  async function saveAdminPaymentMode() {
-    if (!selectedAdminReceipt) return;
-    setButtonLoading('btnSaveAdminPaymentModeAction', true);
-    const newMode = document.getElementById('adminNewPaymentMode').value;
-    const recNo = selectedAdminReceipt.receiptNo;
-
-    await supabaseClient.from('collections').update({ payment_mode: newMode }).eq('receipt_no', recNo);
-    setButtonLoading('btnSaveAdminPaymentModeAction', false);
-
-    alert(`Payment mode for ${recNo} updated to ${newMode}.`);
-    bootstrap.Modal.getInstance(document.getElementById('adminEditModeModal')).hide();
-    await searchAdminReceipts();
-    await loadCollectionReports();
-  }
-
-  async function confirmCancelReceipt(receiptNo) {
-    if (!confirm(`Are you sure you want to CANCEL Receipt ${receiptNo}?\n\nThis will restore the student's dues in the ledger.`)) {
-      return;
-    }
-
-    const { data: rec } = await supabaseClient.from('collections').select('*').eq('receipt_no', receiptNo).single();
-    if (!rec) {
-      alert("Receipt not found.");
-      return;
-    }
-
-    await supabaseClient.from('collections').delete().eq('receipt_no', receiptNo);
-
-    const { data: fd } = await supabaseClient.from('fee_details').select('*').eq('adm_no', rec.adm_no).single();
-    if (fd) {
-      const currentPaid = Number(fd.total_paid || 0);
-      const grandTotal = Number(fd.grand_total || 0);
-      const newPaid = Math.max(0, currentPaid - Number(rec.amount_paid));
-      const newBal = Math.max(0, grandTotal - newPaid);
-
-      await supabaseClient.from('fee_details').update({
-        total_paid: newPaid,
-        balance: newBal
-      }).eq('adm_no', rec.adm_no);
-    }
-
-    alert(`Receipt ${receiptNo} cancelled successfully.`);
-    await searchAdminReceipts();
-    await loadReports();
-    await loadCollectionReports();
-  }
-
-  function openSelfProfileModal() {
-    document.getElementById('selfUsername').value = currentUser.username;
-    document.getElementById('selfNewPassword').value = '';
-    new bootstrap.Modal(document.getElementById('selfProfileModal')).show();
-  }
-
-  async function handleSelfProfileUpdate(e) {
-    e.preventDefault();
-    setButtonLoading('btnSelfProfileSaveAction', true);
-    const newUsername = document.getElementById('selfUsername').value.trim();
-    const newPassword = document.getElementById('selfNewPassword').value.trim();
-
-    const updatePayload = { username: newUsername };
-    if (newPassword) updatePayload.password = newPassword;
-
-    const { error } = await supabaseClient.from('users').update(updatePayload).eq('username', currentUser.username);
-    setButtonLoading('btnSelfProfileSaveAction', false);
-
-    if (error) {
-      alert('Error updating profile: ' + error.message);
-      return;
-    }
-
-    currentUser.username = newUsername;
-    document.getElementById('currentUserDisplay').innerText = newUsername;
-    alert('Profile updated successfully.');
-    bootstrap.Modal.getInstance(document.getElementById('selfProfileModal')).hide();
-  }
-
-  async function loadUsersList() {
-    const { data: users } = await supabaseClient.from('users').select('*').order('username');
-    const tbody = document.getElementById('userManagementTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    (users || []).forEach(u => {
-      tbody.innerHTML += `
-        <tr>
-          <td><strong>${u.username}</strong></td>
-          <td><span class="badge bg-light text-dark border">${u.type}</span></td>
-          <td>${u.associated_id || '-'}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteUser('${u.username}')"><i class="fas fa-trash"></i></button>
-          </td>
-        </tr>
-      `;
-    });
-  }
-
-  function openAddUserModal() {
-    document.getElementById('userFormOldUsername').value = '';
-    document.getElementById('userFormUsername').value = '';
-    document.getElementById('userFormPassword').value = '';
-    document.getElementById('userFormAssociatedId').value = '';
-    new bootstrap.Modal(document.getElementById('userModal')).show();
-  }
-
-  async function handleSaveUser(e) {
-    e.preventDefault();
-    setButtonLoading('btnSaveUserModalAction', true);
-    const username = document.getElementById('userFormUsername').value.trim();
-    const password = document.getElementById('userFormPassword').value.trim() || '123456';
-    const type = document.getElementById('userFormRole').value;
-    const associatedId = document.getElementById('userFormAssociatedId').value.trim();
-
-    const { error } = await supabaseClient.from('users').upsert([{ 
-      username, 
-      password, 
-      type, 
-      associated_id: associatedId 
-    }], { onConflict: 'username' });
-
-    setButtonLoading('btnSaveUserModalAction', false);
-
-    if (error) {
-      alert('Error saving user: ' + error.message);
-      return;
-    }
-
-    alert('User saved successfully.');
-    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
-    await loadUsersList();
-  }
-
-  async function deleteUser(username) {
-    if (!confirm(`Delete user account "${username}"?`)) return;
-    await supabaseClient.from('users').delete().eq('username', username);
-    alert('User deleted.');
-    await loadUsersList();
-  }
-
-  function printReceipt() {
-    if (!receiptPayloadCache) {
-      window.print();
-      return;
-    }
-    const data = receiptPayloadCache;
-    const printWindow = window.open('', '_blank', 'width=850,height=900');
-    
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Fee Receipt - ${data.admNo}</title>
-        <style>
-          @page { size: A4 portrait; margin: 10mm 12mm; }
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2d3748; background: #fff; }
-          .receipt-slip { width: 100%; border: 1.5px solid #222; border-radius: 8px; padding: 14px 18px; font-size: 12.5px; line-height: 1.4; margin-bottom: 16px; }
-          .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-          .brand-left { display: flex; align-items: flex-start; }
-          .logo-img { max-height: 44px; margin-right: 10px; }
-          .title-text { font-size: 14px; font-weight: 800; color: #1e3a8a; line-height: 1.15; font-family:'Times New Roman',serif; }
-          .sub-text { font-size: 10.5px; color: #4a5568; }
-          .contact-text { font-size: 10px; font-weight: 700; color: #111827; margin-top: 1px; }
-          .badge-text { font-size: 9.5px; font-weight: 700; color: #718096; text-transform: uppercase; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; }
-          .info-row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 11.5px; }
-          .amount-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 10px; margin: 8px 0; }
-          .amount-val { color: #059669; font-weight: 800; font-size: 15px; }
-          .footer-row { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 6px; border-top: 1px solid #e2e8f0; font-size: 10.5px; color: #718096; }
-          .cut-separator { border-top: 1.5px dashed #a0aec0; margin: 12px 0; text-align: center; position: relative; }
-          .cut-separator span { position: absolute; top: -10px; left: 45%; background: #fff; padding: 0 8px; font-size: 9.5px; color: #718096; }
-        </style>
-      </head>
-      <body>
-        <!-- Student Copy -->
-        <div class="receipt-slip">
-          <div class="header-row">
-            <div class="brand-left">
-              <img src="${data.logoUrl}" class="logo-img">
-              <div>
-                <div class="title-text">I. T. College & School for Women</div>
-                <div class="sub-text">Algon Kothi (2026-27)</div>
-                <div class="contact-text">Principal: 9915914240, 9872962630</div>
-              </div>
-            </div>
-            <span class="badge-text">STUDENT COPY</span>
-          </div>
-
-          <div class="info-row" style="margin-top: 6px;">
-            <div><strong>Receipt Ref:</strong> ${data.receiptNo}</div>
-            <div><strong>Date:</strong> ${data.date}</div>
-          </div>
-          <div class="info-row">
-            <div><strong>Adm No:</strong> ${data.admNo}</div>
-            <div><strong>Class:</strong> ${data.className}</div>
-          </div>
-          <div class="info-row">
-            <div><strong>Student Name:</strong> <span style="font-weight: bold;">${data.name}</span></div>
-            <div><strong>Father's Name:</strong> <span>${data.fatherName || '-'}</span></div>
-          </div>
-          <div class="info-row">
-            <div><strong>Mode:</strong> ${data.paymentMode}</div>
-            <div><strong>User:</strong> <span>${data.collectedBy || 'Staff'}</span></div>
-          </div>
-
-          <div class="amount-box">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: bold;">Amount Paid:</span>
-              <span class="amount-val">₹ ${data.amountPaid}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #4a5568;">
-              <span>Total Session Balance:</span>
-              <span style="font-weight: bold;">₹ ${data.balanceRemaining}</span>
-            </div>
-          </div>
-
-          <div class="footer-row">
-            <span>Particulars: ${data.feeDescription}</span>
-            <span>Authorized Signatory</span>
-          </div>
-        </div>
-
-        <div class="cut-separator"><span>✂ Cut Here for College Copy</span></div>
-
-        <!-- College Copy -->
-        <div class="receipt-card">
-          <div class="header-row">
-            <div class="brand-left">
-              <img src="${data.logoUrl}" class="logo-img">
-              <div>
-                <div class="title-text">I. T. College & School for Women</div>
-                <div class="sub-text">Algon Kothi (2026-27)</div>
-                <div class="contact-text">Principal: 9915914240, 9872962630</div>
-              </div>
-            </div>
-            <span class="badge-text">COLLEGE COPY</span>
-          </div>
-
-          <div class="info-row" style="margin-top: 6px;">
-            <div><strong>Receipt Ref:</strong> ${data.receiptNo}</div>
-            <div><strong>Date:</strong> ${data.date}</div>
-          </div>
-          <div class="info-row">
-            <div><strong>Adm No:</strong> ${data.admNo}</div>
-            <div><strong>Class:</strong> ${data.className}</div>
-          </div>
-          <div class="info-row">
-            <div><strong>Student Name:</strong> <span style="font-weight: bold;">${data.name}</span></div>
-            <div><strong>Father's Name:</strong> <span>${data.fatherName || '-'}</span></div>
-          </div>
-          <div class="info-row">
-            <div><strong>Mode:</strong> ${data.paymentMode}</div>
-            <div><strong>User:</strong> <span>${data.collectedBy || 'Staff'}</span></div>
-          </div>
-
-          <div class="amount-box">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: bold;">Amount Paid:</span>
-              <span class="amount-val">₹ ${data.amountPaid}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #4a5568;">
-              <span>Total Session Balance:</span>
-              <span style="font-weight: bold;">₹ ${data.balanceRemaining}</span>
-            </div>
-          </div>
-
-          <div class="footer-row">
-            <span>Particulars: ${data.feeDescription}</span>
-            <span>Authorized Signatory</span>
-          </div>
-        </div>
-
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-          };
-        <\/script>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.open();
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-  }
-</script>
-</body>
-</html>
+          <td class="fw-I encountered an error doing what you asked. Could you try again?
