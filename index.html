@@ -249,8 +249,8 @@
               <input type="date" class="form-control" id="selfDoa" name="doa" required>
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-bold small">Aadhaar No. / UID (12 Digits)</label>
-              <input type="text" class="form-control fw-bold" id="selfUid" name="uid" placeholder="12-Digit Numeric UID" maxlength="12" pattern="\d{12}" oninput="this.value=this.value.replace(/\D/g,'')" required>
+              <label class="form-label fw-bold small">UID Number</label>
+              <input type="text" class="form-control fw-bold" id="selfUid" name="uid" placeholder="UID Number" required>
             </div>
 
             <div class="col-md-6">
@@ -527,14 +527,16 @@
           <table class="table table-bordered small align-middle mb-4">
             <thead class="table-light">
               <tr>
-                <th>1st Sem Fee</th>
-                <th>2nd Sem Fee</th>
+                <th>Term 1 Fee</th>
+                <th>Term 2 Fee</th>
+                <th>Term 3 Fee</th>
                 <th>Van Charges</th>
                 <th>Other Charges</th>
                 <th>Late Fee</th>
                 <th>Prev Dues</th>
-                <th>1st Sem Conc</th>
-                <th>2nd Sem Conc</th>
+                <th>Term 1 Conc</th>
+                <th>Term 2 Conc</th>
+                <th>Term 3 Conc</th>
                 <th>Net Session Demand</th>
                 <th>Total Paid</th>
                 <th>Balance Remaining</th>
@@ -542,14 +544,16 @@
             </thead>
             <tbody>
               <tr>
-                <td id="profSem1">₹0</td>
-                <td id="profSem2">₹0</td>
+                <td id="profTerm1">₹0</td>
+                <td id="profTerm2">₹0</td>
+                <td id="profTerm3">₹0</td>
                 <td id="profVanFee">₹0</td>
                 <td id="profOtherFee">₹0</td>
                 <td id="profLateFee">₹0</td>
                 <td id="profPrevBal">₹0</td>
-                <td class="text-danger" id="profSem1Conc">₹0</td>
-                <td class="text-danger" id="profSem2Conc">₹0</td>
+                <td class="text-danger" id="profTerm1Conc">₹0</td>
+                <td class="text-danger" id="profTerm2Conc">₹0</td>
+                <td class="text-danger" id="profTerm3Conc">₹0</td>
                 <td class="fw-bold" id="profGrandTotal">₹0</td>
                 <td class="text-success fw-bold" id="profPaid">₹0</td>
                 <td class="text-danger fw-bold" id="profBalance">₹0</td>
@@ -618,7 +622,7 @@
               <p class="mb-1"><strong>Class:</strong> <span id="colClass"></span></p>
               <p class="mb-1"><strong>Van Station:</strong> <span id="colVillage"></span></p>
               <p class="mb-1"><strong>Village/Town:</strong> <span id="colVillageTown"></span></p>
-              <p class="mb-1"><strong>Total Grand Fee (Both Sems):</strong> <span class="fw-bold text-primary" id="colGrandTotal"></span></p>
+              <p class="mb-1"><strong>Total Grand Fee (All Terms):</strong> <span class="fw-bold text-primary" id="colGrandTotal"></span></p>
               <p class="mb-1"><strong>Total Paid So Far:</strong> <span class="text-success fw-bold" id="colPaidSoFar"></span></p>
               <p class="mb-1"><strong>Total Remaining Balance:</strong> <span class="text-danger fw-bold" id="colOutstanding"></span></p>
             </div>
@@ -630,15 +634,23 @@
             <div class="section-title"><i class="fas fa-cash-register text-success"></i> Payment Terminal & Waterfall Allocation</div>
             
             <div class="card p-2 mb-3 bg-light border-0">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex gap-4">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex gap-3 flex-wrap">
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="colTermRadio" id="colRadioSem1" value="sem1" checked onchange="switchCollectionTerm()">
-                    <label class="form-check-label fw-bold text-primary" for="colRadioSem1">1st Semester Installment</label>
+                    <input class="form-check-input" type="radio" name="colTermRadio" id="colRadioTerm1" value="term1" checked onchange="switchCollectionTerm()">
+                    <label class="form-check-label fw-bold text-primary" for="colRadioTerm1">Term 1 Installment</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="colTermRadio" id="colRadioTerm2" value="term2" onchange="switchCollectionTerm()">
+                    <label class="form-check-label fw-bold text-primary" for="colRadioTerm2">Term 2 Installment</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="colTermRadio" id="colRadioTerm3" value="term3" onchange="switchCollectionTerm()">
+                    <label class="form-check-label fw-bold text-primary" for="colRadioTerm3">Term 3 Installment</label>
                   </div>
                   <div class="form-check">
                     <input class="form-check-input" type="radio" name="colTermRadio" id="colRadioFull" value="full" onchange="switchCollectionTerm()">
-                    <label class="form-check-label fw-bold text-dark" for="colRadioFull">Full Session (Both Sems)</label>
+                    <label class="form-check-label fw-bold text-dark" for="colRadioFull">Full Session (All Terms)</label>
                   </div>
                 </div>
                 <div class="form-check form-switch mb-0">
@@ -775,13 +787,17 @@
               </div>
 
               <div class="row g-2 mb-2">
-                <div class="col-6">
-                  <label class="form-label small fw-bold text-muted"><i class="fas fa-lock me-1"></i>1st Sem Fee</label>
-                  <input type="number" id="fmSem1" class="form-control bg-light fw-bold" readonly onchange="calcFmTotal()">
+                <div class="col-4">
+                  <label class="form-label small fw-bold text-muted"><i class="fas fa-lock me-1"></i>Term 1 Fee</label>
+                  <input type="number" id="fmTerm1" class="form-control bg-light fw-bold" readonly onchange="calcFmTotal()">
                 </div>
-                <div class="col-6">
-                  <label class="form-label small fw-bold text-muted"><i class="fas fa-lock me-1"></i>2nd Sem Fee</label>
-                  <input type="number" id="fmSem2" class="form-control bg-light fw-bold" readonly onchange="calcFmTotal()">
+                <div class="col-4">
+                  <label class="form-label small fw-bold text-muted"><i class="fas fa-lock me-1"></i>Term 2 Fee</label>
+                  <input type="number" id="fmTerm2" class="form-control bg-light fw-bold" readonly onchange="calcFmTotal()">
+                </div>
+                <div class="col-4">
+                  <label class="form-label small fw-bold text-muted"><i class="fas fa-lock me-1"></i>Term 3 Fee</label>
+                  <input type="number" id="fmTerm3" class="form-control bg-light fw-bold" readonly onchange="calcFmTotal()">
                 </div>
               </div>
 
@@ -832,8 +848,8 @@
 
                 <div id="fmVanModeSelect" style="display:none;" class="mb-2">
                   <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="fmVanBillingMode" id="fmModeSem" value="sem" checked onchange="switchFmVanMode()">
-                    <label class="form-check-label small" for="fmModeSem">Sem Wise</label>
+                    <input class="form-check-input" type="radio" name="fmVanBillingMode" id="fmModeTerm" value="term" checked onchange="switchFmVanMode()">
+                    <label class="form-check-label small" for="fmModeTerm">Term Wise (3 Terms)</label>
                   </div>
                   <div class="form-check form-check-inline">
                     <input class="form-check-input" type="radio" name="fmVanBillingMode" id="fmModeMonth" value="month" onchange="switchFmVanMode()">
@@ -841,18 +857,24 @@
                   </div>
                 </div>
 
-                <div id="fmVanSemBox" style="display:none;">
+                <div id="fmVanTermBox" style="display:none;">
                   <div class="row g-2">
-                    <div class="col-6">
+                    <div class="col-4">
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="fmChkVanSem1" checked onchange="calcFmTotal()">
-                        <label class="form-check-label small" for="fmChkVanSem1">1st Sem Van (<span id="fmVanSem1Amt">₹0</span>)</label>
+                        <input class="form-check-input" type="checkbox" id="fmChkVanTerm1" checked onchange="calcFmTotal()">
+                        <label class="form-check-label small" for="fmChkVanTerm1">Term 1 Van (<span id="fmVanTerm1Amt">₹0</span>)</label>
                       </div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="fmChkVanSem2" checked onchange="calcFmTotal()">
-                        <label class="form-check-label small" for="fmChkVanSem2">2nd Sem Van (<span id="fmVanSem2Amt">₹0</span>)</label>
+                        <input class="form-check-input" type="checkbox" id="fmChkVanTerm2" checked onchange="calcFmTotal()">
+                        <label class="form-check-label small" for="fmChkVanTerm2">Term 2 Van (<span id="fmVanTerm2Amt">₹0</span>)</label>
+                      </div>
+                    </div>
+                    <div class="col-4">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="fmChkVanTerm3" checked onchange="calcFmTotal()">
+                        <label class="form-check-label small" for="fmChkVanTerm3">Term 3 Van (<span id="fmVanTerm3Amt">₹0</span>)</label>
                       </div>
                     </div>
                   </div>
@@ -880,36 +902,44 @@
                 </div>
               </div>
 
-              <!-- Concession (Auto 50/50 Split) -->
+              <!-- Concession (Auto 3-Way Split) -->
               <div class="card p-3 mb-3 border-danger-subtle bg-danger-subtle bg-opacity-10">
-                <h6 class="fw-bold text-danger mb-2 small"><i class="fas fa-tags me-1"></i> Concession Allocation (Automatic 50/50 Split)</h6>
+                <h6 class="fw-bold text-danger mb-2 small"><i class="fas fa-tags me-1"></i> Concession Allocation (Automatic 3-Way Split)</h6>
                 <div class="row g-2">
-                  <div class="col-4">
-                    <label class="form-label small fw-bold">Total Concession (₹)</label>
-                    <input type="number" id="fmConcTotal" class="form-control" placeholder="Enter Total" value="0" oninput="autoSplitConcession()">
+                  <div class="col-3">
+                    <label class="form-label small fw-bold">Total Conc. (₹)</label>
+                    <input type="number" id="fmConcTotal" class="form-control" placeholder="Enter Total" value="0" oninput="autoSplitConcession3Way()">
                   </div>
-                  <div class="col-4">
-                    <label class="form-label small fw-bold">1st Sem Part (50%)</label>
-                    <input type="number" id="fmConcSem1" class="form-control bg-light fw-bold" readonly value="0">
+                  <div class="col-3">
+                    <label class="form-label small fw-bold">Term 1 Part</label>
+                    <input type="number" id="fmConcTerm1" class="form-control bg-light fw-bold" readonly value="0">
                   </div>
-                  <div class="col-4">
-                    <label class="form-label small fw-bold">2nd Sem Part (50%)</label>
-                    <input type="number" id="fmConcSem2" class="form-control bg-light fw-bold" readonly value="0">
+                  <div class="col-3">
+                    <label class="form-label small fw-bold">Term 2 Part</label>
+                    <input type="number" id="fmConcTerm2" class="form-control bg-light fw-bold" readonly value="0">
+                  </div>
+                  <div class="col-3">
+                    <label class="form-label small fw-bold">Term 3 Part</label>
+                    <input type="number" id="fmConcTerm3" class="form-control bg-light fw-bold" readonly value="0">
                   </div>
                 </div>
               </div>
 
-              <!-- Semester-Wise Net Totals & Grand Session Total -->
+              <!-- Term-Wise Net Totals & Grand Session Total -->
               <div class="card p-3 mb-3 bg-light border">
-                <h6 class="fw-bold text-secondary mb-2 small"><i class="fas fa-calculator me-1"></i> Semester-Wise Net Demands</h6>
+                <h6 class="fw-bold text-secondary mb-2 small"><i class="fas fa-calculator me-1"></i> Term-Wise Net Demands</h6>
                 <div class="row g-2 mb-2">
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-primary">1st Sem Net Total (Fee+Van-Conc+Prev)</label>
-                    <input type="text" id="fmSem1NetTotalDisplay" class="form-control fw-bold bg-white" readonly value="₹ 0">
+                  <div class="col-4">
+                    <label class="form-label small fw-bold text-primary">Term 1 Net (Fee+Van-Conc+Prev)</label>
+                    <input type="text" id="fmTerm1NetTotalDisplay" class="form-control fw-bold bg-white" readonly value="₹ 0">
                   </div>
-                  <div class="col-6">
-                    <label class="form-label small fw-bold text-primary">2nd Sem Net Total (Fee+Van-Conc)</label>
-                    <input type="text" id="fmSem2NetTotalDisplay" class="form-control fw-bold bg-white" readonly value="₹ 0">
+                  <div class="col-4">
+                    <label class="form-label small fw-bold text-primary">Term 2 Net (Fee+Van-Conc)</label>
+                    <input type="text" id="fmTerm2NetTotalDisplay" class="form-control fw-bold bg-white" readonly value="₹ 0">
+                  </div>
+                  <div class="col-4">
+                    <label class="form-label small fw-bold text-primary">Term 3 Net (Fee+Van-Conc)</label>
+                    <input type="text" id="fmTerm3NetTotalDisplay" class="form-control fw-bold bg-white" readonly value="₹ 0">
                   </div>
                 </div>
                 <div>
@@ -936,13 +966,17 @@
             </div>
 
             <div class="row g-2 mb-3">
-              <div class="col-6">
-                <label class="form-label small text-muted"><i class="fas fa-lock me-1"></i>1st Sem Fee (₹)</label>
-                <input type="number" id="bulkSem1" class="form-control bg-light fw-bold" readonly>
+              <div class="col-4">
+                <label class="form-label small text-muted"><i class="fas fa-lock me-1"></i>Term 1 (₹)</label>
+                <input type="number" id="bulkTerm1" class="form-control bg-light fw-bold" readonly>
               </div>
-              <div class="col-6">
-                <label class="form-label small text-muted"><i class="fas fa-lock me-1"></i>2nd Sem Fee (₹)</label>
-                <input type="number" id="bulkSem2" class="form-control bg-light fw-bold" readonly>
+              <div class="col-4">
+                <label class="form-label small text-muted"><i class="fas fa-lock me-1"></i>Term 2 (₹)</label>
+                <input type="number" id="bulkTerm2" class="form-control bg-light fw-bold" readonly>
+              </div>
+              <div class="col-4">
+                <label class="form-label small text-muted"><i class="fas fa-lock me-1"></i>Term 3 (₹)</label>
+                <input type="number" id="bulkTerm3" class="form-control bg-light fw-bold" readonly>
               </div>
             </div>
 
@@ -977,7 +1011,7 @@
               <input type="date" class="form-control fw-bold" name="doa" id="newStudentDoa" required onchange="checkAdmissionSchedule(this.value)">
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-bold">UID / Aadhaar No.</label>
+              <label class="form-label small fw-bold">UID Number</label>
               <input type="text" class="form-control fw-bold" name="uid" placeholder="UID Number" required>
             </div>
 
@@ -1135,7 +1169,7 @@
             </div>
 
             <div class="mb-3" id="gpIdBox" style="display:none;">
-              <label class="form-label small fw-bold">ID Card Details (Aadhaar / Voter / License)</label>
+              <label class="form-label small fw-bold">ID Card Details</label>
               <input type="text" id="gpVisitorIdCard" class="form-control" placeholder="ID Card Number">
             </div>
 
@@ -1196,10 +1230,11 @@
             </select>
           </div>
           <div class="col-md-4">
-            <label class="form-label small fw-bold">Semester Clearance Term:</label>
-            <select id="nodueSemType" class="form-select" onchange="generateNoDueSlipsList()">
-              <option value="odd">Odd Semester (1st Term & Prev Dues Cleared)</option>
-              <option value="even">Even Semester (Full Session Cleared - Nil Balance)</option>
+            <label class="form-label small fw-bold">Term Clearance Type:</label>
+            <select id="nodueTermType" class="form-select" onchange="generateNoDueSlipsList()">
+              <option value="term1">Term 1 Clearance (Term 1 & Prev Dues Cleared)</option>
+              <option value="term2">Term 2 Clearance (Term 1 & Term 2 Cleared)</option>
+              <option value="all">Full Session Clearance (Nil Balance)</option>
             </select>
           </div>
           <div class="col-md-4 text-end">
@@ -1353,7 +1388,7 @@
             <label class="form-label small fw-bold">Fee Term Report:</label>
             <select id="filterReportTerm" class="form-select" onchange="filterReportTable()">
               <option value="total">Total Session Fee Balance</option>
-              <option value="sem1">1st Semester Pending Fee</option>
+              <option value="term1">Term 1 Pending Fee</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -1602,7 +1637,7 @@
               <input type="date" class="form-control" id="editDoa" name="doa" required>
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-bold small">UID / Aadhaar No.</label>
+              <label class="form-label fw-bold small">UID Number</label>
               <input type="text" class="form-control fw-bold" id="editUid" name="uid" placeholder="UID Number" required>
             </div>
 
@@ -1979,13 +2014,15 @@
     }
   }
 
-  // --- 50/50 Concession Auto Splitter ---
-  function autoSplitConcession() {
+  // --- 3-Way Concession Auto Splitter ---
+  function autoSplitConcession3Way() {
     const total = Number(document.getElementById('fmConcTotal').value) || 0;
-    const half1 = Math.floor(total / 2);
-    const half2 = total - half1;
-    document.getElementById('fmConcSem1').value = half1;
-    document.getElementById('fmConcSem2').value = half2;
+    const part1 = Math.floor(total / 3);
+    const part2 = Math.floor(total / 3);
+    const part3 = total - (part1 + part2);
+    document.getElementById('fmConcTerm1').value = part1;
+    document.getElementById('fmConcTerm2').value = part2;
+    document.getElementById('fmConcTerm3').value = part3;
     calcFmTotal();
   }
 
@@ -2039,7 +2076,7 @@
     }
   }
 
-  // --- Cascading Class Change Handler (Updates Sem1, Sem2, and Grand Total) ---
+  // --- Cascading Class Change Handler (Updates Term 1, Term 2, Term 3, and Grand Total) ---
   async function handleClassChangeInEdit(newClass, admNo) {
     if (!admNo) return;
     const classRec = masterClasses.find(c => c.className === newClass);
@@ -2052,13 +2089,14 @@
     const { data: fd } = await supabaseClient.from('fee_details').select('*').eq('adm_no', admNo).maybeSingle();
     if (fd) {
       let vanFee = fd.van_opted ? Math.round(((monthlyRate * 12) / 10)) * 10 : 0;
-      let grandTotal = Math.max(0, (classRec.sem1 + classRec.sem2 + vanFee + Number(fd.previous_balance || 0) + Number(fd.other_fee || 0) + Number(fd.late_fee || 0)) - Number(fd.total_concession || 0));
+      let grandTotal = Math.max(0, (classRec.term1 + classRec.term2 + classRec.term3 + vanFee + Number(fd.previous_balance || 0) + Number(fd.other_fee || 0) + Number(fd.late_fee || 0)) - Number(fd.total_concession || 0));
       let balance = Math.max(0, grandTotal - Number(fd.total_paid || 0));
 
       await supabaseClient.from('fee_details').update({
         class_name: newClass,
-        sem1_fee: classRec.sem1,
-        sem2_fee: classRec.sem2,
+        term1_fee: classRec.term1,
+        term2_fee: classRec.term2,
+        term3_fee: classRec.term3,
         van_fee_total: vanFee,
         grand_total: grandTotal,
         balance: balance
@@ -2626,7 +2664,13 @@
     ]);
 
     masterVillages = (villagesRes.data || []).map(v => ({ name: v.name, monthly: Number(v.monthly_rate) || 0, total: Number(v.total_rate) || 0 }));
-    masterClasses = (classesRes.data || []).map(c => ({ className: c.class_name, sem1: Number(c.sem1_fee) || 0, sem2: Number(c.sem2_fee) || 0, total: Number(c.total_fee) || 0 }));
+    masterClasses = (classesRes.data || []).map(c => ({ 
+      className: c.class_name, 
+      term1: Number(c.total_term_1 !== undefined ? c.total_term_1 : c.sem1_fee) || 0, 
+      term2: Number(c.total_term_2 !== undefined ? c.total_term_2 : c.sem2_fee) || 0, 
+      term3: Number(c.total_term_3) || 0, 
+      total: Number(c.grand_total) || 0 
+    }));
     masterLateFee = await calculateLateFeeForDate(new Date().toISOString().split('T')[0]);
 
     const logo = configRes.data?.logo_url || 'https://i.ibb.co/8405qjzb/ITCW.png';
@@ -2693,8 +2737,9 @@
 
     const rec = masterClasses.find(c => c.className === cls);
     if (rec) {
-      document.getElementById('bulkSem1').value = rec.sem1;
-      document.getElementById('bulkSem2').value = rec.sem2;
+      document.getElementById('bulkTerm1').value = rec.term1;
+      document.getElementById('bulkTerm2').value = rec.term2;
+      document.getElementById('bulkTerm3').value = rec.term3;
     }
 
     try {
@@ -2735,8 +2780,9 @@
     if (sErr || !student) return { success: false, message: `Admission number ${cleanAdm} not found.` };
 
     const classRec = masterClasses.find(c => c.className === student.class_name);
-    const masterSem1 = classRec ? classRec.sem1 : 0;
-    const masterSem2 = classRec ? classRec.sem2 : 0;
+    const masterTerm1 = classRec ? classRec.term1 : 0;
+    const masterTerm2 = classRec ? classRec.term2 : 0;
+    const masterTerm3 = classRec ? classRec.term3 : 0;
 
     // Van Charges set according to Van Station (village field)
     const vRec = masterVillages.find(v => v.name.toUpperCase() === (student.village || '').trim().toUpperCase());
@@ -2755,15 +2801,17 @@
     let feePlan = null;
     if (fdData) {
       feePlan = {
-        sem1Fee: Number(fdData.sem1_fee) || masterSem1,
-        sem2Fee: Number(fdData.sem2_fee) || masterSem2,
+        term1Fee: Number(fdData.term1_fee !== undefined ? fdData.term1_fee : fdData.sem1_fee) || masterTerm1,
+        term2Fee: Number(fdData.term2_fee !== undefined ? fdData.term2_fee : fdData.sem2_fee) || masterTerm2,
+        term3Fee: Number(fdData.term3_fee) || masterTerm3,
         vanOpted: !!fdData.van_opted,
-        vanMode: fdData.van_mode || 'sem',
+        vanMode: fdData.van_mode || 'term',
         vanMonths: fdData.van_months || '',
         vanFeeTotal: Number(fdData.van_fee_total) || 0,
         totalConcession: Number(fdData.total_concession) || 0,
-        sem1Concession: Number(fdData.sem1_concession) || 0,
-        sem2Concession: Number(fdData.sem2_concession) || 0,
+        term1Concession: Number(fdData.term1_concession !== undefined ? fdData.term1_concession : fdData.sem1_concession) || 0,
+        term2Concession: Number(fdData.term2_concession !== undefined ? fdData.term2_concession : fdData.sem2_concession) || 0,
+        term3Concession: Number(fdData.term3_concession) || 0,
         grandTotal: Number(fdData.grand_total) || 0,
         totalPaid: Number(fdData.total_paid) || 0,
         balance: Number(fdData.balance) || 0,
@@ -2775,18 +2823,20 @@
       };
     } else {
       feePlan = {
-        sem1Fee: masterSem1,
-        sem2Fee: masterSem2,
+        term1Fee: masterTerm1,
+        term2Fee: masterTerm2,
+        term3Fee: masterTerm3,
         vanOpted: false,
-        vanMode: 'sem',
+        vanMode: 'term',
         vanMonths: '',
         vanFeeTotal: 0,
         totalConcession: 0,
-        sem1Concession: 0,
-        sem2Concession: 0,
-        grandTotal: masterSem1 + masterSem2 + dynamicLate,
+        term1Concession: 0,
+        term2Concession: 0,
+        term3Concession: 0,
+        grandTotal: masterTerm1 + masterTerm2 + masterTerm3 + dynamicLate,
         totalPaid: 0,
-        balance: masterSem1 + masterSem2 + dynamicLate,
+        balance: masterTerm1 + masterTerm2 + masterTerm3 + dynamicLate,
         previousBalance: 0,
         otherFee: 0,
         otherFeeDesc: '',
@@ -2795,21 +2845,26 @@
       };
     }
 
-    let sem1VanFee = 0;
-    let sem2VanFee = 0;
+    let term1VanFee = 0;
+    let term2VanFee = 0;
+    let term3VanFee = 0;
     if (feePlan.vanOpted) {
-      if (feePlan.vanMode === 'sem') {
-        sem1VanFee = Math.round((villageMonthlyRate * 6) / 10) * 10;
-        sem2VanFee = Math.round((villageMonthlyRate * 6) / 10) * 10;
+      if (feePlan.vanMode === 'term') {
+        term1VanFee = Math.round((villageMonthlyRate * 4) / 10) * 10;
+        term2VanFee = Math.round((villageMonthlyRate * 4) / 10) * 10;
+        term3VanFee = Math.round((villageMonthlyRate * 4) / 10) * 10;
       } else {
         const months = (feePlan.vanMonths || '').split(',').map(m => m.trim());
-        const sem1List = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026'];
+        const term1List = ['Jul 2026', 'Aug 2026', 'Sep 2026', 'Oct 2026'];
+        const term2List = ['Nov 2026', 'Dec 2026', 'Jan 2027', 'Feb 2027'];
         months.forEach(m => {
-          if (sem1List.includes(m)) sem1VanFee += villageMonthlyRate;
-          else if (m) sem2VanFee += villageMonthlyRate;
+          if (term1List.includes(m)) term1VanFee += villageMonthlyRate;
+          else if (term2List.includes(m)) term2VanFee += villageMonthlyRate;
+          else if (m) term3VanFee += villageMonthlyRate;
         });
-        sem1VanFee = Math.round(sem1VanFee / 10) * 10;
-        sem2VanFee = Math.round(sem2VanFee / 10) * 10;
+        term1VanFee = Math.round(term1VanFee / 10) * 10;
+        term2VanFee = Math.round(term2VanFee / 10) * 10;
+        term3VanFee = Math.round(term3VanFee / 10) * 10;
       }
     }
 
@@ -2853,10 +2908,11 @@
         isStruckOff
       },
       villageMonthlyRate,
-      masterSem1,
-      masterSem2,
+      masterTerm1,
+      masterTerm2,
+      masterTerm3,
       feePlan,
-      checkOptions: { sem1VanFee, sem2VanFee },
+      checkOptions: { term1VanFee, term2VanFee, term3VanFee },
       history
     };
   }
@@ -2907,14 +2963,16 @@
       badge.innerText = 'Inactive';
     }
 
-    document.getElementById('profSem1').innerText = '₹ ' + res.feePlan.sem1Fee;
-    document.getElementById('profSem2').innerText = '₹ ' + res.feePlan.sem2Fee;
+    document.getElementById('profTerm1').innerText = '₹ ' + res.feePlan.term1Fee;
+    document.getElementById('profTerm2').innerText = '₹ ' + res.feePlan.term2Fee;
+    document.getElementById('profTerm3').innerText = '₹ ' + res.feePlan.term3Fee;
     document.getElementById('profVanFee').innerText = '₹ ' + res.feePlan.vanFeeTotal;
     document.getElementById('profOtherFee').innerText = '₹ ' + (res.feePlan.otherFee || 0);
     document.getElementById('profLateFee').innerText = '₹ ' + (res.feePlan.lateFee || 0);
     document.getElementById('profPrevBal').innerText = '₹ ' + (res.feePlan.previousBalance || 0);
-    document.getElementById('profSem1Conc').innerText = '₹ ' + res.feePlan.sem1Concession;
-    document.getElementById('profSem2Conc').innerText = '₹ ' + res.feePlan.sem2Concession;
+    document.getElementById('profTerm1Conc').innerText = '₹ ' + res.feePlan.term1Concession;
+    document.getElementById('profTerm2Conc').innerText = '₹ ' + res.feePlan.term2Concession;
+    document.getElementById('profTerm3Conc').innerText = '₹ ' + res.feePlan.term3Concession;
     document.getElementById('profGrandTotal').innerText = '₹ ' + res.feePlan.grandTotal;
     document.getElementById('profPaid').innerText = '₹ ' + res.feePlan.totalPaid;
     document.getElementById('profBalance').innerText = '₹ ' + res.feePlan.balance;
@@ -3052,11 +3110,15 @@
       badge.innerText = 'Inactive';
     }
 
-    const sem1Gross = (res.feePlan.sem1Fee + (res.checkOptions ? res.checkOptions.sem1VanFee : 0) + res.feePlan.previousBalance) - res.feePlan.sem1Concession;
-    const isSem1Pending = (res.feePlan.totalPaid < sem1Gross);
-
-    if (isSem1Pending) {
-      document.getElementById('colRadioSem1').checked = true;
+    const term1Gross = (res.feePlan.term1Fee + (res.checkOptions ? res.checkOptions.term1VanFee : 0) + res.feePlan.previousBalance) - res.feePlan.term1Concession;
+    const term2Gross = term1Gross + (res.feePlan.term2Fee + (res.checkOptions ? res.checkOptions.term2VanFee : 0) - res.feePlan.term2Concession);
+    
+    if (res.feePlan.totalPaid < term1Gross) {
+      document.getElementById('colRadioTerm1').checked = true;
+    } else if (res.feePlan.totalPaid < term2Gross) {
+      document.getElementById('colRadioTerm2').checked = true;
+    } else if (res.feePlan.totalPaid < res.feePlan.grandTotal) {
+      document.getElementById('colRadioTerm3').checked = true;
     } else {
       document.getElementById('colRadioFull').checked = true;
     }
@@ -3069,7 +3131,9 @@
 
   function switchCollectionTerm() {
     if (!currentColStudent) return;
-    const isSem1 = document.getElementById('colRadioSem1').checked;
+    const isTerm1 = document.getElementById('colRadioTerm1').checked;
+    const isTerm2 = document.getElementById('colRadioTerm2').checked;
+    const isTerm3 = document.getElementById('colRadioTerm3').checked;
     const isWaived = document.getElementById('colWaiveLateFee').checked;
     const fp = currentColStudent.feePlan;
     const paid = fp.totalPaid;
@@ -3080,11 +3144,17 @@
     let otherDemand = fp.otherFee || 0;
     let lateDemand = isWaived ? 0 : (fp.lateFee !== undefined ? fp.lateFee : masterLateFee);
 
-    if (isSem1) {
-      collegeDemand = Math.max(0, fp.sem1Fee - fp.sem1Concession);
-      vanDemand = currentColStudent.checkOptions ? (currentColStudent.checkOptions.sem1VanFee || 0) : 0;
+    if (isTerm1) {
+      collegeDemand = Math.max(0, fp.term1Fee - fp.term1Concession);
+      vanDemand = currentColStudent.checkOptions ? (currentColStudent.checkOptions.term1VanFee || 0) : 0;
+    } else if (isTerm2) {
+      collegeDemand = Math.max(0, (fp.term1Fee + fp.term2Fee) - (fp.term1Concession + fp.term2Concession));
+      vanDemand = currentColStudent.checkOptions ? ((currentColStudent.checkOptions.term1VanFee || 0) + (currentColStudent.checkOptions.term2VanFee || 0)) : 0;
+    } else if (isTerm3) {
+      collegeDemand = Math.max(0, (fp.term1Fee + fp.term2Fee + fp.term3Fee) - fp.totalConcession);
+      vanDemand = fp.vanFeeTotal || 0;
     } else {
-      collegeDemand = Math.max(0, (fp.sem1Fee + fp.sem2Fee) - fp.totalConcession);
+      collegeDemand = Math.max(0, (fp.term1Fee + fp.term2Fee + fp.term3Fee) - fp.totalConcession);
       vanDemand = fp.vanFeeTotal || 0;
     }
 
@@ -3319,8 +3389,9 @@
       badge.innerText = 'Inactive';
     }
 
-    document.getElementById('fmSem1').value = res.feePlan.sem1Fee || res.masterSem1;
-    document.getElementById('fmSem2').value = res.feePlan.sem2Fee || res.masterSem2;
+    document.getElementById('fmTerm1').value = res.feePlan.term1Fee || res.masterTerm1;
+    document.getElementById('fmTerm2').value = res.feePlan.term2Fee || res.masterTerm2;
+    document.getElementById('fmTerm3').value = res.feePlan.term3Fee || res.masterTerm3;
     document.getElementById('fmPrevBal').value = res.feePlan.previousBalance || 0;
 
     const calculatedLateFeeForDOA = await calculateLateFeeForDate(res.student.doa);
@@ -3335,13 +3406,15 @@
     document.getElementById('fmOtherFeeDesc').value = res.feePlan.otherFeeDesc || '';
 
     document.getElementById('fmConcTotal').value = res.feePlan.totalConcession;
-    document.getElementById('fmConcSem1').value = res.feePlan.sem1Concession;
-    document.getElementById('fmConcSem2').value = res.feePlan.sem2Concession;
+    document.getElementById('fmConcTerm1').value = res.feePlan.term1Concession;
+    document.getElementById('fmConcTerm2').value = res.feePlan.term2Concession;
+    document.getElementById('fmConcTerm3').value = res.feePlan.term3Concession;
 
     document.getElementById('fmVanOpt').checked = res.feePlan.vanOpted;
-    const semVanRate = res.villageMonthlyRate * 6;
-    document.getElementById('fmVanSem1Amt').innerText = '₹' + semVanRate;
-    document.getElementById('fmVanSem2Amt').innerText = '₹' + semVanRate;
+    const termVanRate = res.villageMonthlyRate * 4;
+    document.getElementById('fmVanTerm1Amt').innerText = '₹' + termVanRate;
+    document.getElementById('fmVanTerm2Amt').innerText = '₹' + termVanRate;
+    document.getElementById('fmVanTerm3Amt').innerText = '₹' + termVanRate;
 
     toggleFmVan();
     calcFmTotal();
@@ -3446,55 +3519,62 @@
   function switchFmVanMode() {
     const opted = document.getElementById('fmVanOpt').checked;
     if (!opted) {
-      document.getElementById('fmVanSemBox').style.display = 'none';
+      document.getElementById('fmVanTermBox').style.display = 'none';
       document.getElementById('fmVanMonthBox').style.display = 'none';
       calcFmTotal();
       return;
     }
-    const isSem = document.getElementById('fmModeSem').checked;
-    document.getElementById('fmVanSemBox').style.display = isSem ? 'block' : 'none';
-    document.getElementById('fmVanMonthBox').style.display = !isSem ? 'block' : 'none';
+    const isTerm = document.getElementById('fmModeTerm').checked;
+    document.getElementById('fmVanTermBox').style.display = isTerm ? 'block' : 'none';
+    document.getElementById('fmVanMonthBox').style.display = !isTerm ? 'block' : 'none';
     calcFmTotal();
   }
 
   function calcFmTotal() {
     if (!currentFmStudent) return;
-    const s1 = Number(document.getElementById('fmSem1').value) || 0;
-    const s2 = Number(document.getElementById('fmSem2').value) || 0;
+    const t1 = Number(document.getElementById('fmTerm1').value) || 0;
+    const t2 = Number(document.getElementById('fmTerm2').value) || 0;
+    const t3 = Number(document.getElementById('fmTerm3').value) || 0;
     const prev = Number(document.getElementById('fmPrevBal').value) || 0;
     const other = Number(document.getElementById('fmOtherFeeAmt').value) || 0;
     const isWaived = document.getElementById('fmChkWaiveLate').checked;
     const late = isWaived ? 0 : (Number(document.getElementById('fmLateFee').value) || 0);
     const totalConc = Number(document.getElementById('fmConcTotal').value) || 0;
-    const sem1Conc = Number(document.getElementById('fmConcSem1').value) || 0;
-    const sem2Conc = Number(document.getElementById('fmConcSem2').value) || 0;
+    const term1Conc = Number(document.getElementById('fmConcTerm1').value) || 0;
+    const term2Conc = Number(document.getElementById('fmConcTerm2').value) || 0;
+    const term3Conc = Number(document.getElementById('fmConcTerm3').value) || 0;
 
-    let sem1Van = 0;
-    let sem2Van = 0;
+    let term1Van = 0;
+    let term2Van = 0;
+    let term3Van = 0;
     let vanFee = 0;
 
     if (document.getElementById('fmVanOpt').checked) {
       const vRate = currentFmStudent.villageMonthlyRate;
-      if (document.getElementById('fmModeSem').checked) {
-        if (document.getElementById('fmChkVanSem1').checked) sem1Van = Math.round((vRate * 6) / 10) * 10;
-        if (document.getElementById('fmChkVanSem2').checked) sem2Van = Math.round((vRate * 6) / 10) * 10;
-        vanFee = sem1Van + sem2Van;
+      if (document.getElementById('fmModeTerm').checked) {
+        if (document.getElementById('fmChkVanTerm1').checked) term1Van = Math.round((vRate * 4) / 10) * 10;
+        if (document.getElementById('fmChkVanTerm2').checked) term2Van = Math.round((vRate * 4) / 10) * 10;
+        if (document.getElementById('fmChkVanTerm3').checked) term3Van = Math.round((vRate * 4) / 10) * 10;
+        vanFee = term1Van + term2Van + term3Van;
       } else {
         const count = document.querySelectorAll('.fm-month-chk:checked').length;
         vanFee = Math.round((count * vRate) / 10) * 10;
-        sem1Van = Math.round(vanFee / 2);
-        sem2Van = vanFee - sem1Van;
+        term1Van = Math.round(vanFee / 3);
+        term2Van = Math.round(vanFee / 3);
+        term3Van = vanFee - term1Van - term2Van;
       }
     }
 
     document.getElementById('fmVanTotalBadgeDisplay').innerText = `Van Total: ₹${vanFee}`;
 
-    const sem1Net = Math.max(0, (s1 + sem1Van + prev + other + late) - sem1Conc);
-    const sem2Net = Math.max(0, (s2 + sem2Van) - sem2Conc);
-    const grandNet = Math.max(0, (s1 + s2 + vanFee + prev + other + late) - totalConc);
+    const term1Net = Math.max(0, (t1 + term1Van + prev + other + late) - term1Conc);
+    const term2Net = Math.max(0, (t2 + term2Van) - term2Conc);
+    const term3Net = Math.max(0, (t3 + term3Van) - term3Conc);
+    const grandNet = Math.max(0, (t1 + t2 + t3 + vanFee + prev + other + late) - totalConc);
 
-    document.getElementById('fmSem1NetTotalDisplay').value = '₹ ' + sem1Net;
-    document.getElementById('fmSem2NetTotalDisplay').value = '₹ ' + sem2Net;
+    document.getElementById('fmTerm1NetTotalDisplay').value = '₹ ' + term1Net;
+    document.getElementById('fmTerm2NetTotalDisplay').value = '₹ ' + term2Net;
+    document.getElementById('fmTerm3NetTotalDisplay').value = '₹ ' + term3Net;
     document.getElementById('fmGrandTotal').value = '₹ ' + grandNet;
 
     const badge = document.getElementById('fmActiveBadge');
@@ -3514,10 +3594,11 @@
     const vRate = currentFmStudent.villageMonthlyRate;
 
     if (document.getElementById('fmVanOpt').checked) {
-      if (document.getElementById('fmModeSem').checked) {
-        let sem1Van = document.getElementById('fmChkVanSem1').checked ? Math.round((vRate * 6) / 10) * 10 : 0;
-        let sem2Van = document.getElementById('fmChkVanSem2').checked ? Math.round((vRate * 6) / 10) * 10 : 0;
-        vanFee = sem1Van + sem2Van;
+      if (document.getElementById('fmModeTerm').checked) {
+        let t1Van = document.getElementById('fmChkVanTerm1').checked ? Math.round((vRate * 4) / 10) * 10 : 0;
+        let t2Van = document.getElementById('fmChkVanTerm2').checked ? Math.round((vRate * 4) / 10) * 10 : 0;
+        let t3Van = document.getElementById('fmChkVanTerm3').checked ? Math.round((vRate * 4) / 10) * 10 : 0;
+        vanFee = t1Van + t2Van + t3Van;
       } else {
         vanMonths = Array.from(document.querySelectorAll('.fm-month-chk:checked')).map(c => c.value);
         vanFee = Math.round((vanMonths.length * vRate) / 10) * 10;
@@ -3527,17 +3608,19 @@
     const isStruck = document.getElementById('fmChkStruckOff').checked;
     const isWaived = document.getElementById('fmChkWaiveLate').checked;
 
-    const s1Fee = Number(document.getElementById('fmSem1').value) || 0;
-    const s2Fee = Number(document.getElementById('fmSem2').value) || 0;
+    const t1Fee = Number(document.getElementById('fmTerm1').value) || 0;
+    const t2Fee = Number(document.getElementById('fmTerm2').value) || 0;
+    const t3Fee = Number(document.getElementById('fmTerm3').value) || 0;
     const prevBal = Number(document.getElementById('fmPrevBal').value) || 0;
     const lateFee = Number(document.getElementById('fmLateFee').value) || 0;
     const otherFee = Number(document.getElementById('fmOtherFeeAmt').value) || 0;
     const totalConc = Number(document.getElementById('fmConcTotal').value) || 0;
-    const sem1Conc = Number(document.getElementById('fmConcSem1').value) || 0;
-    const sem2Conc = Number(document.getElementById('fmConcSem2').value) || 0;
+    const term1Conc = Number(document.getElementById('fmConcTerm1').value) || 0;
+    const term2Conc = Number(document.getElementById('fmConcTerm2').value) || 0;
+    const term3Conc = Number(document.getElementById('fmConcTerm3').value) || 0;
     const effLate = isWaived ? 0 : lateFee;
 
-    const grandTotal = Math.max(0, (s1Fee + s2Fee + vanFee + prevBal + otherFee + effLate) - totalConc);
+    const grandTotal = Math.max(0, (t1Fee + t2Fee + t3Fee + vanFee + prevBal + otherFee + effLate) - totalConc);
     const paidAmount = currentFmStudent.feePlan.totalPaid || 0;
     const balance = Math.max(0, grandTotal - paidAmount);
 
@@ -3545,15 +3628,17 @@
       adm_no: currentFmStudent.student.admNo,
       class_name: currentFmStudent.student.className,
       name: currentFmStudent.student.name,
-      sem1_fee: s1Fee,
-      sem2_fee: s2Fee,
+      term1_fee: t1Fee,
+      term2_fee: t2Fee,
+      term3_fee: t3Fee,
       van_opted: document.getElementById('fmVanOpt').checked,
-      van_mode: document.getElementById('fmModeSem').checked ? 'sem' : 'month',
+      van_mode: document.getElementById('fmModeTerm').checked ? 'term' : 'month',
       van_months: vanMonths.join(', '),
       van_fee_total: vanFee,
       total_concession: totalConc,
-      sem1_concession: sem1Conc,
-      sem2_concession: sem2Conc,
+      term1_concession: term1Conc,
+      term2_concession: term2Conc,
+      term3_concession: term3Conc,
       grand_total: grandTotal,
       total_paid: paidAmount,
       balance: balance,
@@ -3589,8 +3674,9 @@
 
   async function applyBulkFeePlan() {
     const className = document.getElementById('bulkClassDropdown').value;
-    const sem1Fee = Number(document.getElementById('bulkSem1').value) || 0;
-    const sem2Fee = Number(document.getElementById('bulkSem2').value) || 0;
+    const term1Fee = Number(document.getElementById('bulkTerm1').value) || 0;
+    const term2Fee = Number(document.getElementById('bulkTerm2').value) || 0;
+    const term3Fee = Number(document.getElementById('bulkTerm3').value) || 0;
     const vanOpted = document.getElementById('bulkVanOpt').checked;
 
     if (!confirm(`Apply fee preset to all students in ${className}?`)) return;
@@ -3615,7 +3701,7 @@
       let vanFee = 0;
       if (vanOpted) {
         const monthlyRate = vMap[(s.village || '').trim().toUpperCase()] || 0;
-        vanFee = (Math.round((monthlyRate * 6) / 10) * 10) * 2;
+        vanFee = (Math.round((monthlyRate * 4) / 10) * 10) * 3;
       }
 
       const existing = feeMap[s.adm_no];
@@ -3628,25 +3714,28 @@
       let lateFee = existing ? ((existing.late_fee !== null && existing.late_fee !== undefined) ? Number(existing.late_fee) : dynamicLate) : dynamicLate;
       let waiveLate = existing ? !!existing.waive_late_fee : false;
       let totalConc = existing ? Number(existing.total_concession || 0) : 0;
-      let sem1Conc = existing ? Number(existing.sem1_concession || 0) : 0;
-      let sem2Conc = existing ? Number(existing.sem2_concession || 0) : 0;
+      let term1Conc = existing ? Number(existing.term1_concession !== undefined ? existing.term1_concession : existing.sem1_concession || 0) : 0;
+      let term2Conc = existing ? Number(existing.term2_concession !== undefined ? existing.term2_concession : existing.sem2_concession || 0) : 0;
+      let term3Conc = existing ? Number(existing.term3_concession || 0) : 0;
 
       const effLate = waiveLate ? 0 : lateFee;
-      const grandTotal = Math.max(0, (sem1Fee + sem2Fee + vanFee + prevBal + otherFee + effLate) - totalConc);
+      const grandTotal = Math.max(0, (term1Fee + term2Fee + term3Fee + vanFee + prevBal + otherFee + effLate) - totalConc);
 
       upsertRows.push({
         adm_no: s.adm_no,
         class_name: className,
         name: s.name,
-        sem1_fee: sem1Fee,
-        sem2_fee: sem2Fee,
+        term1_fee: term1Fee,
+        term2_fee: term2Fee,
+        term3_fee: term3Fee,
         van_opted: vanOpted,
-        van_mode: 'sem',
+        van_mode: 'term',
         van_months: '',
         van_fee_total: vanFee,
         total_concession: totalConc,
-        sem1_concession: sem1Conc,
-        sem2_concession: sem2Conc,
+        term1_concession: term1Conc,
+        term2_concession: term2Conc,
+        term3_concession: term3Conc,
         grand_total: grandTotal,
         total_paid: paid,
         balance: Math.max(0, grandTotal - paid),
@@ -4059,7 +4148,7 @@
 
   async function generateNoDueSlipsList() {
     const cls = document.getElementById('nodueClassDropdown').value;
-    const semType = document.getElementById('nodueSemType').value;
+    const termType = document.getElementById('nodueTermType').value;
     const alertBox = document.getElementById('nodueStatusAlert');
     const printArea = document.getElementById('noduePrintArea');
 
@@ -4083,10 +4172,18 @@
       if (!fd || String(fd.status).toLowerCase() === 'struck off') return;
 
       let isEligible = false;
-      const sem1Gross = Number(fd.sem1_fee || 0) + (Number(fd.van_fee_total || 0) / 2) + Number(fd.previous_balance || 0) - Number(fd.sem1_concession || 0);
+      const t1FeeVal = Number(fd.term1_fee !== undefined ? fd.term1_fee : fd.sem1_fee || 0);
+      const t1ConcVal = Number(fd.term1_concession !== undefined ? fd.term1_concession : fd.sem1_concession || 0);
+      const t1Gross = t1FeeVal + (Number(fd.van_fee_total || 0) / 3) + Number(fd.previous_balance || 0) - t1ConcVal;
+      
+      const t2FeeVal = Number(fd.term2_fee !== undefined ? fd.term2_fee : fd.sem2_fee || 0);
+      const t2ConcVal = Number(fd.term2_concession !== undefined ? fd.term2_concession : fd.sem2_concession || 0);
+      const t2Gross = t1Gross + t2FeeVal + (Number(fd.van_fee_total || 0) / 3) - t2ConcVal;
 
-      if (semType === 'odd') {
-        if (Number(fd.total_paid || 0) >= sem1Gross && sem1Gross > 0) isEligible = true;
+      if (termType === 'term1') {
+        if (Number(fd.total_paid || 0) >= t1Gross && t1Gross > 0) isEligible = true;
+      } else if (termType === 'term2') {
+        if (Number(fd.total_paid || 0) >= t2Gross && t2Gross > 0) isEligible = true;
       } else {
         if (Number(fd.balance || 0) <= 0 && Number(fd.grand_total || 0) > 0) isEligible = true;
       }
@@ -4099,24 +4196,24 @@
           className: cls,
           village: s.village,
           villageTown: s.village_town || s.village,
-          clearedFor: semType === 'odd' ? 'Odd Semester (1st Term & Dues Cleared)' : 'Even Semester (Full Session Cleared)'
+          clearedFor: termType === 'term1' ? 'Term 1 Clearance' : (termType === 'term2' ? 'Term 2 Clearance' : 'Full Session Clearance')
         });
       }
     });
 
-    alertBox.innerText = `Found ${currentNoDueList.length} students in ${cls} with NIL balance for ${semType === 'odd' ? 'Odd Semester' : 'Full Session'}.`;
+    alertBox.innerText = `Found ${currentNoDueList.length} students in ${cls} eligible for ${termType}.`;
     alertBox.style.display = 'block';
-    renderNoDueSlipsGrid(currentNoDueList, semType);
+    renderNoDueSlipsGrid(currentNoDueList, termType);
   }
 
-  function renderNoDueSlipsGrid(students, semType) {
+  function renderNoDueSlipsGrid(students, termType) {
     const area = document.getElementById('noduePrintArea');
     area.innerHTML = '';
     const logoUrl = document.getElementById('headerLogo').src;
     const today = new Date().toLocaleDateString('en-GB');
 
     if (students.length === 0) {
-      area.innerHTML = '<div class="alert alert-warning text-center fw-bold">No students in this class have fully cleared dues for this term.</div>';
+      area.innerHTML = '<div class="alert alert-warning text-center fw-bold">No students in this class meet the criteria for this term clearance.</div>';
       return;
     }
 
@@ -4140,7 +4237,7 @@
           <p class="mb-3" style="font-size: 13.5px; line-height: 1.6;">
             This is to certify that <strong>Ms. ${s.name}</strong>, D/o <strong>S. ${s.fatherName}</strong>, 
             bearing Admission No: <strong>${s.admNo}</strong>, student of <strong>${s.className}</strong> (Resident of <strong>${s.villageTown}</strong>), 
-            has <strong>NIL Outstanding Balance</strong> and has successfully cleared all College Fee, Transport Charges, and other institutional dues for the 
+            has successfully cleared all dues and transport charges for 
             <strong class="text-primary">${s.clearedFor}</strong>.
           </p>
 
@@ -4189,7 +4286,7 @@
 
     students.forEach(s => {
       const fd = fdMap[s.adm_no] || { 
-        sem1_fee: 0, sem1_concession: 0, previous_balance: 0, 
+        term1_fee: 0, term1_concession: 0, previous_balance: 0, 
         grand_total: 0, total_paid: 0, balance: 0, status: '' 
       };
       
@@ -4206,8 +4303,10 @@
         inactiveStudentsCount++;
       }
 
-      const sem1Gross = Number(fd.sem1_fee || 0) + (Number(fd.van_fee_total || 0) / 2) + prevBal - Number(fd.sem1_concession || 0);
-      const sem1Pending = Math.max(0, sem1Gross - totalPaid);
+      const t1FeeVal = Number(fd.term1_fee !== undefined ? fd.term1_fee : fd.sem1_fee || 0);
+      const t1ConcVal = Number(fd.term1_concession !== undefined ? fd.term1_concession : fd.sem1_concession || 0);
+      const term1Gross = t1FeeVal + (Number(fd.van_fee_total || 0) / 3) + prevBal - t1ConcVal;
+      const term1Pending = Math.max(0, term1Gross - totalPaid);
 
       reportsCache.push({
         admNo: s.adm_no,
@@ -4225,7 +4324,7 @@
         totalFee: Number(fd.grand_total || 0),
         paid: totalPaid,
         balance: Number(fd.balance || 0),
-        sem1Pending: sem1Pending,
+        term1Pending: term1Pending,
         isActive,
         isStruckOff: isStruck
       });
@@ -4301,9 +4400,9 @@
     const headerLabel = document.getElementById('reportHeaderBalanceLabel');
     const subHeading = document.getElementById('reportPrintSubHeading');
 
-    if (reportTerm === 'sem1') {
-      headerLabel.innerText = '1st Sem Pending';
-      subHeading.innerText = `1st Semester Pending Fee Report (Minimum Threshold: ₹${minAmount}) - 2026-27`;
+    if (reportTerm === 'term1') {
+      headerLabel.innerText = 'Term 1 Pending';
+      subHeading.innerText = `Term 1 Pending Fee Report (Minimum Threshold: ₹${minAmount}) - 2026-27`;
     } else {
       headerLabel.innerText = 'Total Balance Pending';
       subHeading.innerText = `Total Session Fee Status Report (Minimum Threshold: ₹${minAmount}) - 2026-27`;
@@ -4311,7 +4410,7 @@
 
     let filtered = reportsCache.filter(s => {
       const matchClass = !selectedClass || s.className === selectedClass;
-      const targetBalance = (reportTerm === 'sem1') ? s.sem1Pending : s.balance;
+      const targetBalance = (reportTerm === 'term1') ? s.term1Pending : s.balance;
       const matchMinAmount = targetBalance > minAmount;
       return matchClass && matchMinAmount;
     });
@@ -4330,7 +4429,7 @@
 
     data.forEach(s => {
       const contacts = [s.contact1, s.contact2].filter(c => c && c !== '-').join(' / ') || '-';
-      const displayBalance = (reportTerm === 'sem1') ? s.sem1Pending : s.balance;
+      const displayBalance = (reportTerm === 'term1') ? s.term1Pending : s.balance;
       const statusBadge = displayBalance > 0 
         ? '<span class="status-badge status-pending">Pending</span>' 
         : '<span class="status-badge status-paid">Cleared</span>';
