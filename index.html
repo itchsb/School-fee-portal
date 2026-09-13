@@ -314,7 +314,7 @@
         </button>
 
         <div class="nav-section-label">Student Management</div>
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-user-graduate"></i> Students <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -333,7 +333,7 @@
         </div>
 
         <div class="nav-section-label">Fees & Accounts</div>
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-rupee-sign"></i> Fees & Accounts <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -349,7 +349,7 @@
         </div>
 
         <div class="nav-section-label">Academics</div>
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-school"></i> Academic Management <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -362,7 +362,7 @@
           </div>
         </div>
 
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-award"></i> Results & Examinations <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -379,7 +379,7 @@
         </div>
 
         <div class="nav-section-label">Human Resources</div>
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-users"></i> Staff & HR <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -393,7 +393,7 @@
         </div>
 
         <div class="nav-section-label">Student Services</div>
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-concierge-bell"></i> Services <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -406,7 +406,7 @@
         </div>
 
         <div class="nav-section-label">Campus Operations</div>
-        <div class="nav-group">
+        <div class="nav-group collapsed">
           <button class="nav-group-toggle" onclick="toggleNavGroup(this)">
             <i class="fas fa-building"></i> Operations <i class="fas fa-chevron-down group-chevron"></i>
           </button>
@@ -539,27 +539,14 @@
     <div id="studentPhotosTab" class="portal-pane" style="display:none;">
       <div class="content-box">
         <div class="section-title"><i class="fas fa-images text-primary"></i> Central Student & Family Photo Management</div>
-        <div class="alert alert-info small mb-3"><strong>Long-term photo storage:</strong> the ERP keeps a permanent copy in Supabase Storage and links it to the student's Admission No. Google Drive is an optional migration/source reference, not the permanent dependency.</div>
-        <div class="card border-0 bg-light p-3 mb-3">
-          <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div><h6 class="fw-bold mb-1">1. One-time database & Storage setup</h6><div class="small text-muted">Run the SQL below once in Supabase SQL Editor.</div></div>
-            <button class="btn btn-outline-primary btn-sm fw-bold" onclick="showStudentPhotoSetupSql()"><i class="fas fa-database me-1"></i> View / Copy SQL Setup</button>
-          </div>
-        </div>
         <div class="card border-0 p-3 mb-3">
-          <h6 class="fw-bold text-primary"><i class="fas fa-cloud-arrow-up me-1"></i> 2. Bulk import photos from your Mac</h6>
-          <p class="small text-muted mb-2">Select your photo folder or multiple image files. Names such as <code>Student_26818.jpg</code>, <code>Father_26818.jpg</code> and <code>Mother_26818.jpg</code> are matched automatically.</p>
+          <h6 class="fw-bold text-primary"><i class="fas fa-cloud-arrow-up me-1"></i> Bulk import photos from your Mac / Windows</h6>
+          <p class="small text-muted mb-2">Select your photo folder or multiple image files. Only exact filenames such as <code>Student_26818.jpg</code>, <code>Father_26818.jpg</code> and <code>Mother_26818.jpg</code> are accepted. Files such as <code>Student_26818 (1).jpg</code> or <code>(2)</code> are skipped. Photos for admission numbers not found in the student database are also skipped. When a new photo is uploaded, it replaces the existing photo for that student/person and the latest photo is used everywhere in the ERP.</p>
           <div class="row g-2 align-items-end">
             <div class="col-md-8"><label class="form-label small fw-bold">Photo folder / files</label><input id="studentPhotoBulkFiles" type="file" class="form-control form-control-sm" accept="image/*" multiple webkitdirectory onchange="previewBulkStudentPhotoFiles(this.files)"></div>
-            <div class="col-md-4"><button class="btn btn-success btn-sm fw-bold w-100" onclick="uploadBulkStudentPhotoFiles()"><i class="fas fa-upload me-1"></i> Upload Matched Photos</button></div>
+            <div class="col-md-4"><button class="btn btn-success btn-sm fw-bold w-100" onclick="uploadBulkStudentPhotoFiles()"><i class="fas fa-upload me-1"></i> Upload / Replace Photos</button></div>
           </div>
           <div id="studentPhotoBulkStatus" class="small mt-2"></div>
-        </div>
-        <div class="card border-0 p-3 mb-3">
-          <h6 class="fw-bold text-primary"><i class="fab fa-google-drive me-1"></i> 3. Save existing Google Drive references</h6>
-          <p class="small text-muted">Paste one line per photo in this format: <code>Admission No | Student/Father/Mother | Google Drive link</code>. This preserves the original source reference. For permanent storage, upload the actual files using the section above.</p>
-          <textarea id="studentPhotoDriveLinks" class="form-control form-control-sm" rows="4" placeholder="26818 | Student | https://drive.google.com/file/d/FILE_ID/view?usp=sharing&#10;26818 | Father | https://drive.google.com/file/d/FILE_ID/view?usp=sharing&#10;26818 | Mother | https://drive.google.com/file/d/FILE_ID/view?usp=sharing"></textarea>
-          <button class="btn btn-outline-success btn-sm fw-bold mt-2" onclick="saveStudentPhotoDriveLinks()"><i class="fas fa-link me-1"></i> Save Drive References</button>
         </div>
         <div class="row g-2 mb-3">
           <div class="col-md-4"><input id="studentPhotoSearch" class="form-control form-control-sm" placeholder="Search admission / student / father..." oninput="renderStudentPhotoManager()"></div>
@@ -3119,7 +3106,11 @@
 
   function toggleNavGroup(button) {
     const group = button.closest('.nav-group');
-    if (group) group.classList.toggle('collapsed');
+    if (!group) return;
+    const willOpen = group.classList.contains('collapsed');
+    // Only one main navigation group can be expanded at a time.
+    document.querySelectorAll('#staffNavGroup .nav-group').forEach(g => g.classList.add('collapsed'));
+    if (willOpen) group.classList.remove('collapsed');
   }
 
   // --- Auto Cursor Focus & Navigation Router ---
@@ -6346,21 +6337,12 @@ create policy student_photos_storage_delete on storage.objects for delete to ano
     const safe=String(adm||'').trim().replace(/[^a-zA-Z0-9_-]/g,'_');
     return `${STUDENT_PHOTO_SESSION}/${safe}/${role}.jpg`;
   }
-  function driveFileId(url){
-    const m=String(url||'').match(/(?:\/d\/|id=)([a-zA-Z0-9_-]{10,})/);
-    return m?m[1]:'';
-  }
-  function drivePreviewUrl(url){
-    const id=driveFileId(url); return id?`https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`:'';
-  }
   function photoStoragePath(row,role){return row?.[`${role}_storage_path`]||'';}
   async function getStudentPhotoUrl(row,role,seconds=3600){
     const path=photoStoragePath(row,role);
-    if(path){
-      const {data,error}=await supabaseClient.storage.from(STUDENT_PHOTO_BUCKET).createSignedUrl(path,seconds);
-      if(!error && data?.signedUrl) return data.signedUrl;
-    }
-    return drivePreviewUrl(row?.[`${role}_drive_url`]||'');
+    if(!path) return '';
+    const {data,error}=await supabaseClient.storage.from(STUDENT_PHOTO_BUCKET).createSignedUrl(path,seconds);
+    return (!error && data?.signedUrl) ? data.signedUrl : '';
   }
   async function fetchStudentPhotoMap(admNos){
     const ids=(admNos||[]).map(x=>String(x||'').trim()).filter(Boolean);
@@ -6382,9 +6364,23 @@ create policy student_photos_storage_delete on storage.objects for delete to ano
     body.innerHTML='<tr><td colspan="6" class="text-center py-4"><i class="fas fa-spinner fa-spin me-1"></i> Loading students and photos...</td></tr>';
     const {data:students,error}=await supabaseClient.from('students').select('adm_no,name,father_name,mother_name,class_name').order('class_name').order('adm_no');
     if(error){body.innerHTML=`<tr><td colspan="6" class="text-danger text-center">Unable to load students: ${escapeHtml(error.message)}</td></tr>`;return;}
-    const map=await fetchStudentPhotoMap((students||[]).map(s=>s.adm_no));
-    studentPhotoRows=[];
+
+    // The photo manager must display ONE row per Admission No. even if the
+    // underlying students table contains accidental duplicate records.
+    // student_photos itself is keyed by adm_no, so duplicate student rows must
+    // never produce duplicate photo entries in this manager.
+    const uniqueStudents=[];
+    const seenAdmissions=new Set();
     for(const s of (students||[])){
+      const adm=String(s.adm_no||'').trim();
+      if(!adm || seenAdmissions.has(adm)) continue;
+      seenAdmissions.add(adm);
+      uniqueStudents.push(s);
+    }
+
+    const map=await fetchStudentPhotoMap(uniqueStudents.map(s=>s.adm_no));
+    studentPhotoRows=[];
+    for(const s of uniqueStudents){
       const r=map[String(s.adm_no)]||{adm_no:s.adm_no};
       const [studentUrl,fatherUrl,motherUrl]=await Promise.all([getStudentPhotoUrl(r,'student',1800),getStudentPhotoUrl(r,'father',1800),getStudentPhotoUrl(r,'mother',1800)]);
       studentPhotoRows.push({...s,...r,studentUrl,fatherUrl,motherUrl});
@@ -6461,6 +6457,36 @@ create policy student_photos_storage_delete on storage.objects for delete to ano
     }else if(el){el.remove();}
   }
 
+  // Upload a new photo to the canonical path, then remove any previous/duplicate
+  // storage objects for the same admission number + role. This guarantees that
+  // the latest photo is the only photo kept for that person.
+  async function replaceStudentPhotoStorageFile(adm, role, file, oldPath=''){
+    const path=studentPhotoPath(adm,role);
+    const bucket=supabaseClient.storage.from(STUDENT_PHOTO_BUCKET);
+    const {error:upErr}=await bucket.upload(path,file,{upsert:true,contentType:file.type||'image/jpeg',cacheControl:'31536000'});
+    if(upErr) throw upErr;
+
+    // Remove an old DB-referenced path if it is different from the canonical path.
+    if(oldPath && oldPath!==path){
+      try{ await bucket.remove([oldPath]); }catch(e){ console.warn('Old photo cleanup warning:',e); }
+    }
+
+    // Also remove legacy/duplicate files for this role in the student's folder,
+    // but never remove the newly uploaded canonical file.
+    try{
+      const folder=`${STUDENT_PHOTO_SESSION}/${String(adm).trim().replace(/[^a-zA-Z0-9_-]/g,'_')}`;
+      const {data:list,error:listErr}=await bucket.list(folder,{limit:100});
+      if(!listErr && Array.isArray(list)){
+        const extras=list.map(x=>x.name).filter(name=>{
+          const full=`${folder}/${name}`;
+          return full!==path && new RegExp(`^${role}\\.(jpg|jpeg|png|webp)$`,'i').test(name);
+        });
+        if(extras.length) await bucket.remove(extras.map(name=>`${folder}/${name}`));
+      }
+    }catch(e){ console.warn('Legacy photo cleanup warning:',e); }
+    return path;
+  }
+
   async function uploadBulkStudentPhotoFiles(){
     if(!studentPhotoBulkFilesCache.length){alert('Select the photo folder/files first.');return;}
     const files=studentPhotoBulkFilesCache;
@@ -6483,10 +6509,11 @@ create policy student_photos_storage_delete on storage.objects for delete to ano
         if(!m){skipped++;skippedReasons.push(`${file.name} — unmatched/invalid filename`);showPhotoUploadWait(i+1,files.length,done,skipped,failed);continue;}
         if(m.duplicate){skipped++;skippedReasons.push(`${file.name} — duplicate copy`);showPhotoUploadWait(i+1,files.length,done,skipped,failed);continue;}
         if(!validAdmissions.has(m.adm)){skipped++;skippedReasons.push(`${file.name} — admission no. not found`);showPhotoUploadWait(i+1,files.length,done,skipped,failed);continue;}
-        const path=studentPhotoPath(m.adm,m.role);
         try{
-          const {error:upErr}=await supabaseClient.storage.from(STUDENT_PHOTO_BUCKET).upload(path,file,{upsert:true,contentType:file.type||'image/jpeg',cacheControl:'31536000'});
-          if(upErr) throw upErr;
+          const {data:existing,error:oldErr}=await supabaseClient.from('student_photos').select('adm_no,student_storage_path,father_storage_path,mother_storage_path').eq('adm_no',m.adm).maybeSingle();
+          if(oldErr) throw oldErr;
+          const oldPath=existing?.[`${m.role}_storage_path`]||'';
+          const path=await replaceStudentPhotoStorageFile(m.adm,m.role,file,oldPath);
           await upsertStudentPhotoPatch(m.adm,{[`${m.role}_storage_path`]:path,updated_at:new Date().toISOString()});
           done++;
         }catch(e){
@@ -6512,21 +6539,6 @@ create policy student_photos_storage_delete on storage.objects for delete to ano
     }
   }
 
-  async function saveStudentPhotoDriveLinks(){
-    const textValue=document.getElementById('studentPhotoDriveLinks')?.value||''; const lines=textValue.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
-    if(!lines.length){alert('Paste at least one Drive reference.');return;}
-    let saved=0,bad=0;
-    for(const line of lines){
-      const parts=line.split('|').map(x=>x.trim()); if(parts.length<3){bad++;continue;}
-      const adm=parts[0],role=normalizeStudentPhotoRole(parts[1]),url=parts.slice(2).join('|');
-      if(!adm||!role||!/^https?:\/\/(drive\.google\.com|docs\.google\.com)\//i.test(url)){bad++;continue;}
-      try{await upsertStudentPhotoPatch(adm,{[`${role}_drive_url`]:url,updated_at:new Date().toISOString()});saved++;}catch(e){bad++;console.error(e);}
-    }
-    alert(`Saved ${saved} Google Drive reference(s).${bad?` ${bad} line(s) could not be saved.`:''}`);
-    document.getElementById('studentPhotoDriveLinks').value='';
-    await loadStudentPhotosManager();
-  }
-
   function openStudentPhotoEditor(adm){
     const row=studentPhotoRows.find(x=>String(x.adm_no)===String(adm)); if(!row)return;
     let modal=document.getElementById('studentPhotoEditorModal');
@@ -6534,33 +6546,28 @@ create policy student_photos_storage_delete on storage.objects for delete to ano
     modal.innerHTML=`<div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold"><i class="fas fa-images me-2"></i>Photos — ${escapeHtml(row.name||'')} (Adm ${escapeHtml(row.adm_no)})</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
       <form onsubmit="saveIndividualStudentPhotos(event,'${escapeHtml(String(row.adm_no))}')"><div class="modal-body"><div class="alert alert-secondary small">Upload a new image for each person. The file is stored under the student's Admission No. and replaces the previous image.</div><div class="row g-3">
       ${['student','father','mother'].map(role=>`<div class="col-md-4"><div class="card h-100 p-2 text-center"><div class="fw-bold mb-2">${role==='student'?'Student':role==='father'?'Father':'Mother'}</div><div id="photoEditorPreview_${role}">${photoCellHtml(row[role+'Url'],role)}</div><input class="form-control form-control-sm mt-2" type="file" accept="image/*" id="photoEditorFile_${role}"></div></div>`).join('')}
-      </div><div class="mt-3"><label class="form-label small fw-bold">Optional Google Drive references</label><div class="row g-2">${['student','father','mother'].map(role=>`<div class="col-md-4"><input id="photoEditorDrive_${role}" class="form-control form-control-sm" placeholder="${role} Drive link" value="${escapeHtml(row[role+'_drive_url']||'')}"></div>`).join('')}</div></div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success fw-bold" id="btnSaveIndividualStudentPhotos"><i class="fas fa-save me-1"></i> Save Photos</button></div></form></div></div>`;
+      </div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success fw-bold" id="btnSaveIndividualStudentPhotos"><i class="fas fa-save me-1"></i> Save Photos</button></div></form></div></div>`;
     bootstrap.Modal.getOrCreateInstance(modal).show();
   }
 
   async function saveIndividualStudentPhotos(e,adm){
     e.preventDefault(); const btn=document.getElementById('btnSaveIndividualStudentPhotos'); if(btn)btn.disabled=true;
     try{
+      const currentRow=studentPhotoRows.find(x=>String(x.adm_no)===String(adm))||{};
       const patch={updated_at:new Date().toISOString()};
       for(const role of ['student','father','mother']){
         const file=document.getElementById(`photoEditorFile_${role}`)?.files?.[0];
-        const drive=document.getElementById(`photoEditorDrive_${role}`)?.value.trim()||'';
-        if(file){const path=studentPhotoPath(adm,role);const {error}=await supabaseClient.storage.from(STUDENT_PHOTO_BUCKET).upload(path,file,{upsert:true,contentType:file.type||'image/jpeg',cacheControl:'31536000'});if(error)throw error;patch[`${role}_storage_path`]=path;}
-        patch[`${role}_drive_url`]=drive||null;
+        if(file){
+          const currentPath=photoStoragePath(currentRow,role);
+          const path=await replaceStudentPhotoStorageFile(adm,role,file,currentPath);
+          patch[`${role}_storage_path`]=path;
+        }
       }
       await upsertStudentPhotoPatch(adm,patch);
       bootstrap.Modal.getInstance(document.getElementById('studentPhotoEditorModal'))?.hide();
       alert('Student/family photos saved successfully.'); await loadStudentPhotosManager();
     }catch(err){alert('Photo save failed: '+(err.message||err));}finally{if(btn)btn.disabled=false;}
   }
-
-  function showStudentPhotoSetupSql(){
-    let modal=document.getElementById('studentPhotoSqlModal');
-    if(!modal){modal=document.createElement('div');modal.id='studentPhotoSqlModal';modal.className='modal fade';modal.tabIndex=-1;document.body.appendChild(modal);}
-    modal.innerHTML=`<div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Student Photo Database Setup SQL</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-warning small"><strong>Run once:</strong> Supabase Dashboard → SQL Editor → New Query → paste this SQL → Run. It creates the <code>student_photos</code> table and the private <code>student-photos</code> Storage bucket.</div><textarea id="studentPhotoSetupSqlText" class="form-control font-monospace small" rows="24" readonly>${escapeHtml(STUDENT_PHOTO_SETUP_SQL)}</textarea></div><div class="modal-footer"><button class="btn btn-outline-primary fw-bold" onclick="copyStudentPhotoSetupSql()"><i class="fas fa-copy me-1"></i> Copy SQL</button><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div>`;
-    bootstrap.Modal.getOrCreateInstance(modal).show();
-  }
-  async function copyStudentPhotoSetupSql(){try{await navigator.clipboard.writeText(STUDENT_PHOTO_SETUP_SQL);alert('SQL copied to clipboard.');}catch(e){const t=document.getElementById('studentPhotoSetupSqlText');t?.select();document.execCommand('copy');alert('SQL copied.');}}
 
 </script>
 </body>
