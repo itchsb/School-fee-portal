@@ -4197,12 +4197,39 @@ function portalModuleAction(tabId, action) {
     body.innerHTML=(st||[]).map((x,i)=>{
       const m=mm[x.adm_no],grade=getSavedResultGrade(x.adm_no,term,subject),absent=getSavedResultAbsent(x.adm_no,term,subject);
       const disabled=!canEdit||absent;
-      const result=mode==='grade'?`<select class="form-select form-select-sm teacher-result-grade" data-adm="${erpEsc(x.adm_no)}" ${!canEdit?'disabled':''}><option value="">Select Grade</option>${RESULT_GRADE_LIST.map(g=>`<option ${grade===g?'selected':''}>${g}</option>`).join('')}</select>`:`<input type="number" class="form-control form-control-sm teacher-result-mark" data-adm="${erpEsc(x.adm_no)}" data-subject="${erpEsc(subject)}" data-max="${max}" value="${m?.marks_obtained??''}" min="0" max="${max}" step="0.01" ${disabled?'disabled':''} oninput="validateResultMarkInput(this)">`;
+      const result=mode==='grade'?`<select class="form-select form-select-sm teacher-result-grade" data-adm="${erpEsc(x.adm_no)}" ${!canEdit?'disabled':''}><option value="">Select Grade</option>${RESULT_GRADE_LIST.map(g=>`<option ${grade===g?'selected':''}>${g}</option>`).join('')}</select>`:`<input type="number" class="form-control form-control-sm teacher-result-mark${m?.marks_obtained!==undefined && m?.marks_obtained!==null && max>0 && (Number(m.marks_obtained)/max*100)<33?' result-mark-below-pass':''}" data-adm="${erpEsc(x.adm_no)}" data-subject="${erpEsc(subject)}" data-max="${max}" value="${m?.marks_obtained??''}" min="0" max="${max}" step="0.01" ${disabled?'disabled':''} oninput="validateResultMarkInput(this)" onkeydown="if(event.keyCode===13){event.preventDefault();moveToNextResultMark(this);}">`;
       const absentBox=`<div class="form-check d-flex align-items-center gap-1"><input class="form-check-input teacher-result-absent" type="checkbox" data-adm="${erpEsc(x.adm_no)}" ${absent?'checked':''} ${!canEdit?'disabled':''} onchange="toggleTeacherResultAbsent(this)"><label class="form-check-label fw-bold text-danger">Absent</label></div>`;
       return `<tr><td>${i+1}</td><td class="fw-bold">${erpEsc(x.roll_no||'-')}</td><td>${erpEsc(x.adm_no)}</td><td class="fw-bold">${erpEsc(x.name)}</td><td>${erpEsc(x.section||'-')}</td><td>${mode==='grade'?'Grade':'Marks'}</td><td class="text-center">${mode==='grade'?'—':max}</td><td>${result}</td><td>${absentBox}</td></tr>`;
     }).join('')||'<tr><td colspan="9" class="text-center text-muted">No students found.</td></tr>';
   }
 
+  function showResultMarkError(message){
+    let modal=document.getElementById('resultMarkErrorModal');
+    if(!modal){
+      modal=document.createElement('div');
+      modal.id='resultMarkErrorModal';
+      modal.className='modal fade';
+      modal.tabIndex=-1;
+      modal.setAttribute('data-bs-backdrop','static');
+      modal.setAttribute('data-bs-keyboard','false');
+      modal.innerHTML='<div class=\"modal-dialog modal-dialog-centered\"><div class=\"modal-content border-danger\"><div class=\"modal-header bg-danger text-white\"><h5 class=\"modal-title fw-bold\">Invalid Marks</h5></div><div class=\"modal-body fw-bold\" id=\"resultMarkErrorMessage\"></div><div class=\"modal-footer\"><button type=\"button\" class=\"btn btn-danger fw-bold\" id=\"resultMarkErrorOk\">OK</button></div></div></div>';
+      document.body.appendChild(modal);
+      modal.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();return false;}},true);
+      modal.querySelector('#resultMarkErrorOk').addEventListener('click',()=>bootstrap.Modal.getOrCreateInstance(modal).hide());
+    }
+    modal.querySelector('#resultMarkErrorMessage').textContent=message;
+    const bs=bootstrap.Modal.getOrCreateInstance(modal,{backdrop:'static',keyboard:false});
+    bs.show();
+    setTimeout(()=>modal.querySelector('#resultMarkErrorOk')?.focus(),100);
+  }
+  function markResultInputPassFail(input){
+    if(!input)return true;
+    const max=Number(input.dataset.max)||0;
+    const value=input.value===''?null:Number(input.value);
+    if(value!==null && Number.isFinite(value) && max>0 && (value/max*100)<33) input.classList.add('result-mark-below-pass');
+    else input.classList.remove('result-mark-below-pass');
+    return true;
+  }
   function validateResultMarkInput(input){
     if(!input)return true;
     const raw=input.value;
@@ -4210,15 +4237,24 @@ function portalModuleAction(tabId, action) {
     const value=raw===''?null:Number(raw);
     if(value!==null && (!Number.isFinite(value) || value<0)){
       input.value=''; input.classList.remove('result-mark-below-pass');
-      alert('Please enter a valid mark between 0 and '+max+'.'); return false;
+      showResultMarkError('Please enter a valid mark between 0 and '+max+'.'); return false;
     }
     if(value!==null && value>max){
       input.value=''; input.classList.remove('result-mark-below-pass');
-      alert('Marks cannot be more than the maximum marks ('+max+') for this subject.'); return false;
+      showResultMarkError('Marks cannot be more than the maximum marks ('+max+') for this subject.'); return false;
     }
-    if(value!==null && max>0 && (value/max*100)<33) input.classList.add('result-mark-below-pass');
-    else input.classList.remove('result-mark-below-pass');
-    return true;
+    return markResultInputPassFail(input);
+  }
+  function moveToNextResultMark(input){
+    if(!input)return;
+    if(!validateResultMarkInput(input))return;
+    const selector=input.classList.contains('teacher-result-mark')?'.teacher-result-mark:not([disabled])':'.result-entry-mark:not([disabled])';
+    const fields=[...document.querySelectorAll(selector)];
+    const idx=fields.indexOf(input);
+    if(idx>=0 && idx<fields.length-1){
+      fields[idx+1].focus();
+      fields[idx+1].select?.();
+    }else{input.blur();}
   }
   function validateAllResultMarkInputs(selector){
     for(const input of [...document.querySelectorAll(selector)]){
@@ -4396,7 +4432,7 @@ function portalModuleAction(tabId, action) {
     body.innerHTML='';
     if(!filtered.length){body.innerHTML='<tr><td colspan="9" class="text-center text-muted py-4">No students found.</td></tr>';return;}
     filtered.forEach((st,i)=>{const m=map[st.adm_no],grade=getSavedResultGrade(st.adm_no,term,subject),absent=getSavedResultAbsent(st.adm_no,term,subject),
-      result=mode==='grade'?resultGradeSelectHtml(st.adm_no,term,subject,grade):'<input type="number" class="form-control form-control-sm result-entry-mark" data-adm="'+escapeHtml(st.adm_no)+'" data-subject="'+escapeHtml(subject)+'" data-max="'+max+'" value="'+(m?Number(m.marks_obtained):'')+'" min="0" max="'+max+'" '+(absent?'disabled':'')+' oninput="validateResultMarkInput(this)">',
+      result=mode==='grade'?resultGradeSelectHtml(st.adm_no,term,subject,grade):'<input type="number" class="form-control form-control-sm result-entry-mark'+(m&&m.marks_obtained!==undefined&&m.marks_obtained!==null&&max>0&&(Number(m.marks_obtained)/max*100)<33?' result-mark-below-pass':'')+'" data-adm="'+escapeHtml(st.adm_no)+'" data-subject="'+escapeHtml(subject)+'" data-max="'+max+'" value="'+(m?Number(m.marks_obtained):'')+'" min="0" max="'+max+'" '+(absent?'disabled':'')+' oninput="validateResultMarkInput(this)" onkeydown="if(event.keyCode===13){event.preventDefault();moveToNextResultMark(this);}">',
       absentBox='<div class="form-check d-flex align-items-center gap-1"><input class="form-check-input result-entry-absent" type="checkbox" data-adm="'+escapeHtml(st.adm_no)+'" data-term="'+escapeHtml(term)+'" data-subject="'+escapeHtml(subject)+'" '+(absent?'checked':'')+' onchange="toggleResultAbsent(this)"><label class="form-check-label fw-bold text-danger">Absent</label></div>';
       body.insertAdjacentHTML('beforeend','<tr><td>'+(i+1)+'</td><td class="fw-bold">'+escapeHtml(st.roll_no||'-')+'</td><td>'+escapeHtml(st.adm_no)+'</td><td class="fw-bold">'+escapeHtml(st.name)+'</td><td>'+escapeHtml(st.section||'-')+'</td><td>'+ (mode==='grade'?'Grade':'Marks')+'</td><td class="text-center">'+(mode==='grade'?'—':max)+'</td><td>'+result+'</td><td>'+absentBox+'</td></tr>');
     });
@@ -8497,6 +8533,44 @@ async function editStaffSalary(code){if(!staffIsAdmin()){alert('Only Admin or Ac
     try{const {data}=await supabaseClient.auth.getSession();if(!data?.session)return;const u=data.session.user;const {data:a}=await supabaseClient.from('portal_accounts').select('*').eq('user_id',u.id).maybeSingle();if(!a)return;const ident=a.role==='staff'?{role:'staff',staff:{employee_code:a.employee_code}}:{role:'parent',children:[]};await onLogin(a.phone||u.phone,a.role,a.employee_code||null,null,u.id,'portal');}catch(e){console.warn('Auth restore',e);}
   }
   window.addEventListener('load',()=>setTimeout(restorePortalAuth,250));
+</script>
+<script>
+/* Global numeric keypad support: applies only to inputs that are already numeric/tel/numeric-purpose fields. */
+(function(){
+  function applyNumericInputMode(root){
+    const scope=root||document;
+    if(!scope.querySelectorAll) return;
+    scope.querySelectorAll('input').forEach(function(input){
+      const type=String(input.type||'').toLowerCase();
+      const attrs=(String(input.name||'')+' '+String(input.id||'')+' '+String(input.placeholder||'')+' '+String(input.className||'')+' '+String(input.getAttribute('pattern')||'')+' '+String(input.getAttribute('oninput')||'')).toLowerCase();
+      if(type==='number'){
+        input.setAttribute('inputmode', (input.step && input.step!=='1') ? 'decimal' : 'numeric');
+        return;
+      }
+      if(type==='tel'){
+        input.setAttribute('inputmode','numeric');
+        return;
+      }
+      const numericPurpose=/mobile|phone|contact|aadhaar|uid|admission|employee.?code|roll.?no|amount|marks|numeric|digits/.test(attrs);
+      const numericOnly=/number|numeric|digits|only|\\d/.test(attrs);
+      if(numericPurpose && numericOnly) input.setAttribute('inputmode','numeric');
+    });
+  }
+  function init(){
+    applyNumericInputMode(document);
+    if(window.MutationObserver){
+      new MutationObserver(function(records){
+        records.forEach(function(record){
+          record.addedNodes.forEach(function(node){
+            if(node.nodeType===1) applyNumericInputMode(node);
+          });
+        });
+      }).observe(document.documentElement,{childList:true,subtree:true});
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
 </script>
 </body>
 </html>
