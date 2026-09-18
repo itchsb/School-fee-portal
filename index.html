@@ -331,7 +331,26 @@
     .portal-action-wait { opacity: .85; cursor: wait !important; }
     .portal-action-wait .portal-wait-spinner { display: inline-block; width: .85em; height: .85em; border: .14em solid currentColor; border-right-color: transparent; border-radius: 50%; animation: portalWaitSpin .7s linear infinite; vertical-align: -.1em; margin-right: .45rem; }
     @keyframes portalWaitSpin { to { transform: rotate(360deg); } }
-  </style>
+  
+/* Exam Date Sheet: clear borders between every class/date cell */
+#examDateSheetTable { border-collapse: collapse !important; width: 100%; }
+#examDateSheetTable th, #examDateSheetTable td { border: 1px solid #000 !important; }
+#examDateSheetTable thead th { border: 1px solid #000 !important; font-weight: 700; }
+#examDateSheetTable tbody td:first-child, #examDateSheetTable thead th:first-child { border-right: 2px solid #000 !important; }
+#examDateSheetTable tbody tr { border-bottom: 1px solid #000 !important; }
+.exam-sheet-print-only { display:none; }
+@media print {
+  body * { visibility: hidden !important; }
+  #examDateSheetPrintArea, #examDateSheetPrintArea * { visibility: visible !important; }
+  #examDateSheetPrintArea { display:block !important; position:absolute; left:0; top:0; width:100%; background:#fff; }
+  #examDateSheetPrintArea table { width:100%; border-collapse:collapse !important; font-family: Times New Roman, serif; }
+  #examDateSheetPrintArea th, #examDateSheetPrintArea td { border:1px solid #000 !important; padding:4px; text-align:center; vertical-align:middle; }
+  #examDateSheetPrintArea .print-title { text-align:center; font-weight:700; font-size:18px; margin-bottom:2px; }
+  #examDateSheetPrintArea .print-subtitle { text-align:center; font-size:14px; margin-bottom:8px; }
+  #examDateSheetPrintArea .no-print { display:none !important; }
+  #examDateSheetPrintArea .exam-print-table th:first-child, #examDateSheetPrintArea .exam-print-table td:first-child { white-space:nowrap; }
+}
+</style>
 </head>
 <body>
 <div id="portalOperationLoading" aria-live="polite" aria-busy="true">
@@ -488,6 +507,7 @@
             <i class="fas fa-award"></i> Results & Examinations <i class="fas fa-chevron-down group-chevron"></i>
           </button>
           <div class="nav-group-items">
+            <button class="nav-item-btn" onclick="openExamDateSheetTab(this);"><i class="fas fa-calendar-days"></i> Exam Date Sheet</button>
             <button class="nav-item-btn" onclick="openResultModule('resultMarksTab', this)"><i class="fas fa-edit"></i> Enter / Edit Marks</button>
             <button class="nav-item-btn" onclick="openResultModule('resultListsTab', this)"><i class="fas fa-list-ol"></i> Print Lists</button>
             <button class="nav-item-btn" onclick="openResultModule('resultCardsTab', this)"><i class="fas fa-id-card"></i> Print Report Cards</button>
@@ -542,6 +562,10 @@
           </div>
         </div>
 
+        <div class="nav-section-label">Communication & Calendar</div>
+        <button class="nav-item-btn" onclick="openNotificationsTab(this);"><i class="fas fa-bell"></i> Notifications</button>
+        <button class="nav-item-btn" onclick="openHolidaysTab(this);"><i class="fas fa-calendar-days"></i> Holidays & Calendar</button>
+
         <div class="nav-section-label">Reports & Administration</div>
         <button class="nav-item-btn" onclick="switchNavTab('reportsTab', this)"><i class="fas fa-chart-column"></i> Reports Center</button>
         <button class="nav-item-btn text-danger fw-bold" id="adminNavBtn" style="display:none;" onclick="switchNavTab('adminTab', this)"><i class="fas fa-shield-alt"></i> Administration</button>
@@ -566,6 +590,10 @@
             <div class="nav-group-items">
               <button class="nav-item-btn" onclick="switchNavTab('teacherTimetableTab', this); loadTeacherTimetable();"><i class="fas fa-calendar-alt"></i> Timetable</button>
               <button class="nav-item-btn" onclick="switchNavTab('teacherResultTab', this); loadTeacherResultWorkspace();"><i class="fas fa-edit"></i> Result</button>
+              <button class="nav-item-btn" onclick="openExamDateSheetTab(this);"><i class="fas fa-calendar-days"></i> Exam Date Sheet</button>
+              <button class="nav-item-btn" onclick="switchNavTab('applyLeaveTab', this); loadApplyLeave();"><i class="fas fa-calendar-plus"></i> Apply Leave</button>
+              <button class="nav-item-btn" onclick="openNotificationsTab(this);"><i class="fas fa-bell"></i> Notifications</button>
+              <button class="nav-item-btn" onclick="openHolidaysTab(this);"><i class="fas fa-calendar-days"></i> Holidays & Calendar</button>
             </div>
           </div>
         </div>
@@ -573,6 +601,9 @@
         <div id="parentLimitedNav" style="display:none;">
           <div class="nav-section-label">My Children</div>
           <button class="nav-item-btn active" onclick="switchNavTab('parentChildrenTab', this); loadParentChildren();"><i class="fas fa-children"></i> My Children</button>
+          <button class="nav-item-btn" onclick="openExamDateSheetTab(this);"><i class="fas fa-calendar-days"></i> Exam Date Sheet</button>
+          <button class="nav-item-btn" onclick="openNotificationsTab(this);"><i class="fas fa-bell"></i> Notifications</button>
+          <button class="nav-item-btn" onclick="openHolidaysTab(this);"><i class="fas fa-calendar-days"></i> Holidays & Calendar</button>
         </div>
       </div>
 
@@ -580,6 +611,8 @@
       <div id="studentNavGroup" style="display:none;">
         <button class="nav-item-btn active" id="btnStudentSelfNav" onclick="switchNavTab('studentSelfEditTab', this)"><i class="fas fa-user-edit"></i> Edit Student Data</button>
         <button class="nav-item-btn" onclick="switchNavTab('resultTab', this); loadResultManagerClasses();"><i class="fas fa-award"></i> My Result Card</button>
+        <button class="nav-item-btn" onclick="openNotificationsTab(this);"><i class="fas fa-bell"></i> Notifications</button>
+        <button class="nav-item-btn" onclick="openHolidaysTab(this);"><i class="fas fa-calendar-days"></i> Holidays & Calendar</button>
       </div>
     </nav>
   </aside>
@@ -764,7 +797,24 @@
       </div>
     </div>
 
-    <div class="modal fade" id="ttTeacherReplaceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="examDateSheetHolidayWarningModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title fw-bold w-100"><i class="fas fa-calendar-exclamation me-2"></i>Exam Date Warning</h5>
+      </div>
+      <div class="modal-body py-4">
+        <div id="examDateSheetHolidayWarningText" class="fs-6"></div>
+        <div class="small text-muted mt-2">Do you want to proceed with selecting this exam date?</div>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary px-4" id="examDateSheetHolidayCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-primary fw-bold px-4" id="examDateSheetHolidayProceedBtn">Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="ttTeacherReplaceModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-warning">
@@ -2481,7 +2531,120 @@
       </div>
     </div>
 
-    <div id="staffTab" class="portal-pane" style="display:none;">
+            <div id="examDateSheetTab" class="portal-pane" style="display:none;">
+  <div class="content-box">
+    <div class="section-title"><i class="fas fa-calendar-days text-primary"></i> Exam Date Sheet</div>
+    <p class="text-muted small mb-3">Date Sheet: select exam dates across columns, day is fetched automatically, classes are listed down the left, and subjects can be selected for each class/date. Multiple subjects and W/O options are supported where required.</p>
+
+    <div id="examDateSheetAdmin" style="display:none;">
+      <div class="card p-3 mb-3 bg-light border-0">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-2">
+            <label class="form-label small fw-bold">Exam</label>
+            <select id="examDateSheetType" class="form-select" onchange="loadExamDateSheet()">
+              <option value="1st Term">1st Term</option>
+              <option value="2nd Term">2nd Term</option>
+              <option value="Final Exam">Final Exam</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold">Select Exam Date</label>
+            <input type="date" id="examDateSheetDate" class="form-control" onchange="updateExamDateSheetSelectedDay()">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-bold">Day</label>
+            <input type="text" id="examDateSheetDay" class="form-control" readonly placeholder="Auto">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-primary fw-bold w-100" onclick="addExamDateSheetDate()"><i class="fas fa-calendar-plus me-1"></i>Add Date</button>
+          </div>
+          <div class="col-md-3">
+            <button type="button" class="btn btn-success fw-bold w-100" onclick="saveExamDateSheetAll()"><i class="fas fa-save me-1"></i>Save Date Sheet</button>
+          </div>
+        </div>
+        <div id="examDateSheetMessage" class="small mt-2"></div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap mb-3">
+      <button type="button" class="btn btn-outline-primary fw-bold exam-sheet-option active" data-exam="1st Term" onclick="setExamDateSheetType('1st Term')">1st Term</button>
+      <button type="button" class="btn btn-outline-primary fw-bold exam-sheet-option" data-exam="2nd Term" onclick="setExamDateSheetType('2nd Term')">2nd Term</button>
+      <button type="button" class="btn btn-outline-primary fw-bold exam-sheet-option" data-exam="Final Exam" onclick="setExamDateSheetType('Final Exam')">Final Exam</button>
+      <button type="button" class="btn btn-outline-dark fw-bold no-print" onclick="printExamDateSheet()"><i class="fas fa-print me-1"></i>Print Date Sheet</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm align-middle text-center mb-0" id="examDateSheetTable">
+        <thead class="table-dark"></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+            <div id="examDateSheetPrintArea" class="exam-sheet-print-only" aria-hidden="true"></div>
+
+            <div id="notificationsTab" class="portal-pane" style="display:none;">
+  <div class="content-box">
+    <div id="notificationAdminManagement" class="mb-4" style="display:none;">
+          <div class="section-title"><i class="fas fa-bell text-danger"></i> Notifications Panel</div>
+          <p class="text-muted small mb-3">Create, edit, copy/paste and publish school notifications. Notification number is generated automatically.</p>
+          <div class="card p-3 mb-3 bg-light border-0">
+            <div class="row g-2">
+              <div class="col-md-3"><label class="form-label small fw-bold">Notification Date</label><input type="date" id="notificationDate" class="form-control"></div>
+              <div class="col-md-3"><label class="form-label small fw-bold">Show To</label><select id="notificationAudience" class="form-select"><option value="all">All</option><option value="staff_teaching">Staff Teaching</option><option value="staff_non_teaching">Staff Non-Teaching</option><option value="teachers">Teachers</option><option value="parents">Parents</option><option value="students">Students</option></select></div>
+              <div class="col-md-6"><label class="form-label small fw-bold">Title / Subject</label><input id="notificationTitle" class="form-control" maxlength="250"></div>
+              <div class="col-12"><label class="form-label small fw-bold">Notification</label><textarea id="notificationBody" class="form-control" rows="5" placeholder="Write or paste the notification here..."></textarea></div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button class="btn btn-success fw-bold" id="btnSaveNotification" onclick="saveNotification()"><i class="fas fa-save me-1"></i>Save Notification</button>
+              <button class="btn btn-outline-secondary fw-bold" onclick="clearNotificationEditor()">Clear</button>
+            </div>
+            <div id="notificationAdminMessage" class="small mt-2"></div>
+          </div>
+          <div class="table-responsive"><table class="table table-sm table-bordered align-middle" id="notificationAdminTable"><thead class="table-dark"><tr><th>No.</th><th>Date</th><th>Audience</th><th>Title</th><th>Notification</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+        </div>
+
+        
+    <div class="section-title"><i class="fas fa-bell text-primary"></i> Notifications</div>
+    <p class="text-muted small mb-3">Notifications published for your user group.</p>
+    <div id="userNotificationsList"></div>
+  </div>
+</div>
+
+<div id="holidaysTab" class="portal-pane" style="display:none;">
+  <div class="content-box">
+    <div id="holidayAdminManagement" class="mb-4" style="display:none;">
+          <div class="section-title"><i class="fas fa-calendar-days text-danger"></i> Mark & Announce Holidays</div>
+          <p class="text-muted small mb-3">All approved holidays are stored in the central holiday database and reflected in school calendar and student/staff attendance.</p>
+          <div class="card p-3 mb-3 bg-light border-0">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-3"><label class="form-label small fw-bold">Holiday Type</label><select id="holidayType" class="form-select" onchange="holidayTypeChanged()"><option value="local">1. Local Holiday</option><option value="reserved">2. Reserved Holidays</option><option value="saturday">3. Saturday Holiday</option><option value="preparatory">4. Preparatory Holiday</option><option value="gazetted">5. Gazetted Holidays</option><option value="vacation_summer">6. Summer Vacation</option><option value="vacation_winter">7. Winter Vacation</option></select></div>
+              <div class="col-md-2" id="holidayCountModeCol" style="display:none;"><label class="form-label small fw-bold">Holiday Mode</label><select id="holidayCountMode" class="form-select" onchange="holidayCountModeChanged()"><option value="single">Single Holiday</option><option value="multiple">Multiple Holidays</option></select></div>
+              <div class="col-md-3" id="holidayFetchCol"><button class="btn btn-outline-primary fw-bold w-100" onclick="fetchGovernmentHolidayLists()"><i class="fas fa-cloud-download-alt me-1"></i>Fetch Government Holidays</button></div>
+              <div class="col-md-3"><label class="form-label small fw-bold">From Date</label><input type="date" id="holidayFromDate" class="form-control" onchange="holidayCountModeChanged()"></div>
+              <div class="col-md-3"><label class="form-label small fw-bold">To Date</label><input type="date" id="holidayToDate" class="form-control"></div>
+              <div class="col-md-6"><label class="form-label small fw-bold">Description / Holiday Name</label><input id="holidayDescription" class="form-control" placeholder="Holiday description"></div>
+              <div class="col-md-3" id="holidaySaturdayCol"><label class="form-label small fw-bold">Saturday Date</label><input type="date" id="holidaySaturdayDate" class="form-control" onchange="validateSaturdayDate()"></div>
+              <div class="col-md-3 d-flex align-items-center" id="holidayReservedCol"><div class="form-check mt-4"><input class="form-check-input" type="checkbox" id="holidayImplement"><label class="form-check-label fw-bold" for="holidayImplement">Implement / Mark Holiday</label></div></div>
+            </div>
+            <div class="mt-3"><button class="btn btn-success fw-bold" onclick="saveHolidayFromAdmin()"><i class="fas fa-calendar-plus me-1"></i>Add / Mark Holiday</button><button class="btn btn-outline-secondary fw-bold ms-2" onclick="loadHolidayAdminTable()"><i class="fas fa-sync me-1"></i>Refresh</button></div>
+            <div id="holidayAdminMessage" class="small mt-2"></div>
+          </div>
+          <div class="table-responsive"><table class="table table-sm table-bordered align-middle" id="holidayAdminTable"><thead class="table-dark"><tr><th>Date / Range</th><th>Type</th><th>Description</th><th>Source</th><th>Implemented</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+        </div>
+
+
+    <div class="section-title"><i class="fas fa-calendar-days text-primary"></i> Holidays & School Calendar</div>
+    <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+      <div><label class="form-label small fw-bold">Month</label><input type="month" id="holidayCalendarMonth" class="form-control form-control-sm" onchange="loadHolidayCalendar()"></div>
+      <button class="btn btn-outline-primary btn-sm fw-bold" onclick="loadHolidayCalendar()"><i class="fas fa-sync me-1"></i>Refresh</button>
+    </div>
+    <div id="holidayCalendarList"></div>
+  </div>
+</div>
+
+<div id="staffTab" class="portal-pane" style="display:none;">
   <div class="content-box">
     <div class="section-title"><i class="fas fa-users text-primary"></i> Staff Directory</div>
     <p class="text-muted small mb-3">Current teaching and non-teaching staff. Modify records or record the date a staff member leaves.</p>
@@ -2832,7 +2995,7 @@
           <button class="btn btn-sm btn-outline-danger fw-bold active" id="adminSubTabBtnUsers" onclick="switchAdminSubTab('users')"><i class="fas fa-users me-1"></i>User Account Management</button>
           <button class="btn btn-sm btn-outline-danger fw-bold" id="adminSubTabBtnPermissions" onclick="switchAdminSubTab('permissions')"><i class="fas fa-user-shield me-1"></i>Allotment of Menu (Tabs) & Sub Tabs</button>
           <button class="btn btn-sm btn-outline-danger fw-bold" id="adminSubTabBtnAudits" onclick="switchAdminSubTab('audits')"><i class="fas fa-receipt me-1"></i>Receipt Audits</button>
-        </div>
+          </div>
 
         <div id="adminSubTabUsers" class="admin-subpane">
           <div class="d-flex justify-content-between mb-3 align-items-center">
@@ -3498,6 +3661,7 @@ function portalModuleAction(tabId, action) {
     if (tabId === 'teacherInchargeResultsTab') setTimeout(loadTeacherInchargeResults, 50);
     if (tabId === 'teacherTimetableTab') setTimeout(loadTeacherTimetable, 50);
     if (tabId === 'teacherResultTab') setTimeout(loadTeacherResultWorkspace, 50);
+    if (tabId === 'examDateSheetTab') setTimeout(loadExamDateSheet, 50);
 
     if (tabId === 'gatepassTab') {
       startWebcamStream();
@@ -3556,7 +3720,9 @@ function portalModuleAction(tabId, action) {
       inventoryTab: 'Inventory & Assets',
       eventsTab: 'Events & Activities',
       communicationTab: 'Notices & Communication',
-      reportsTab: 'School Reports Center'
+      reportsTab: 'School Reports Center',
+      notificationsTab: 'Notifications',
+      holidaysTab: 'Holidays & School Calendar'
     };
     document.getElementById('pageTitleDisplay').innerText = titleMap[tabId] || 'Portal Workspace';
 
@@ -4040,7 +4206,7 @@ function portalModuleAction(tabId, action) {
   async function teacherIsIncharge(cls,sec){return !!(await getTeacherInchargeAssignments()).some(x=>String(x.class_name)===String(cls)&&String(x.section_name)===String(sec));}
   async function loadTeacherAttendance(){const a=await getTeacherInchargeAssignments(),msg=document.getElementById('teacherAttendanceMessage');if(!a.length){if(msg)msg.innerHTML='<span class="text-danger">No Class Incharge assignment found. Attendance cannot be added or edited.</span>';return;}if(msg)msg.innerHTML='You can add/edit attendance only for your Class Incharge class + section: '+a.map(x=>`${erpEsc(x.class_name)} - ${erpEsc(x.section_name)}`).join(', ');const cs=document.getElementById('teacherAttClass'),ss=document.getElementById('teacherAttSection');cs.innerHTML=a.map(x=>`<option value="${erpEsc(x.class_name)}">${erpEsc(x.class_name)}</option>`).join('');ss.innerHTML=a.filter((x,i)=>x.class_name===a[0].class_name).map(x=>`<option value="${erpEsc(x.section_name)}">${erpEsc(x.section_name)}</option>`).join('');document.getElementById('teacherAttDate').value=document.getElementById('teacherAttDate').value||academicToday();await loadTeacherAttendanceStudents();}
   async function loadTeacherAttendanceStudents(){const cls=document.getElementById('teacherAttClass')?.value||'',sec=document.getElementById('teacherAttSection')?.value||'',date=document.getElementById('teacherAttDate')?.value||academicToday(),tb=document.getElementById('teacherAttendanceBody');if(!(await teacherIsIncharge(cls,sec))){tb.innerHTML='<tr><td colspan="5" class="text-center text-danger">Attendance access denied. You are not the Class Incharge.</td></tr>';return;}const {data:st,error}=await supabaseClient.from('students').select('adm_no,name,roll_no,section').eq('class_name',cls).eq('section',sec).order('roll_no',{ascending:true,nullsFirst:false}).order('name');if(error){tb.innerHTML=`<tr><td colspan="5" class="text-danger">${erpEsc(error.message)}</td></tr>`;return;}const ids=(st||[]).map(x=>x.adm_no),{data:att}=ids.length?await supabaseClient.from('student_attendance').select('adm_no,status').in('adm_no',ids).eq('attendance_date',date):{data:[]};const map={};(att||[]).forEach(x=>map[x.adm_no]=x.status);tb.innerHTML=(st||[]).map((x,i)=>{const v=map[x.adm_no]||'P';return `<tr><td>${i+1}</td><td>${erpEsc(x.roll_no||'-')}</td><td>${erpEsc(x.adm_no)}</td><td class="fw-bold">${erpEsc(x.name)}</td><td><select class="form-select form-select-sm teacher-att-status" data-adm="${erpEsc(x.adm_no)}"><option ${v==='P'?'selected':''}>P</option><option ${v==='A'?'selected':''}>A</option><option ${v==='L'?'selected':''}>L</option></select></td></tr>`}).join('')||'<tr><td colspan="5" class="text-center text-muted">No students found.</td></tr>';}
-  async function saveTeacherAttendance(){const cls=document.getElementById('teacherAttClass')?.value||'',sec=document.getElementById('teacherAttSection')?.value||'',date=document.getElementById('teacherAttDate')?.value||'';if(!(await teacherIsIncharge(cls,sec))){alert('Attendance can be edited only by the Class Incharge.');return;}const rows=[...document.querySelectorAll('.teacher-att-status')].map(x=>({adm_no:x.dataset.adm,attendance_date:date,status:x.value,class_name:cls,section_name:sec,marked_by:String(currentUser.associatedId||currentUser.username||'staff')}));if(!rows.length)return alert('Load students first.');const {error}=await supabaseClient.from('student_attendance').upsert(rows,{onConflict:'adm_no,attendance_date'});if(error)alert('Attendance save failed: '+error.message);else alert('Attendance saved successfully.');}
+  async function saveTeacherAttendance(){const cls=document.getElementById('teacherAttClass')?.value||'',sec=document.getElementById('teacherAttSection')?.value||'',date=document.getElementById('teacherAttDate')?.value||'';if(!(await teacherIsIncharge(cls,sec))){alert('Attendance can be edited only by the Class Incharge.');return;}const {data:holidayRows}=await supabaseClient.from('school_holidays').select('id').eq('active',true).eq('implemented',true).lte('holiday_date',date).gte('holiday_to',date);if((holidayRows||[]).length){alert('This date is marked as a holiday. Attendance cannot be marked.');return;}const rows=[...document.querySelectorAll('.teacher-att-status')].map(x=>({adm_no:x.dataset.adm,attendance_date:date,status:x.value,class_name:cls,section_name:sec,marked_by:String(currentUser.associatedId||currentUser.username||'staff')}));if(!rows.length)return alert('Load students first.');const {error}=await supabaseClient.from('student_attendance').upsert(rows,{onConflict:'adm_no,attendance_date'});if(error)alert('Attendance save failed: '+error.message);else alert('Attendance saved successfully.');}
   async function loadTeacherFeePending(){const a=await getTeacherInchargeAssignments(),msg=document.getElementById('teacherFeePendingMessage'),tb=document.getElementById('teacherFeePendingBody');if(!a.length){msg.innerHTML='<span class="text-danger">No Class Incharge assignment found.</span>';tb.innerHTML='<tr><td colspan="8" class="text-center text-muted">No records.</td></tr>';return;}msg.textContent='Student Fee Status Report — your incharge class/sections only.';const clauses=a.map(x=>`${x.class_name}|||${x.section_name}`);const {data:st,error}=await supabaseClient.from('students').select('adm_no,name,class_name,section,roll_no').order('roll_no',{ascending:true,nullsFirst:false}).order('name');if(error){tb.innerHTML=`<tr><td colspan="8" class="text-danger">${erpEsc(error.message)}</td></tr>`;return;}const filtered=(st||[]).filter(x=>clauses.includes(`${x.class_name}|||${x.section}`));const ids=filtered.map(x=>x.adm_no),{data:fees}=ids.length?await supabaseClient.from('fee_details').select('*').in('adm_no',ids):{data:[]};const fm={};(fees||[]).forEach(x=>fm[x.adm_no]=x);tb.innerHTML=filtered.map(x=>{const f=fm[x.adm_no]||{},total=Number(f.grand_total||0),paid=Number(f.total_paid||0),bal=Number(f.balance??Math.max(0,total-paid));return `<tr><td>${erpEsc(x.roll_no||'-')}</td><td>${erpEsc(x.adm_no)}</td><td class="fw-bold">${erpEsc(x.name)}</td><td>${erpEsc(x.class_name)}</td><td>${erpEsc(x.section||'-')}</td><td>₹${total.toFixed(0)}</td><td>₹${paid.toFixed(0)}</td><td class="fw-bold ${bal>0?'text-danger':'text-success'}">₹${bal.toFixed(0)}</td></tr>`}).join('')||'<tr><td colspan="8" class="text-center text-muted">No pending fee records found.</td></tr>';}
   async function loadTeacherStudents(){const a=await getTeacherInchargeAssignments(),msg=document.getElementById('teacherStudentsMessage'),tb=document.getElementById('teacherStudentsBody');if(!a.length){msg.innerHTML='<span class="text-danger">No Class Incharge assignment found.</span>';tb.innerHTML='<tr><td colspan="8" class="text-center">No records.</td></tr>';return;}msg.textContent='Students — roll number wise for your incharge class + section(s).';const {data,error}=await supabaseClient.from('students').select('*').order('roll_no',{ascending:true,nullsFirst:false}).order('name');if(error){tb.innerHTML=`<tr><td colspan="8" class="text-danger">${erpEsc(error.message)}</td></tr>`;return;}const keys=new Set(a.map(x=>`${x.class_name}|||${x.section_name}`)),rows=(data||[]).filter(x=>keys.has(`${x.class_name}|||${x.section}`));tb.innerHTML=rows.map(x=>`<tr><td class="fw-bold">${erpEsc(x.roll_no||'-')}</td><td>${erpEsc(x.adm_no)}</td><td>${erpEsc(x.name)}</td><td>${erpEsc(x.class_name)}</td><td>${erpEsc(x.section||'-')}</td><td>${erpEsc(x.father_name||'-')}</td><td>${erpEsc(x['contact 1']||x['contact 2']||'-')}</td><td><button class="btn btn-outline-primary btn-sm" onclick="openTeacherStudentProfile('${erpEsc(x.adm_no)}')">View Profile</button></td></tr>`).join('')||'<tr><td colspan="8" class="text-center text-muted">No students found.</td></tr>';}
   async function openTeacherStudentProfile(adm){
@@ -7137,6 +7303,7 @@ function portalModuleAction(tabId, action) {
     {menu:'Human Resources',items:[['staffTab','Staff Directory'],['staffJoiningTab','Staff Joining Form'],['staffAttendanceTab','Staff Attendance'],['applyLeaveTab','Apply Leave'],['staffLeaveTab','Leave Management'],['payrollTab','Payroll / Salary']]},
     {menu:'Student Services',items:[['gatepassTab','Gatepass'],['nodueTab','No Due Slips'],['certificatesTab','Certificates'],['idCardsTab','ID Cards']]},
     {menu:'Campus Operations',items:[['transportTab','Transport'],['libraryTab','Library'],['inventoryTab','Inventory & Assets'],['eventsTab','Events & Activities'],['communicationTab','Notices & Communication']]},
+    {menu:'Communication & Calendar',items:[['notificationsTab','Notifications'],['holidaysTab','Holidays & Calendar']]},
     {menu:'Reports & Administration',items:[['reportsTab','Reports Center'],['adminTab','Administrative Controls & User Manager'],['adminUsers','User Account Management'],['adminPermissions','Allotment of Menu (Tabs) & Sub Tabs'],['adminAudits','Receipt Audits']]},
     {menu:'Teacher Login',items:[['userProfileTab','Profile'],['teacherAttendanceTab','Incharge — Attendance'],['teacherFeePendingTab','Incharge — Fee Pending Lists'],['teacherStudentsTab','Incharge — Students'],['teacherInchargeResultsTab','Incharge — Result Lists'],['teacherTimetableTab','Teacher — Timetable'],['teacherResultTab','Teacher — Result']]}
   ];
@@ -8414,8 +8581,8 @@ async function staffOwnIncharges(){if(academicAdmin())return null;const emp=Stri
 async function loadAttendanceForCurrentStaff(){const arr=await staffOwnIncharges();if(!arr?.length){alert('No class + section is assigned to you as Class Incharge.');return;}const first=arr[0];document.getElementById('attClass').value=first.class_name;await loadAttendanceSections();document.getElementById('attSection').value=first.section_name;await loadStudentAttendance();}
 async function attendanceAllowed(cls,sec){if(academicAdmin())return true;const emp=String(currentUser.associatedId||'').trim();if(!emp)return false;const {data}=await supabaseClient.from('class_incharges').select('id').eq('session',ACADEMIC_SESSION).eq('employee_code',emp).eq('class_name',cls).eq('section_name',sec).maybeSingle();return !!data;}
 async function loadStudentAttendanceManager(){const d=document.getElementById('attDate');if(d&&!d.value)d.value=academicToday();populateAcademicClassSelects();const msg=document.getElementById('attendanceAccessMessage');if(academicAdmin()){msg.textContent='Admin mode: all classes and sections are available.';}else{const a=await staffOwnIncharges();msg.textContent=a?.length?('Class incharge: '+a.map(x=>x.class_name+' - '+x.section_name).join(', ')):'No class incharge assignment found.';if(a?.length){document.getElementById('attClass').value=a[0].class_name;await loadAttendanceSections();document.getElementById('attSection').value=a[0].section_name;}}}
-async function loadStudentAttendance(){const cls=document.getElementById('attClass').value,sec=document.getElementById('attSection').value,date=document.getElementById('attDate').value,tb=document.querySelector('#studentAttendanceGrid tbody');if(!cls||!sec||!date)return alert('Select date, class and section.');if(!(await attendanceAllowed(cls,sec))){alert('Attendance access denied. You are not the Class Incharge for this class + section.');return;}const {data:students,error}=await supabaseClient.from('students').select('adm_no,name,class_name,section,roll_no').eq('class_name',cls).eq('section',sec).order('roll_no',{ascending:true,nullsFirst:false}).order('name');if(error){tb.innerHTML=`<tr><td colspan="6" class="text-danger">${escapeHtml(error.message||error)}</td></tr>`;return;}const adms=(students||[]).map(x=>x.adm_no);const {data:att}=adms.length?await supabaseClient.from('student_attendance').select('*').in('adm_no',adms).eq('attendance_date',date):{data:[]};const map={};(att||[]).forEach(x=>map[x.adm_no]=x);tb.innerHTML=(students||[]).map((s,i)=>{const v=map[s.adm_no]?.status||'P';return `<tr><td>${i+1}</td><td>${escapeHtml(s.roll_no||'-')}</td><td>${escapeHtml(s.adm_no)}</td><td class="fw-bold">${escapeHtml(s.name)}</td><td>${escapeHtml(s.section||sec)}</td><td><select class="form-select form-select-sm att-status" data-adm="${escapeHtml(s.adm_no)}"><option ${v==='P'?'selected':''}>P</option><option ${v==='A'?'selected':''}>A</option><option ${v==='L'?'selected':''}>L</option></select></td></tr>`;}).join('')||'<tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>';}
-async function saveStudentAttendance(){const cls=document.getElementById('attClass').value,sec=document.getElementById('attSection').value,date=document.getElementById('attDate').value;if(!(await attendanceAllowed(cls,sec))){alert('Attendance access denied.');return;}const rows=[...document.querySelectorAll('.att-status')].map(x=>({adm_no:x.dataset.adm,attendance_date:date,status:x.value,class_name:cls,section_name:sec,marked_by:String(currentUser.username||currentUser.associatedId||'staff')}));if(!rows.length)return alert('Load students first.');try{const {error}=await supabaseClient.from('student_attendance').upsert(rows,{onConflict:'adm_no,attendance_date'});if(error)throw error;alert('Attendance saved successfully.');}catch(e){alert('Attendance save failed: '+(e.message||e));}}
+async function loadStudentAttendance(){const cls=document.getElementById('attClass').value,sec=document.getElementById('attSection').value,date=document.getElementById('attDate').value,tb=document.querySelector('#studentAttendanceGrid tbody');if(!cls||!sec||!date)return alert('Select date, class and section.');if(!(await attendanceAllowed(cls,sec))){alert('Attendance access denied. You are not the Class Incharge for this class + section.');return;}const {data:students,error}=await supabaseClient.from('students').select('adm_no,name,class_name,section,roll_no').eq('class_name',cls).eq('section',sec).order('roll_no',{ascending:true,nullsFirst:false}).order('name');if(error){tb.innerHTML=`<tr><td colspan="6" class="text-danger">${escapeHtml(error.message||error)}</td></tr>`;return;}const adms=(students||[]).map(x=>x.adm_no);const {data:att}=adms.length?await supabaseClient.from('student_attendance').select('*').in('adm_no',adms).eq('attendance_date',date):{data:[]};const {data:holidayRows}=await supabaseClient.from('school_holidays').select('*').eq('active',true).eq('implemented',true).lte('holiday_date',date).gte('holiday_to',date);const isHoliday=!!(holidayRows||[]).length;const map={};(att||[]).forEach(x=>map[x.adm_no]=x);tb.innerHTML=(students||[]).map((s,i)=>{const v=isHoliday?'H':(map[s.adm_no]?.status||'P');return `<tr><td>${i+1}</td><td>${escapeHtml(s.roll_no||'-')}</td><td>${escapeHtml(s.adm_no)}</td><td class="fw-bold">${escapeHtml(s.name)}</td><td>${escapeHtml(s.section||sec)}</td><td><select class="form-select form-select-sm att-status" data-adm="${escapeHtml(s.adm_no)}" ${isHoliday?'disabled':''}><option ${v==='P'?'selected':''}>P</option><option ${v==='A'?'selected':''}>A</option><option ${v==='L'?'selected':''}>L</option><option ${v==='H'?'selected':''}>H</option></select></td></tr>`;}).join('')||'<tr><td colspan="6" class="text-center text-muted">No students found.</td></tr>';}
+async function saveStudentAttendance(){const cls=document.getElementById('attClass').value,sec=document.getElementById('attSection').value,date=document.getElementById('attDate').value;if(!(await attendanceAllowed(cls,sec))){alert('Attendance access denied.');return;}const {data:holidayRows}=await supabaseClient.from('school_holidays').select('id').eq('active',true).eq('implemented',true).lte('holiday_date',date).gte('holiday_to',date);if((holidayRows||[]).length){alert('This date is marked as a holiday. Student attendance cannot be marked.');return;}const rows=[...document.querySelectorAll('.att-status')].map(x=>({adm_no:x.dataset.adm,attendance_date:date,status:x.value,class_name:cls,section_name:sec,marked_by:String(currentUser.username||currentUser.associatedId||'staff')}));if(!rows.length)return alert('Load students first.');try{const {error}=await supabaseClient.from('student_attendance').upsert(rows,{onConflict:'adm_no,attendance_date'});if(error)throw error;alert('Attendance saved successfully.');}catch(e){alert('Attendance save failed: '+(e.message||e));}}
 
 /* ===== STAFF & HR REDESIGN ===== */
 let staffDirectoryCache=[], staffLeaveCache=[], staffPayrollCache=[];
@@ -8436,15 +8603,456 @@ async function editStaff(id){const r=staffDirectoryCache.find(x=>x.id===id);if(!
 let sjwEditId=null;
 async function submitStaffJoining(e){if(e)e.preventDefault();const f=document.getElementById('staffJoiningFormElement');if(!f||!f.checkValidity()){f?.reportValidity();return;}const d=sjwFormData();if(!(await validateStaffDisplayNameField(true)))return;const payload={employee_code:d.employee_code,full_name:d.full_name.trim(),display_name:d.display_name.trim(),employee_type:d.employee_type,designation:d.designation,joining_date:d.joining_date,employment_type:d.employment_type,parent_name:d.parent_name.trim(),dob:d.dob,gender:d.gender,mobile:d.mobile.trim(),address:d.address.trim(),govt_id:d.govt_id.trim(),photo_data:d.photo_data||null,highest_qualification:d.highest_qualification,professional_qualification:d.professional_qualification,main_subject_trade:d.main_subject_trade?.trim()||null,experience_status:d.experience_status,previous_employer:d.previous_employer?.trim()||null,experience_years:d.experience_years?Number(d.experience_years):null,staff_declaration:d.staff_declaration.trim(),staff_signature_confirmed:!!d.staff_signature_confirmed};try{const q=sjwEditId?supabaseClient.from('staff_joinings').update(payload).eq('id',sjwEditId).select().single():supabaseClient.from('staff_joinings').insert(payload).select().single();const {data,error}=await q;if(error)throw error;alert(sjwEditId?'Staff record updated successfully.':'Staff joining saved successfully. Employee ID: '+data.employee_code);sjwEditId=null;await loadStaffDirectory();await openStaffJoiningForm();}catch(err){alert('Could not save to Supabase. '+(err?.message||err));}}
 /* Attendance */
-async function loadStaffAttendance(){const m=document.getElementById('staffAttendanceMonth');if(m&&!m.value)m.value=staffTodayMonth();const month=m?.value||staffTodayMonth();const [y,mo]=month.split('-').map(Number);const days=new Date(y,mo,0).getDate();const start=`${month}-01`,end=`${month}-${String(days).padStart(2,'0')}`;const [{data:staff},{data:att},{data:hol},{data:leaves}]=await Promise.all([supabaseClient.from('staff_joinings').select('employee_code,full_name,display_name').is('leaving_date',null).order('employee_code'),supabaseClient.from('staff_attendance').select('*').gte('attendance_date',start).lte('attendance_date',end),supabaseClient.from('staff_holidays').select('*').gte('holiday_date',start).lte('holiday_date',end),supabaseClient.from('staff_leave_applications').select('*').eq('status','Approved').lte('from_date',end).gte('to_date',start)]);const sm={};(staff||[]).forEach(r=>sm[r.employee_code]=r);const am={};(att||[]).forEach(r=>am[r.employee_code+'|'+r.attendance_date]=r.status);const hm={};(hol||[]).forEach(r=>hm[r.holiday_date]=r.title||'Holiday');const lm={};(leaves||[]).forEach(r=>{let d=new Date(r.from_date+'T00:00:00'),e=new Date(r.to_date+'T00:00:00');while(d<=e){lm[r.employee_code+'|'+d.toISOString().slice(0,10)]=r.leave_paid?'PL':'NPL';d.setDate(d.getDate()+1);}});const th=['<th class="sticky-col">ID</th>','<th class="sticky-col">Name</th>'];for(let d=1;d<=days;d++){const ds=`${month}-${String(d).padStart(2,'0')}`;th.push(`<th title="${escStaff(hm[ds]||'')}">${d}</th>`);}const head=document.querySelector('#staffAttendanceGrid thead');const body=document.querySelector('#staffAttendanceGrid tbody');if(!head||!body)return;head.innerHTML='<tr>'+th.join('')+'</tr>';body.innerHTML=Object.values(sm).map(st=>{let cells='';for(let d=1;d<=days;d++){const ds=`${month}-${String(d).padStart(2,'0')}`,v=hm[ds]?'H':(lm[st.employee_code+'|'+ds]||am[st.employee_code+'|'+ds]||'A');cells+=`<td><select class="form-select form-select-sm p-0 text-center" style="min-width:54px" onchange="saveStaffAttendance('${escStaff(st.employee_code)}','${ds}',this.value)"><option ${v==='P'?'selected':''}>P</option><option ${v==='A'?'selected':''}>A</option><option ${v==='PL'?'selected':''}>PL</option><option ${v==='NPL'?'selected':''}>NPL</option><option ${v==='H'?'selected':''}>H</option></select></td>`;}return `<tr><td class="sticky-col"><b>${escStaff(st.employee_code)}</b></td><td class="sticky-col text-start">${escStaff(staffDisplayName(st))}</td>${cells}</tr>`}).join('');document.getElementById('staffAttendanceSummary').textContent=`${Object.keys(sm).length} staff • ${days} days • Holidays: ${Object.keys(hm).length} • Approved leave is automatically reflected.`;}
+async function loadStaffAttendance(){const m=document.getElementById('staffAttendanceMonth');if(m&&!m.value)m.value=staffTodayMonth();const month=m?.value||staffTodayMonth();const [y,mo]=month.split('-').map(Number);const days=new Date(y,mo,0).getDate();const start=`${month}-01`,end=`${month}-${String(days).padStart(2,'0')}`;const [{data:staff},{data:att},{data:hol},{data:leaves}]=await Promise.all([supabaseClient.from('staff_joinings').select('employee_code,full_name,display_name').is('leaving_date',null).order('employee_code'),supabaseClient.from('staff_attendance').select('*').gte('attendance_date',start).lte('attendance_date',end),supabaseClient.from('school_holidays').select('*').eq('active',true).eq('implemented',true).gte('holiday_date',start).lte('holiday_to',end),supabaseClient.from('staff_leave_applications').select('*').eq('status','Approved').lte('from_date',end).gte('to_date',start)]);const sm={};(staff||[]).forEach(r=>sm[r.employee_code]=r);const am={};(att||[]).forEach(r=>am[r.employee_code+'|'+r.attendance_date]=r.status);const hm={};(hol||[]).forEach(r=>{let d=new Date(r.holiday_date+'T00:00:00'),e=new Date((r.holiday_to||r.holiday_date)+'T00:00:00');while(d<=e){hm[d.toISOString().slice(0,10)]=r.description||'Holiday';d.setDate(d.getDate()+1);}});const lm={};(leaves||[]).forEach(r=>{let d=new Date(r.from_date+'T00:00:00'),e=new Date(r.to_date+'T00:00:00');while(d<=e){lm[r.employee_code+'|'+d.toISOString().slice(0,10)]=r.leave_paid?'PL':'NPL';d.setDate(d.getDate()+1);}});const th=['<th class="sticky-col">ID</th>','<th class="sticky-col">Name</th>'];for(let d=1;d<=days;d++){const ds=`${month}-${String(d).padStart(2,'0')}`;th.push(`<th title="${escStaff(hm[ds]||'')}">${d}</th>`);}const head=document.querySelector('#staffAttendanceGrid thead');const body=document.querySelector('#staffAttendanceGrid tbody');if(!head||!body)return;head.innerHTML='<tr>'+th.join('')+'</tr>';body.innerHTML=Object.values(sm).map(st=>{let cells='';for(let d=1;d<=days;d++){const ds=`${month}-${String(d).padStart(2,'0')}`,v=hm[ds]?'H':(lm[st.employee_code+'|'+ds]||am[st.employee_code+'|'+ds]||'A');cells+=`<td><select class="form-select form-select-sm p-0 text-center" style="min-width:54px" onchange="saveStaffAttendance('${escStaff(st.employee_code)}','${ds}',this.value)"><option ${v==='P'?'selected':''}>P</option><option ${v==='A'?'selected':''}>A</option><option ${v==='PL'?'selected':''}>PL</option><option ${v==='NPL'?'selected':''}>NPL</option><option ${v==='H'?'selected':''}>H</option></select></td>`;}return `<tr><td class="sticky-col"><b>${escStaff(st.employee_code)}</b></td><td class="sticky-col text-start">${escStaff(staffDisplayName(st))}</td>${cells}</tr>`}).join('');document.getElementById('staffAttendanceSummary').textContent=`${Object.keys(sm).length} staff • ${days} days • Holidays: ${Object.keys(hm).length} • Approved leave is automatically reflected.`;}
 async function saveStaffAttendance(employee_code,attendance_date,status){if(status==='H'){return;}const {error}=await supabaseClient.from('staff_attendance').upsert({employee_code,attendance_date,status,marked_by:currentUser?.username||'admin'},{onConflict:'employee_code,attendance_date'});if(error)alert(error.message);}
+
+/* --- Notifications & Central Holiday Calendar --- */
+const PUNJAB_GAZETTED_HOLIDAYS_2026 = [
+  ['2026-01-26','Republic Day'],['2026-02-01','Birthday of Sri Guru Ravidas Ji'],['2026-02-15','Maha Shivaratri'],['2026-03-04','Holi'],['2026-03-21','Idu’l Fitr'],['2026-03-23','Shaheedi Diwas of Shaheed-e-Azam Bhagat Singh, Sukhdev and Rajguru Ji'],['2026-03-26','Ram Navami'],['2026-03-31','Mahavir Jayanti'],['2026-04-03','Good Friday'],['2026-04-08','Birthday of Sri Guru Nabha Dass Ji'],['2026-04-14','Vaisakhi'],['2026-04-14','Birthday of Dr. B.R. Ambedkar'],['2026-04-19','Birthday of Lord Parshuram Ji'],['2026-05-01','May Day'],['2026-05-27','Id-ul-Zuha (Bakrid)'],['2026-06-18','Martyrdom Day of Sri Guru Arjun Dev Ji'],['2026-06-29','Kabir Jayanti'],['2026-07-31','Martyrdom Day of Shaheed Udham Singh'],['2026-08-15','Independence Day'],['2026-09-04','Janam Ashtami'],['2026-10-02','Birthday of Mahatma Gandhi Ji'],['2026-10-11','Maharaj Agarsain Jayanti'],['2026-10-20','Dussehra'],['2026-10-26','Birthday of Maharishi Valmiki Ji'],['2026-11-08','Diwali'],['2026-11-09','Vishwakarma Day'],['2026-11-16','Martyrdom Day of S. Kartar Singh Sarabha Ji'],['2026-11-24','Birthday of Sri Guru Nanak Dev Ji'],['2026-12-14','Martyrdom Day of Sri Guru Teg Bahadur Ji'],['2026-12-25','Christmas Day'],['2026-12-28','Shaheedi Sabha, Shri Fatehgarh Sahib']
+];
+const PUNJAB_RESTRICTED_HOLIDAYS_2026 = [
+  ['2026-01-01','New Year Day'],['2026-01-13','Lohri'],['2026-01-17','Nirwan Diwas of Bhagwan Adinath Ji'],['2026-01-23','Basant Panchmi / Birthday of Satguru Ram Singh Ji'],['2026-03-04','Hola Mohalla'],['2026-03-08','International Women Day'],['2026-05-01','Buddh Purnima'],['2026-06-25','Nirjala Ekadashi'],['2026-06-26','Muharram'],['2026-06-29','Death Anniversary of Maharaja Ranjit Singh Ji'],['2026-08-26','Birthday of Prophet Mohammad Sahib (Milad-un-Nabi / Id-e-Milad)'],['2026-09-05','Birthday of Baba Jiwan Singh Ji'],['2026-09-12','Pehla Parkash Utsav Sri Guru Granth Sahib Ji'],['2026-09-12','Saragarhi Day'],['2026-09-15','Samvatsari Diwas'],['2026-09-20','Birthday of Baba Sri Chand Ji'],['2026-09-25','Anant Chaturdashi'],['2026-09-28','Birthday of S. Bhagat Singh Ji'],['2026-10-16','Birthday of Baba Banda Singh Ji Bahadur'],['2026-10-27','Birthday of Sri Guru Ram Dass Ji'],['2026-10-29','Karva Chauth'],['2026-11-01','New Punjab Day'],['2026-11-09','Goverdhan Pooja'],['2026-11-11','Guru Gaddi Diwas Sri Guru Granth Sahib Ji'],['2026-11-15','Chhath Pooja'],['2026-11-20','Birthday of Sant Nam Dev Ji'],['2026-12-26','Shaheedi Sabha, Shri Fatehgarh Sahib'],['2026-12-27','Shaheedi Sabha, Shri Fatehgarh Sahib']
+];
+const PUNJAB_GOV_HOLIDAY_SOURCE='Government of Punjab, Department of Personnel, Notification dated 26.11.2025 (List of Holidays 2026)';
+function notificationAudienceLabel(v){return ({all:'All',staff_teaching:'Staff Teaching',staff_non_teaching:'Staff Non-Teaching',teachers:'Teachers',parents:'Parents',students:'Students'})[v]||v||'-';}
+function notificationAudienceMatches(n, profile){
+  const a=String(n.audience||'all').toLowerCase(); if(a==='all')return true;
+  const role=String(profile?.type||currentUser?.type||'').toLowerCase();
+  const et=String(profile?.employee_type||currentUser?.staffProfile?.employee_type||'').toLowerCase();
+  if(a==='parents')return role==='parent'; if(a==='students')return role==='student';
+  if(a==='teachers')return role==='teacher'||et==='teaching';
+  if(a==='staff_teaching')return (role==='staff'||role==='teacher'||role==='principal'||role==='clerk'||role==='accountant')&&et==='teaching';
+  if(a==='staff_non_teaching')return et==='non-teaching'; return false;
+}
+async function getCurrentAudienceProfile(){
+  const p={type:String(currentUser?.type||'').toLowerCase()};
+  if(currentUser?.associatedId){try{const {data}=await supabaseClient.from('staff_joinings').select('employee_type,display_name,full_name').eq('employee_code',currentUser.associatedId).maybeSingle();if(data)Object.assign(p,data);}catch(e){}}
+  return p;
+}
+const EXAM_DATE_SHEET_TYPES=['1st Term','2nd Term','Final Exam'];
+let examDateSheetState={type:'1st Term',dates:[],cells:{},existingIds:[],removedIds:[]};
+const examDateSheetSubjectCache={};
+
+function examDateSheetIsAdmin(){
+  return ['admin','administrator'].includes(String(currentUser?.type||'').toLowerCase()) ||
+         String(currentUser?.username||'').toLowerCase()==='admin';
+}
+function examDateSheetDay(date){
+  if(!date)return '';
+  const p=String(date).split('-');
+  if(p.length!==3)return '';
+  return new Date(Number(p[0]),Number(p[1])-1,Number(p[2])).toLocaleDateString('en-IN',{weekday:'long'});
+}
+function examDateSheetDisplayDate(date){
+  if(!date)return '';
+  const p=String(date).split('-');
+  return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:date;
+}
+function setExamDateSheetType(type){
+  const e=document.getElementById('examDateSheetType');if(e)e.value=type;
+  document.querySelectorAll('.exam-sheet-option').forEach(b=>b.classList.toggle('active',b.dataset.exam===type));
+  loadExamDateSheet();
+}
+function updateExamDateSheetSelectedDay(){
+  const date=document.getElementById('examDateSheetDate')?.value||'';
+  const day=document.getElementById('examDateSheetDay');
+  if(day)day.value=examDateSheetDay(date);
+}
+async function getExamDateSheetClasses(){
+  let classes=[];
+  try{
+    const {data}=await supabaseClient.from('classes').select('class_name').order('id');
+    classes=(data||[]).map(x=>String(x.class_name||'').trim()).filter(Boolean);
+  }catch(e){}
+  if(!classes.length)classes=SCHOOL_CLASS_ORDER.slice();
+  return [...new Set(classes)].sort((a,b)=>classOrderIndex(a)-classOrderIndex(b)||a.localeCompare(b,undefined,{numeric:true}));
+}
+async function getExamDateSheetSubjects(cls){
+  const key=String(cls||'').trim();
+  if(!key)return [];
+  if(examDateSheetSubjectCache[key])return examDateSheetSubjectCache[key];
+  let subjects=[];
+  try{
+    const all=await getResultAllocations(key);
+    subjects=[...new Set((all||[]).map(x=>x.subject_name||x.result_subject_master?.subject_name).filter(Boolean).map(String))];
+  }catch(e){console.warn('Unable to load class subjects:',e);}
+  examDateSheetSubjectCache[key]=subjects;
+  return subjects;
+}
+function examDateSheetCellKey(cls,date){return String(cls).trim().toUpperCase()+'|'+date;}
+async function confirmExamDateSheetDateSelection(date){
+  const holidayMessages=[];
+  const day=examDateSheetDay(date);
+  if(String(day).toLowerCase()==='sunday') holidayMessages.push('<strong>Sunday</strong>');
+  try{
+    const {data,error}=await supabaseClient.from('school_holidays').select('holiday_date,holiday_to,holiday_type,description').eq('active',true).eq('implemented',true).lte('holiday_date',date).gte('holiday_to',date);
+    if(!error && (data||[]).length){
+      (data||[]).forEach(h=>{
+        const desc=String(h.description||'Holiday').trim();
+        holidayMessages.push('<strong>Holiday:</strong> '+erpEsc(desc));
+      });
+    }
+  }catch(e){}
+  if(!holidayMessages.length)return true;
+  const text=document.getElementById('examDateSheetHolidayWarningText');
+  if(text)text.innerHTML='<div class="mb-2"><strong>'+erpEsc(examDateSheetDisplayDate(date))+' ('+erpEsc(day)+')</strong></div><div>'+holidayMessages.join('<br>')+'</div>';
+  const modalEl=document.getElementById('examDateSheetHolidayWarningModal');
+  if(!modalEl || typeof bootstrap==='undefined' || !bootstrap.Modal){
+    return window.confirm('The selected date is '+day+(holidayMessages.length?' and is marked as a holiday.':'')+'\n\nDo you want to proceed?');
+  }
+  return await new Promise(resolve=>{
+    const modal=bootstrap.Modal.getOrCreateInstance(modalEl,{backdrop:'static',keyboard:false});
+    const proceed=document.getElementById('examDateSheetHolidayProceedBtn');
+    const cancel=document.getElementById('examDateSheetHolidayCancelBtn');
+    let done=false;
+    const finish=value=>{if(done)return;done=true;proceed?.removeEventListener('click',onProceed);cancel?.removeEventListener('click',onCancel);modalEl.removeEventListener('hidden.bs.modal',onHidden);modal.hide();resolve(value);};
+    const onProceed=()=>finish(true);
+    const onCancel=()=>finish(false);
+    const onHidden=()=>{if(!done){done=true;resolve(false);}};
+    proceed?.addEventListener('click',onProceed); cancel?.addEventListener('click',onCancel); modalEl.addEventListener('hidden.bs.modal',onHidden); modal.show();
+  });
+}
+async function addExamDateSheetDate(){
+  if(!examDateSheetIsAdmin())return alert('Admin access required.');
+  const date=document.getElementById('examDateSheetDate')?.value||'';
+  const msg=document.getElementById('examDateSheetMessage');
+  if(!date){if(msg)msg.innerHTML='<span class="text-danger">Select an exam date.</span>';return;}
+  if(examDateSheetState.dates.includes(date)){
+    if(msg)msg.innerHTML='<span class="text-warning">This date is already added.</span>';
+    return;
+  }
+  const proceed=await confirmExamDateSheetDateSelection(date);
+  if(!proceed){if(msg)msg.innerHTML='<span class="text-muted">Date selection cancelled.</span>';return;}
+  examDateSheetState.dates.push(date);
+  examDateSheetState.dates.sort();
+  if(msg)msg.innerHTML='<span class="text-success">'+erpEsc(examDateSheetDisplayDate(date))+' ('+erpEsc(examDateSheetDay(date))+') added. Select subjects in the class rows and save the date sheet.</span>';
+  await renderExamDateSheet();
+}
+function removeExamDateSheetDate(date){
+  if(!examDateSheetIsAdmin())return;
+  const ids=[];
+  Object.keys(examDateSheetState.cells).forEach(k=>{
+    if(k.endsWith('|'+date)){
+      (examDateSheetState.cells[k]||[]).forEach(r=>{if(r.id)ids.push(r.id);});
+      delete examDateSheetState.cells[k];
+    }
+  });
+  examDateSheetState.removedIds.push(...ids);
+  examDateSheetState.dates=examDateSheetState.dates.filter(d=>d!==date);
+  renderExamDateSheet();
+}
+function addExamDateSheetSubject(cls,date){
+  const key=examDateSheetCellKey(cls,date);
+  if(!examDateSheetState.cells[key])examDateSheetState.cells[key]=[];
+  examDateSheetState.cells[key].push({id:null,subject_name:'',paper_mode:''});
+  renderExamDateSheet();
+}
+function removeExamDateSheetSubject(cls,date,index){
+  const key=examDateSheetCellKey(cls,date),rows=examDateSheetState.cells[key]||[];
+  const row=rows[index];
+  if(row?.id)examDateSheetState.removedIds.push(row.id);
+  rows.splice(index,1);
+  if(!rows.length)delete examDateSheetState.cells[key];
+  renderExamDateSheet();
+}
+function updateExamDateSheetCell(cls,date,index,field,value){
+  const key=examDateSheetCellKey(cls,date);
+  const rows=examDateSheetState.cells[key]||[];
+  if(rows[index])rows[index][field]=value;
+}
+function examDateSheetSubjectOptions(subjects,selected){
+  return '<option value="">Select Subject</option>'+subjects.map(x=>'<option value="'+erpEsc(x)+'"'+(String(x)===String(selected||'')?' selected':'')+'>'+erpEsc(x)+'</option>').join('');
+}
+async function renderExamDateSheet(){
+  const admin=examDateSheetIsAdmin();
+  const tb=document.querySelector('#examDateSheetTable tbody'),thead=document.querySelector('#examDateSheetTable thead');
+  if(!tb||!thead)return;
+  const classes=await getExamDateSheetClasses();
+  const dates=examDateSheetState.dates.slice().sort();
+  if(!dates.length){
+    thead.innerHTML='<tr><th style="min-width:130px">Classes</th></tr>';
+    tb.innerHTML=classes.map(c=>'<tr><td class="fw-bold text-start">'+erpEsc(c)+'</td></tr>').join('');
+    return;
+  }
+  thead.innerHTML='<tr><th style="min-width:115px">DATE</th>'+dates.map(d=>{
+    const remove=admin?'<button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 no-print" title="Remove date" onclick="removeExamDateSheetDate(\''+d+'\')">×</button>':'';
+    return '<th style="min-width:190px">'+erpEsc(examDateSheetDisplayDate(d))+remove+'</th>';
+  }).join('')+'</tr>'+
+  '<tr><th>Classes</th>'+dates.map(d=>'<th>'+erpEsc(examDateSheetDay(d))+'</th>').join('')+'</tr>';
+
+  const subjectLists=await Promise.all(classes.map(c=>getExamDateSheetSubjects(c)));
+  const subjectMap={};classes.forEach((c,i)=>subjectMap[c]=subjectLists[i]);
+
+  tb.innerHTML=classes.map(c=>{
+    const cells=dates.map(d=>{
+      const key=examDateSheetCellKey(c,d);
+      const rows=examDateSheetState.cells[key]||[];
+      let content='';
+      if(admin){
+        content='<div class="exam-sheet-subject-list d-flex flex-column gap-1">'+rows.map((r,i)=>`
+          <div class="exam-sheet-subject-row d-flex gap-1 align-items-center" data-class="${erpEsc(c)}" data-date="${d}">
+            <select class="form-select form-select-sm exam-sheet-subject-select" onchange="updateExamDateSheetCell('${erpEsc(c).replace(/'/g,'&#39;')}','${d}',${i},'subject_name',this.value)">
+              ${examDateSheetSubjectOptions(subjectMap[c]||[],r.subject_name)}
+            </select>
+            <select class="form-select form-select-sm exam-sheet-mode-select" style="max-width:78px" onchange="updateExamDateSheetCell('${erpEsc(c).replace(/'/g,'&#39;')}','${d}',${i},'paper_mode',this.value)">
+              <option value=""${!r.paper_mode?' selected':''}>—</option>
+              <option value="W"${r.paper_mode==='W'?' selected':''}>W</option>
+              <option value="O"${r.paper_mode==='O'?' selected':''}>O</option>
+            </select>
+          </div>`).join('')+'</div>';
+        content+='<div class="d-flex justify-content-end mt-1"><button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 no-print" onclick="addExamDateSheetSubject(\''+erpEsc(c).replace(/'/g,'&#39;')+'\',\''+d+'\')"><i class="fas fa-plus me-1"></i>Subject</button></div>';
+      }else{
+        content=rows.map(r=>{
+          const subj=String(r.subject_name||'').trim();
+          const mode=String(r.paper_mode||'').toUpperCase();
+          return subj?'<div class="fw-bold" style="font-size:.78rem;line-height:1.15">'+erpEsc(subj)+(mode?'<span class="text-muted"> ('+erpEsc(mode)+')</span>':'')+'</div>':'';
+        }).join('');
+        if(!content)content='<span class="text-muted">—</span>';
+      }
+      return '<td style="min-width:190px;vertical-align:middle">'+content+'</td>';
+    }).join('');
+    return '<tr><td class="fw-bold text-start">'+erpEsc(c)+'</td>'+cells+'</tr>';
+  }).join('');
+}
+function printExamDateSheet(){
+  const dates=examDateSheetState?.dates?.slice()?.sort?.()||[];
+  if(!dates.length){alert('Please add at least one exam date before printing the date sheet.');return;}
+  const type=document.getElementById('examDateSheetType')?.value||examDateSheetState?.type||'Exam';
+  const area=document.getElementById('examDateSheetPrintArea');
+  if(!area)return;
+  const classes=[...document.querySelectorAll('#examDateSheetTable tbody tr td:first-child')].map(td=>td.textContent.trim()).filter(Boolean);
+  const classList=classes.length?classes:SCHOOL_CLASS_ORDER.slice();
+  let html='<table class="exam-print-table" style="width:100%;border-collapse:collapse;table-layout:fixed"><thead>';
+  html+='<tr><th style="width:90px">DATE</th>'+dates.map(d=>'<th>'+erpEsc(examDateSheetDisplayDate(d))+'</th>').join('')+'</tr>';
+  html+='<tr><th>Classes</th>'+dates.map(d=>'<th>'+erpEsc(examDateSheetDay(d))+'</th>').join('')+'</tr></thead><tbody>';
+  classList.forEach(c=>{
+    html+='<tr><td style="font-weight:700;text-align:left">'+erpEsc(c)+'</td>';
+    dates.forEach(d=>{
+      const rows=examDateSheetState.cells[examDateSheetCellKey(c,d)]||[];
+      const vals=rows.map(r=>{const subj=String(r.subject_name||'').trim();if(!subj)return '';const mode=String(r.paper_mode||'').trim().toUpperCase();return erpEsc(subj)+(mode?' ('+erpEsc(mode)+')':'');}).filter(Boolean);
+      html+='<td>'+ (vals.length?vals.map(v=>'<div style="font-weight:600;line-height:1.15;margin:1px 0">'+v+'</div>').join(''):'') +'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  area.innerHTML='<div class="print-title">I.T. Sen. Sec. School, Bhagwanpura (Tarn Taran)</div><div class="print-subtitle">DATE SHEET - '+erpEsc(type)+'</div><div style="text-align:center;font-size:12px;font-weight:600;margin-bottom:8px">Academic Session: '+erpEsc(ACADEMIC_SESSION)+'</div>'+html;
+  area.style.display='block';
+  const style=document.createElement('style');
+  style.id='examDateSheetDynamicPrintStyle';
+  style.textContent='@page{size:A3 landscape;margin:10mm;} @media print{#examDateSheetPrintArea table{font-size:10px!important;} #examDateSheetPrintArea th,#examDateSheetPrintArea td{border:1px solid #000!important;padding:4px 3px!important;} #examDateSheetPrintArea .print-title{font-size:20px!important;} #examDateSheetPrintArea .print-subtitle{font-size:15px!important;}}';
+  document.head.appendChild(style);
+  const oldTitle=document.title;
+  document.title='Date Sheet - '+type;
+  window.print();
+  setTimeout(()=>{area.innerHTML='';area.style.display='none';document.title=oldTitle;style.remove();},800);
+}
+
+async function loadExamDateSheet(){
+  const admin=examDateSheetIsAdmin(),mg=document.getElementById('examDateSheetAdmin');
+  if(mg)mg.style.display=admin?'block':'none';
+  const type=document.getElementById('examDateSheetType')?.value||'1st Term';
+  examDateSheetState={type,dates:[],cells:{},existingIds:[],removedIds:[]};
+  document.querySelectorAll('.exam-sheet-option').forEach(b=>b.classList.toggle('active',b.dataset.exam===type));
+  const tb=document.querySelector('#examDateSheetTable tbody'),thead=document.querySelector('#examDateSheetTable thead');
+  if(!tb||!thead)return;
+  tb.innerHTML='<tr><td colspan="20" class="text-center py-3"><i class="fas fa-spinner fa-spin me-1"></i>Loading...</td></tr>';
+  const {data,error}=await supabaseClient.from('exam_date_sheet').select('*').eq('session',ACADEMIC_SESSION).eq('exam_type',type).order('exam_date').order('class_name');
+  if(error){tb.innerHTML='<tr><td class="text-danger">'+erpEsc(error.message||error)+'</td></tr>';return;}
+  (data||[]).forEach(r=>{
+    const date=String(r.exam_date||'').slice(0,10);
+    const cls=String(r.class_name||'').trim();
+    if(!date||!cls)return;
+    if(!examDateSheetState.dates.includes(date))examDateSheetState.dates.push(date);
+    const key=examDateSheetCellKey(cls,date);
+    if(!examDateSheetState.cells[key])examDateSheetState.cells[key]=[];
+    examDateSheetState.cells[key].push({id:r.id,subject_name:r.subject_name||'',paper_mode:(String(r.paper_mode||'').toUpperCase()==='O'?'O':(String(r.paper_mode||'').toUpperCase()==='W'?'W':''))});
+    if(r.id)examDateSheetState.existingIds.push(r.id);
+  });
+  examDateSheetState.dates.sort();
+  updateExamDateSheetSelectedDay();
+  await renderExamDateSheet();
+}
+async function saveExamDateSheetAll(){
+  if(!examDateSheetIsAdmin())return alert('Admin access required.');
+  const msg=document.getElementById('examDateSheetMessage');
+  const rows=[];
+  Object.keys(examDateSheetState.cells).forEach(key=>{
+    (examDateSheetState.cells[key]||[]).forEach(r=>{
+      if(String(r.subject_name||'').trim()){
+        const parts=key.split('|'),cls=parts.slice(0,-1).join('|'),date=parts[parts.length-1];
+        rows.push({id:r.id||undefined,session:examDateSheetState.type?ACADEMIC_SESSION:ACADEMIC_SESSION,exam_type:examDateSheetState.type,class_name:cls,exam_date:date,day_name:examDateSheetDay(date),subject_name:String(r.subject_name).trim(),paper_mode:(String(r.paper_mode||'').toUpperCase()==='O'?'O':(String(r.paper_mode||'').toUpperCase()==='W'?'W':null))});
+      }
+    });
+  });
+  if(!rows.length){
+    if(msg)msg.innerHTML='<span class="text-warning">Add at least one subject before saving.</span>';
+    return;
+  }
+  if(msg)msg.innerHTML='<span class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Saving date sheet...</span>';
+  rows.forEach(r=>{ if(!r.id) delete r.id; });
+  const {error}=await supabaseClient.from('exam_date_sheet').upsert(rows,{onConflict:'session,exam_type,class_name,exam_date,subject_name,paper_mode'});
+  if(error){if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(error.message||error)+'</span>';return;}
+  const keepIds=rows.map(r=>r.id).filter(Boolean);
+  const deleteIds=[...new Set(examDateSheetState.removedIds.concat(examDateSheetState.existingIds.filter(id=>!keepIds.includes(id))))];
+  if(deleteIds.length){
+    const {error:de}=await supabaseClient.from('exam_date_sheet').delete().in('id',deleteIds);
+    if(de){if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(de.message||de)+'</span>';return;}
+  }
+  if(msg)msg.innerHTML='<span class="text-success">Exam date sheet saved successfully.</span>';
+  await loadExamDateSheet();
+}
+function openExamDateSheetTab(btn){switchNavTab('examDateSheetTab',btn);loadExamDateSheet();}
+function openNotificationsTab(btn){
+  switchNavTab('notificationsTab', btn);
+  const isAdmin = staffIsAdmin();
+  const mg = document.getElementById('notificationAdminManagement');
+  if(mg) mg.style.display = isAdmin ? 'block' : 'none';
+  if(isAdmin) loadNotificationAdmin();
+  loadUserNotifications();
+}
+function openHolidaysTab(btn){
+  switchNavTab('holidaysTab', btn);
+  const isAdmin = staffIsAdmin();
+  const mg = document.getElementById('holidayAdminManagement');
+  if(mg) mg.style.display = isAdmin ? 'block' : 'none';
+  if(isAdmin){ holidayTypeChanged(); loadHolidayAdminTable(); }
+  loadHolidayCalendar();
+}
+
+async function loadUserNotifications(){
+  const box=document.getElementById('userNotificationsList'); if(!box)return; box.innerHTML='<div class="text-center py-4"><i class="fas fa-spinner fa-spin me-1"></i>Loading notifications...</div>';
+  const {data,error}=await supabaseClient.from('school_notifications').select('*').eq('active',true).order('notification_date',{ascending:false}).order('created_at',{ascending:false});
+  if(error){box.innerHTML='<div class="alert alert-danger">Unable to load notifications: '+erpEsc(error.message||error)+'</div>';return;}
+  const profile=await getCurrentAudienceProfile(); const rows=(data||[]).filter(n=>notificationAudienceMatches(n,profile));
+  box.innerHTML=rows.length?rows.map(n=>`<div class="card mb-3 shadow-sm border-primary"><div class="card-header d-flex justify-content-between align-items-center"><div><span class="badge bg-primary me-2">${erpEsc(n.notification_no||'')}</span><strong>${erpEsc(n.title||'Notification')}</strong></div><span class="small text-muted">${erpEsc(n.notification_date||'')}</span></div><div class="card-body"><div class="small text-muted mb-2">For: ${erpEsc(notificationAudienceLabel(n.audience))}</div><div style="white-space:pre-wrap">${erpEsc(n.body||'')}</div></div></div>`).join(''):'<div class="alert alert-info">No notifications available for your account.</div>';
+}
+function clearNotificationEditor(){['notificationTitle','notificationBody'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const d=document.getElementById('notificationDate');if(d)d.value=academicToday();const a=document.getElementById('notificationAudience');if(a)a.value='all';delete document.getElementById('notificationTitle')?.dataset?.editId;}
+async function saveNotification(){
+  if(!staffIsAdmin()){alert('Admin access required.');return;} const id=document.getElementById('notificationTitle')?.dataset?.editId||''; const date=document.getElementById('notificationDate')?.value||academicToday(),aud=document.getElementById('notificationAudience')?.value||'all',title=document.getElementById('notificationTitle')?.value.trim()||'',body=document.getElementById('notificationBody')?.value.trim()||'';
+  if(!title||!body){alert('Title and notification are required.');return;}
+  const payload={notification_date:date,audience:aud,title,body,active:true,updated_at:new Date().toISOString(),updated_by:currentUser?.username||'admin'};
+  if(id)payload.id=id; const {error}=await supabaseClient.from('school_notifications').upsert(payload); if(error){alert('Notification save failed: '+error.message);return;} clearNotificationEditor(); await loadNotificationAdmin();
+}
+async function editNotification(id){const {data,error}=await supabaseClient.from('school_notifications').select('*').eq('id',id).maybeSingle();if(error||!data)return alert(error?.message||'Notification not found.');document.getElementById('notificationDate').value=data.notification_date||academicToday();document.getElementById('notificationAudience').value=data.audience||'all';document.getElementById('notificationTitle').value=data.title||'';document.getElementById('notificationBody').value=data.body||'';document.getElementById('notificationTitle').dataset.editId=data.id;window.scrollTo({top:0,behavior:'smooth'});}
+async function copyNotification(id){const {data,error}=await supabaseClient.from('school_notifications').select('*').eq('id',id).maybeSingle();if(error||!data)return alert(error?.message||'Notification not found.');document.getElementById('notificationDate').value=academicToday();document.getElementById('notificationAudience').value=data.audience||'all';document.getElementById('notificationTitle').value=(data.title||'')+' (Copy)';document.getElementById('notificationBody').value=data.body||'';delete document.getElementById('notificationTitle').dataset.editId;window.scrollTo({top:0,behavior:'smooth'});}
+async function deleteNotification(id){if(!staffIsAdmin()||!confirm('Delete this notification?'))return;const {error}=await supabaseClient.from('school_notifications').delete().eq('id',id);if(error)alert(error.message);else loadNotificationAdmin();}
+async function loadNotificationAdmin(){const tb=document.querySelector('#notificationAdminTable tbody');if(!tb)return;const d=document.getElementById('notificationDate');if(d&&!d.value)d.value=academicToday();tb.innerHTML='<tr><td colspan="7" class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';const {data,error}=await supabaseClient.from('school_notifications').select('*').order('notification_date',{ascending:false}).order('created_at',{ascending:false});if(error){tb.innerHTML='<tr><td colspan="7" class="text-danger">'+erpEsc(error.message)+'</td></tr>';return;}tb.innerHTML=(data||[]).map(n=>`<tr><td><strong>${erpEsc(n.notification_no||'-')}</strong></td><td>${erpEsc(n.notification_date||'')}</td><td>${erpEsc(notificationAudienceLabel(n.audience))}</td><td>${erpEsc(n.title||'')}</td><td style="white-space:pre-wrap;min-width:240px">${erpEsc(n.body||'')}</td><td>${n.active?'Active':'Inactive'}</td><td class="text-nowrap"><button class="btn btn-sm btn-outline-primary me-1" onclick="editNotification('${erpEsc(n.id)}')">Edit</button><button class="btn btn-sm btn-outline-secondary me-1" onclick="copyNotification('${erpEsc(n.id)}')">Copy</button><button class="btn btn-sm btn-outline-danger" onclick="deleteNotification('${erpEsc(n.id)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="7" class="text-center text-muted">No notifications.</td></tr>';}
+async function fetchGovernmentHolidayLists(silent=false){
+  if(!staffIsAdmin())return;
+  const msg=document.getElementById('holidayAdminMessage');
+  if(msg&&!silent)msg.innerHTML='<span class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Loading Government of Punjab holiday list...</span>';
+  const makeUnique=(arr,type,implemented)=>{
+    const seen=new Set(),out=[];
+    (arr||[]).forEach(x=>{
+      const key=String(x[0]||'')+'|'+type;
+      if(!x[0]||seen.has(key))return;
+      seen.add(key);
+      out.push({holiday_date:x[0],holiday_to:x[0],holiday_type:type,description:x[1],source:PUNJAB_GOV_HOLIDAY_SOURCE,implemented,active:true,created_by:currentUser?.username||'admin'});
+    });
+    return out;
+  };
+  const gaz=makeUnique(PUNJAB_GAZETTED_HOLIDAYS_2026,'gazetted',true);
+  const reserved=makeUnique(PUNJAB_RESTRICTED_HOLIDAYS_2026,'reserved',false);
+  const {error}=await supabaseClient.from('school_holidays').upsert([...gaz,...reserved],{onConflict:'holiday_date,holiday_type'});
+  if(error){if(msg&&!silent)msg.innerHTML='<span class="text-danger">'+erpEsc(error.message)+'</span>';return;}
+  if(msg&&!silent)msg.innerHTML='<span class="text-success">Government of Punjab 2026 gazetted and restricted holiday lists loaded. Gazetted holidays are implemented automatically; restricted holidays remain unimplemented until admin selects them.</span>';
+  await loadHolidayAdminTable();
+  await loadHolidayCalendar();
+}
+function holidayTypeChanged(){
+  const t=document.getElementById('holidayType')?.value||'gazetted';
+  const fetchCol=document.getElementById('holidayFetchCol'),sat=document.getElementById('holidaySaturdayCol'),res=document.getElementById('holidayReservedCol'),modeCol=document.getElementById('holidayCountModeCol');
+  if(fetchCol)fetchCol.style.display=(t==='gazetted'||t==='reserved')?'block':'none';
+  if(sat)sat.style.display=t==='saturday'?'block':'none';
+  if(res)res.style.display=t==='reserved'?'block':'none';
+  if(modeCol)modeCol.style.display=(t==='local'||t==='preparatory')?'block':'none';
+  if(t==='gazetted'){
+    const imp=document.getElementById('holidayImplement');if(imp)imp.checked=true;
+    fetchGovernmentHolidayLists(true);
+  } else if(t==='reserved'){
+    const imp=document.getElementById('holidayImplement');if(imp)imp.checked=false;
+    fetchGovernmentHolidayLists(true);
+  } else {
+    holidayCountModeChanged();
+    loadHolidayAdminTable(t);
+  }
+}
+function holidayCountModeChanged(){
+  const t=document.getElementById('holidayType')?.value||'';
+  const mode=document.getElementById('holidayCountMode')?.value||'single';
+  const to=document.getElementById('holidayToDate');
+  if(!to)return;
+  const isRangeType=(t==='local'||t==='preparatory');
+  if(isRangeType && mode==='single'){
+    to.value=document.getElementById('holidayFromDate')?.value||'';
+    to.disabled=true;
+    to.parentElement?.querySelector('label')?.replaceChildren(document.createTextNode('Date'));
+  } else {
+    to.disabled=false;
+    to.parentElement?.querySelector('label')?.replaceChildren(document.createTextNode('To Date'));
+  }
+}
+function validateSaturdayDate(){const el=document.getElementById('holidaySaturdayDate');if(!el||!el.value)return true;const d=new Date(el.value+'T00:00:00');if(d.getDay()!==6){alert('Please select a Saturday.');el.value='';return false;}return true;}
+async function saveHolidayFromAdmin(){
+  if(!staffIsAdmin())return alert('Admin access required.'); const t=document.getElementById('holidayType')?.value||'local';const mode=document.getElementById('holidayCountMode')?.value||'single';let from=document.getElementById('holidayFromDate')?.value||'',to=document.getElementById('holidayToDate')?.value||from,desc=document.getElementById('holidayDescription')?.value.trim()||'';let implement=document.getElementById('holidayImplement')?.checked!==false;
+  if(t==='local'||t==='preparatory'){
+    if(!from||!desc)return alert('Date and description are required.');
+    if(mode==='single')to=from;
+    else if(!to)return alert('From Date, To Date and description are required for multiple holidays.');
+  }
+  if(t==='saturday'){if(!validateSaturdayDate())return;from=document.getElementById('holidaySaturdayDate')?.value||'';to=from;desc=desc||'Saturday Holiday';}
+  if(t==='gazetted'||t==='reserved'){if(!from&&!desc){return alert('Use Fetch Government Holidays first, or enter a date and description.');}}
+  if(t==='saturday'||t==='vacation_summer'||t==='vacation_winter'){if(!from||!to||!desc)return alert('Date/range and description are required.');}
+  if(!from)from=to; if(!to)to=from;
+  if(new Date(to)<new Date(from))return alert('To Date cannot be before From Date.');
+  const rows=[];let d=new Date(from+'T00:00:00'),e=new Date(to+'T00:00:00');while(d<=e){const ds=holidayLocalISODate(d);rows.push({holiday_date:ds,holiday_to:ds,holiday_type:t,description:desc,source:'School Admin',implemented:implement,active:true,created_by:currentUser?.username||'admin'});d.setDate(d.getDate()+1);}const {error}=await supabaseClient.from('school_holidays').upsert(rows,{onConflict:'holiday_date,holiday_type'});if(error){alert('Holiday save failed: '+error.message);return;}document.getElementById('holidayDescription').value='';await loadHolidayAdminTable(t);await loadHolidayCalendar();if(implement&&AUTO_HOLIDAY_NOTIFICATION_TYPES.includes(t))await checkImmediateHolidayNotification(from,true);
+}
+async function toggleHolidayImplementation(id,value){if(!staffIsAdmin())return;const {data:holiday}=await supabaseClient.from('school_holidays').select('holiday_date,holiday_type').eq('id',id).maybeSingle();const {error}=await supabaseClient.from('school_holidays').update({implemented:!!value,updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else{await loadHolidayAdminTable(document.getElementById('holidayType')?.value);await loadHolidayCalendar();if(value&&holiday&&AUTO_HOLIDAY_NOTIFICATION_TYPES.includes(String(holiday.holiday_type)))await checkImmediateHolidayNotification(holiday.holiday_date,true);}}
+async function deleteCentralHoliday(id){if(!staffIsAdmin()||!confirm('Delete this holiday?'))return;const {error}=await supabaseClient.from('school_holidays').delete().eq('id',id);if(error)alert(error.message);else{await loadHolidayAdminTable();await loadHolidayCalendar();}}
+async function loadHolidayAdminTable(filterType){
+  const tb=document.querySelector('#holidayAdminTable tbody');if(!tb)return;
+  const selected=filterType||document.getElementById('holidayType')?.value||'gazetted';
+  const {data,error}=await supabaseClient.from('school_holidays').select('*').eq('holiday_type',selected).order('holiday_date').order('holiday_type');
+  if(error){tb.innerHTML='<tr><td colspan="6" class="text-danger">'+erpEsc(error.message)+'</td></tr>';return;}
+  tb.innerHTML=(data||[]).map(h=>`<tr><td>${erpEsc(h.holiday_date)}${h.holiday_to&&h.holiday_to!==h.holiday_date?' to '+erpEsc(h.holiday_to):''}</td><td>${erpEsc(h.holiday_type)}</td><td>${erpEsc(h.description||'')}</td><td>${erpEsc(h.source||'')}</td><td><input type="checkbox" ${h.implemented?'checked':''} onchange="toggleHolidayImplementation('${erpEsc(h.id)}',this.checked)"></td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteCentralHoliday('${erpEsc(h.id)}')">Delete</button></td></tr>`).join('')||'<tr><td colspan="6" class="text-center text-muted">No holidays stored for this type.</td></tr>';
+}
+function holidayLocalISODate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+async function getCentralHolidays(start,end,onlyImplemented=true){let q=supabaseClient.from('school_holidays').select('*').eq('active',true).lte('holiday_date',end).gte('holiday_to',start);if(onlyImplemented)q=q.eq('implemented',true);const {data,error}=await q.order('holiday_date');return error?[]:(data||[]);}
+async function loadHolidayCalendar(){const box=document.getElementById('holidayCalendarList');if(!box)return;const m=document.getElementById('holidayCalendarMonth');if(m&&!m.value){const now=new Date();m.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;}const month=m?.value||academicToday().slice(0,7),[y,mo]=month.split('-').map(Number),days=new Date(y,mo,0).getDate(),start=`${month}-01`,end=`${month}-${String(days).padStart(2,'0')}`;box.innerHTML='<div class="text-center py-3"><i class="fas fa-spinner fa-spin me-1"></i>Loading calendar...</div>';const rows=await getCentralHolidays(start,end,true);const by={};rows.forEach(r=>{let d=new Date(r.holiday_date+'T00:00:00'),e=new Date((r.holiday_to||r.holiday_date)+'T00:00:00');while(d<=e){const ds=holidayLocalISODate(d);by[ds]=r;d.setDate(d.getDate()+1);}});let html='<div class="table-responsive"><table class="table table-bordered table-sm align-middle"><thead class="table-dark"><tr><th>Date</th><th>Day</th><th>Type</th><th>Holiday / Description</th></tr></thead><tbody>';for(let d=1;d<=days;d++){const ds=`${month}-${String(d).padStart(2,'0')}`,x=by[ds];if(x)html+=`<tr><td><strong>${ds}</strong></td><td>${new Date(ds+'T00:00:00').toLocaleDateString(undefined,{weekday:'long'})}</td><td>${erpEsc(x.holiday_type)}</td><td>${erpEsc(x.description||'Holiday')}</td></tr>`;}html+='</tbody></table></div>';box.innerHTML=rows.length?html:'<div class="alert alert-info">No implemented holidays for this month.</div>';}
 function openHolidayWindow(){const w=window.open('','staffHolidayWindow','width=650,height=700');if(!w){alert('Please allow pop-ups for this site.');return;}w.document.write(`<!doctype html><html><head><title>Staff Holidays</title><style>body{font-family:Arial;padding:24px}input,button{padding:8px;margin:5px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:8px}</style></head><body><h2>Staff Holiday Management</h2><p>Admin can add holidays. They will appear as H for all staff.</p><input id="hd" type="date"><input id="ht" placeholder="Holiday title"><button onclick="opener.saveHolidayFromPopup(document.getElementById('hd').value,document.getElementById('ht').value).then(load)">Add Holiday</button><button onclick="load()">Refresh</button><div id="list"></div><script>async function load(){const r=await opener.getHolidayListForPopup();document.getElementById('list').innerHTML='<table><tr><th>Date</th><th>Holiday</th></tr>'+r.map(x=>'<tr><td>'+x.holiday_date+'</td><td>'+x.title+'</td></tr>').join('')+'</table>'}load();<\/script></body></html>`);w.document.close();}
 async function getHolidayListForPopup(){const {data}=await supabaseClient.from('staff_holidays').select('*').order('holiday_date',{ascending:true});return data||[];}
-async function saveHolidayFromPopup(date,title){if(!staffIsAdmin()){alert('Admin access required.');return;}if(!date||!title){alert('Date and holiday title are required.');return;}const {error}=await supabaseClient.from('staff_holidays').upsert({holiday_date:date,title,created_by:currentUser?.username||'admin'},{onConflict:'holiday_date'});if(error)alert(error.message);else alert('Holiday saved.');}
+async function saveHolidayFromPopup(date,title){if(!staffIsAdmin()){alert('Admin access required.');return;}if(!date||!title){alert('Date and holiday title are required.');return;}const {error}=await supabaseClient.from('staff_holidays').upsert({holiday_date:date,title,created_by:currentUser?.username||'admin'},{onConflict:'holiday_date'});if(error){alert(error.message);return;}const {error:ce}=await supabaseClient.from('school_holidays').upsert({holiday_date:date,holiday_to:date,holiday_type:'local',description:title,source:'Staff Holiday Manager',implemented:true,active:true,created_by:currentUser?.username||'admin'},{onConflict:'holiday_date,holiday_type'});if(ce){alert(ce.message);return;}alert('Holiday saved.');}
 /* Leave */
 async function fillLeaveStaffSelect(){const {data}=await supabaseClient.from('staff_joinings').select('employee_code,full_name,display_name,leaving_date').is('leaving_date',null).order('employee_code');const sel=document.getElementById('applyLeaveStaff');if(!sel)return;sel.innerHTML='<option value="">Select staff</option>'+(data||[]).map(r=>`<option value="${escStaff(r.employee_code)}">${escStaff(r.employee_code)} — ${escStaff(staffDisplayName(r))}</option>`).join('');}
-async function loadApplyLeave(){await fillLeaveStaffSelect();}
-async function submitStaffLeaveApplication(){const employee_code=document.getElementById('applyLeaveStaff')?.value, leave_type=document.getElementById('applyLeaveType')?.value, from_date=document.getElementById('applyLeaveFrom')?.value,to_date=document.getElementById('applyLeaveTo')?.value,reason=document.getElementById('applyLeaveReason')?.value.trim();if(!employee_code||!from_date||!to_date||!reason){alert('Please fill all required leave fields.');return;}if(from_date>to_date){alert('To Date cannot be before From Date.');return;}const staff=staffDirectoryCache.find(x=>x.employee_code===employee_code);const {error}=await supabaseClient.from('staff_leave_applications').insert({employee_code,employee_name:staffDisplayName(staff),leave_type,from_date,to_date,reason,status:'Pending',applied_by:currentUser?.username||'staff'});if(error)alert(error.message);else{document.getElementById('applyLeaveMessage').innerHTML='<div class="alert alert-success">Leave application submitted for admin approval.</div>';document.getElementById('applyLeaveReason').value='';}}
+async function loadApplyLeave(){
+  const isTeacherPortal=String(currentUser?.type||'').toLowerCase()==='staff' && currentUser?.authMode==='portal';
+  const sel=document.getElementById('applyLeaveStaff');
+  if(isTeacherPortal){
+    const emp=String(currentUser?.associatedId||'').trim();
+    if(!emp){if(sel)sel.innerHTML='<option value="">Staff account not linked</option>';return;}
+    const {data:staff,error}=await supabaseClient.from('staff_joinings').select('employee_code,full_name,display_name').eq('employee_code',emp).maybeSingle();
+    if(error||!staff){if(sel)sel.innerHTML='<option value="">Unable to load your staff record</option>';return;}
+    if(sel){sel.innerHTML=`<option value="${escStaff(staff.employee_code)}">${escStaff(staff.employee_code)} — ${escStaff(staffDisplayName(staff))}</option>`;sel.value=staff.employee_code;sel.disabled=true;}
+    const today=academicToday();
+    const from=document.getElementById('applyLeaveFrom'),to=document.getElementById('applyLeaveTo');
+    if(from)from.value=today;if(to)to.value=today;
+    return;
+  }
+  if(sel)sel.disabled=false;
+  await fillLeaveStaffSelect();
+}
+async function submitStaffLeaveApplication(){
+  const isTeacherPortal=String(currentUser?.type||'').toLowerCase()==='staff' && currentUser?.authMode==='portal';
+  const employee_code=isTeacherPortal?String(currentUser?.associatedId||'').trim():document.getElementById('applyLeaveStaff')?.value;
+  const leave_type=document.getElementById('applyLeaveType')?.value, from_date=document.getElementById('applyLeaveFrom')?.value,to_date=document.getElementById('applyLeaveTo')?.value,reason=document.getElementById('applyLeaveReason')?.value.trim();
+  if(!employee_code||!from_date||!to_date||!reason){alert('Please fill all required leave fields.');return;}
+  if(from_date>to_date){alert('To Date cannot be before From Date.');return;}
+  let staff=staffDirectoryCache.find(x=>x.employee_code===employee_code);
+  if(!staff){const r=await supabaseClient.from('staff_joinings').select('employee_code,full_name,display_name').eq('employee_code',employee_code).maybeSingle();staff=r.data;}
+  if(!staff){alert('Unable to load your staff record.');return;}
+  const {error}=await supabaseClient.from('staff_leave_applications').insert({employee_code,employee_name:staffDisplayName(staff),leave_type,from_date,to_date,reason,status:'Pending',applied_by:currentUser?.username||'staff'});
+  if(error)alert(error.message);else{document.getElementById('applyLeaveMessage').innerHTML='<div class="alert alert-success">Leave application submitted for admin approval.</div>';document.getElementById('applyLeaveReason').value='';}
+}
 async function loadStaffLeaveManagement(){const {data,error}=await supabaseClient.from('staff_leave_applications').select('*').order('created_at',{ascending:false});if(error){console.error(error);return;}staffLeaveCache=data||[];renderStaffLeaveTable();}
 function renderStaffLeaveTable(){const tb=document.querySelector('#staffLeaveTable tbody');if(!tb)return;const f=document.getElementById('leaveStatusFilter')?.value||'all';const rows=staffLeaveCache.filter(r=>f==='all'||r.status===f);tb.innerHTML=rows.map(r=>{const days=Math.round((new Date(r.to_date)-new Date(r.from_date))/86400000)+1;return `<tr><td>${escStaff(r.application_no||r.id.slice(0,8))}</td><td>${escStaff(r.employee_code)}</td><td>${escStaff(r.employee_name)}</td><td>${escStaff(r.leave_type)}</td><td>${escStaff(r.from_date)}</td><td>${escStaff(r.to_date)}</td><td>${days}</td><td>${escStaff(r.reason)}</td><td><b>${escStaff(r.status)}</b></td><td>${r.status==='Approved'?(r.leave_paid?'PL':'NPL'):'-'}</td><td>${r.status==='Pending'&&staffIsAdmin()?`<button class="btn btn-success btn-sm" onclick="approveStaffLeave('${r.id}',true)">Approve PL</button> <button class="btn btn-warning btn-sm" onclick="approveStaffLeave('${r.id}',false)">Approve NPL</button> <button class="btn btn-danger btn-sm" onclick="rejectStaffLeave('${r.id}')">Reject</button>`:'-'}</td></tr>`}).join('')||'<tr><td colspan="11" class="text-center text-muted">No leave applications.</td></tr>';}
 async function approveStaffLeave(id,paid){if(!staffIsAdmin())return;const {error}=await supabaseClient.from('staff_leave_applications').update({status:'Approved',leave_paid:paid,approved_by:currentUser?.username||'admin',approved_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else loadStaffLeaveManagement();}
@@ -8529,6 +9137,41 @@ async function editStaffSalary(code){if(!staffIsAdmin()){alert('Only Admin or Ac
     finish=function(state){oldFinish(state);if(state?.button)delete state.button.dataset.portalActionBusy;};
   })();
 
+  /* Automatic holiday notification support.  Uses India Standard Time (Asia/Kolkata).
+     Notifications are generated for all implemented holiday types listed in the Holiday Manager.
+     One notification is generated for a continuous holiday block, one day before its first day. */
+  const AUTO_HOLIDAY_NOTIFICATION_TYPES=['local','reserved','saturday','preparatory','gazetted','vacation_summer','vacation_winter'];
+  function istDateTimeParts(){
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+    const o={};parts.forEach(p=>o[p.type]=p.value);return {date:`${o.year}-${o.month}-${o.day}`,hour:Number(o.hour),minute:Number(o.minute),second:Number(o.second)};
+  }
+  function addCalendarDaysISO(iso,n){const [y,m,d]=String(iso).split('-').map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return holidayLocalISODate(dt);}
+  function formatHolidayDateISO(iso){const [y,m,d]=String(iso).split('-').map(Number);return `${String(d).padStart(2,'0')}-${String(m).padStart(2,'0')}-${y}`;}
+  async function autoGenerateHolidayNotification(forceDate){
+    try{
+      const {data,error}=await supabaseClient.rpc('generate_due_holiday_notifications',{p_today:forceDate||null});
+      if(error){console.warn('Holiday notification generator:',error.message||error);return null;}
+      return data;
+    }catch(e){console.warn('Holiday notification generator:',e);return null;}
+  }
+  async function checkImmediateHolidayNotification(holidayDate,implemented){
+    if(!implemented||!holidayDate)return;
+    const now=istDateTimeParts();
+    const tomorrow=addCalendarDaysISO(now.date,1);
+    if(String(holidayDate)!==tomorrow || (now.hour<14))return;
+    const {data}=await supabaseClient.from('school_notifications').select('id').eq('auto_generated',true).eq('holiday_start',holidayDate).limit(1);
+    if((data||[]).length)return;
+    if(confirm('This holiday is for tomorrow and it is already after 02:00 PM (IST).\n\nDo you want to generate the holiday notification now?')){
+      await autoGenerateHolidayNotification(now.date);
+      if(typeof loadNotificationAdmin==='function')await loadNotificationAdmin();
+    }
+  }
+  async function runHolidayNotificationScheduler(){
+    const now=istDateTimeParts();
+    if(now.hour<14)return;
+    await autoGenerateHolidayNotification(now.date);
+  }
+  setTimeout(()=>{runHolidayNotificationScheduler();},1200);
   async function restorePortalAuth(){
     try{const {data}=await supabaseClient.auth.getSession();if(!data?.session)return;const u=data.session.user;const {data:a}=await supabaseClient.from('portal_accounts').select('*').eq('user_id',u.id).maybeSingle();if(!a)return;const ident=a.role==='staff'?{role:'staff',staff:{employee_code:a.employee_code}}:{role:'parent',children:[]};await onLogin(a.phone||u.phone,a.role,a.employee_code||null,null,u.id,'portal');}catch(e){console.warn('Auth restore',e);}
   }
@@ -8571,6 +9214,7 @@ async function editStaffSalary(code){if(!staffIsAdmin()){alert('Only Admin or Ac
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
 })();
+document.addEventListener('DOMContentLoaded',()=>{try{clearNotificationEditor();holidayTypeChanged();}catch(e){}});
 </script>
 </body>
 </html>
