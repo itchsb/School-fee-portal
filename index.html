@@ -338,6 +338,8 @@
 #examDateSheetTable thead th { border: 1px solid #000 !important; font-weight: 700; }
 #examDateSheetTable tbody td:first-child, #examDateSheetTable thead th:first-child { border-right: 2px solid #000 !important; }
 #examDateSheetTable tbody tr { border-bottom: 1px solid #000 !important; }
+.exam-sheet-date-editor{min-width:145px;font-weight:700;text-align:center;background:#fff;border:1px solid #94a3b8;}
+.exam-sheet-date-editor:focus{border-color:#2563eb;box-shadow:0 0 0 .15rem rgba(37,99,235,.15);}
 .exam-sheet-print-only { display:none; }
 @media print {
   body * { visibility: hidden !important; }
@@ -2541,7 +2543,7 @@
         <div class="row g-2 align-items-end">
           <div class="col-md-2">
             <label class="form-label small fw-bold">Exam</label>
-            <select id="examDateSheetType" class="form-select" onchange="loadExamDateSheet()">
+            <select id="examDateSheetType" class="form-select" onchange="updateExamDateSheetPreviousButton();loadExamDateSheet()">
               <option value="1st Term">1st Term</option>
               <option value="2nd Term">2nd Term</option>
               <option value="Final Exam">Final Exam</option>
@@ -2570,6 +2572,7 @@
       <button type="button" class="btn btn-outline-primary fw-bold exam-sheet-option active" data-exam="1st Term" onclick="setExamDateSheetType('1st Term')">1st Term</button>
       <button type="button" class="btn btn-outline-primary fw-bold exam-sheet-option" data-exam="2nd Term" onclick="setExamDateSheetType('2nd Term')">2nd Term</button>
       <button type="button" class="btn btn-outline-primary fw-bold exam-sheet-option" data-exam="Final Exam" onclick="setExamDateSheetType('Final Exam')">Final Exam</button>
+      <button type="button" class="btn btn-outline-secondary fw-bold no-print" id="examDateSheetFetchPreviousBtn" style="display:none" onclick="fetchPreviousTermDateSheet()"><i class="fas fa-copy me-1"></i>Fetch Previous Term Date Sheet</button>
       <button type="button" class="btn btn-outline-dark fw-bold no-print" onclick="printExamDateSheet()"><i class="fas fa-print me-1"></i>Print Date Sheet</button>
     </div>
 
@@ -8648,9 +8651,15 @@ function examDateSheetDisplayDate(date){
   const p=String(date).split('-');
   return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:date;
 }
+function updateExamDateSheetPreviousButton(){
+  const type=document.getElementById('examDateSheetType')?.value||examDateSheetState.type||'1st Term';
+  const btn=document.getElementById('examDateSheetFetchPreviousBtn');
+  if(btn)btn.style.display=examDateSheetIsAdmin() && (type==='2nd Term'||type==='Final Exam')?'inline-block':'none';
+}
 function setExamDateSheetType(type){
   const e=document.getElementById('examDateSheetType');if(e)e.value=type;
   document.querySelectorAll('.exam-sheet-option').forEach(b=>b.classList.toggle('active',b.dataset.exam===type));
+  updateExamDateSheetPreviousButton();
   loadExamDateSheet();
 }
 function updateExamDateSheetSelectedDay(){
@@ -8728,18 +8737,30 @@ async function addExamDateSheetDate(){
   if(msg)msg.innerHTML='<span class="text-success">'+erpEsc(examDateSheetDisplayDate(date))+' ('+erpEsc(examDateSheetDay(date))+') added. Select subjects in the class rows and save the date sheet.</span>';
   await renderExamDateSheet();
 }
-function removeExamDateSheetDate(date){
+async function editExamDateSheetDate(oldDate,newDate){
   if(!examDateSheetIsAdmin())return;
-  const ids=[];
+  newDate=String(newDate||'').slice(0,10);
+  if(!newDate||newDate===oldDate)return;
+  if(examDateSheetState.dates.includes(newDate)){
+    alert('This date is already present in the date sheet. Choose another date.');
+    await renderExamDateSheet();
+    return;
+  }
+  const proceed=await confirmExamDateSheetDateSelection(newDate);
+  if(!proceed){await renderExamDateSheet();return;}
+  const moved={};
   Object.keys(examDateSheetState.cells).forEach(k=>{
-    if(k.endsWith('|'+date)){
-      (examDateSheetState.cells[k]||[]).forEach(r=>{if(r.id)ids.push(r.id);});
-      delete examDateSheetState.cells[k];
-    }
+    if(!k.endsWith('|'+oldDate))return;
+    const cls=k.slice(0,-(oldDate.length+1));
+    const rows=examDateSheetState.cells[k]||[];
+    moved[examDateSheetCellKey(cls,newDate)]=rows;
+    delete examDateSheetState.cells[k];
   });
-  examDateSheetState.removedIds.push(...ids);
-  examDateSheetState.dates=examDateSheetState.dates.filter(d=>d!==date);
-  renderExamDateSheet();
+  Object.assign(examDateSheetState.cells,moved);
+  examDateSheetState.dates=examDateSheetState.dates.map(d=>d===oldDate?newDate:d).sort();
+  const msg=document.getElementById('examDateSheetMessage');
+  if(msg)msg.innerHTML='<span class="text-success">Exam date changed from '+erpEsc(examDateSheetDisplayDate(oldDate))+' to '+erpEsc(examDateSheetDisplayDate(newDate))+'. Existing subjects/data were retained. Click Save Date Sheet to save the change.</span>';
+  await renderExamDateSheet();
 }
 function addExamDateSheetSubject(cls,date){
   const key=examDateSheetCellKey(cls,date);
@@ -8763,6 +8784,43 @@ function updateExamDateSheetCell(cls,date,index,field,value){
 function examDateSheetSubjectOptions(subjects,selected){
   return '<option value="">Select Subject</option>'+subjects.map(x=>'<option value="'+erpEsc(x)+'"'+(String(x)===String(selected||'')?' selected':'')+'>'+erpEsc(x)+'</option>').join('');
 }
+async function fetchPreviousTermDateSheet(){
+  if(!examDateSheetIsAdmin())return alert('Admin access required.');
+  const currentType=document.getElementById('examDateSheetType')?.value||examDateSheetState.type||'1st Term';
+  const previousType=currentType==='2nd Term'?'1st Term':(currentType==='Final Exam'?'2nd Term':'');
+  if(!previousType)return;
+  const ok=confirm(`Fetch the ${previousType} date sheet into ${currentType}? Existing ${currentType} data will be kept and not deleted.`);
+  if(!ok)return;
+  const msg=document.getElementById('examDateSheetMessage');
+  if(msg)msg.innerHTML='<span class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Fetching '+erpEsc(previousType)+' date sheet...</span>';
+  const {data,error}=await supabaseClient.from('exam_date_sheet').select('*').eq('session',ACADEMIC_SESSION).eq('exam_type',previousType).order('exam_date').order('class_name');
+  if(error){if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(error.message||error)+'</span>';return;}
+  const rows=data||[];
+  if(!rows.length){if(msg)msg.innerHTML='<span class="text-warning">No saved '+erpEsc(previousType)+' date sheet was found.</span>';return;}
+  let addedDates=0,addedSubjects=0;
+  for(const r of rows){
+    const sourceDate=String(r.exam_date||'').slice(0,10),cls=String(r.class_name||'').trim(),subject=String(r.subject_name||'').trim();
+    if(!sourceDate||!cls)continue;
+    let targetDate=sourceDate;
+    // Do not duplicate an existing date. If the date exists, merge its subjects.
+    if(!examDateSheetState.dates.includes(targetDate)){
+      const proceed=await confirmExamDateSheetDateSelection(targetDate);
+      if(!proceed)continue;
+      examDateSheetState.dates.push(targetDate); addedDates++;
+    }
+    const key=examDateSheetCellKey(cls,targetDate);
+    if(!examDateSheetState.cells[key])examDateSheetState.cells[key]=[];
+    const exists=examDateSheetState.cells[key].some(x=>String(x.subject_name||'').trim()===subject && String(x.paper_mode||'').toUpperCase()===String(r.paper_mode||'').toUpperCase());
+    if(!exists){
+      examDateSheetState.cells[key].push({id:null,subject_name:subject,paper_mode:(String(r.paper_mode||'').toUpperCase()==='O'?'O':(String(r.paper_mode||'').toUpperCase()==='W'?'W':''))});
+      addedSubjects++;
+    }
+  }
+  examDateSheetState.dates.sort();
+  if(msg)msg.innerHTML='<span class="text-success">Fetched '+addedDates+' date(s) and '+addedSubjects+' subject entr'+(addedSubjects===1?'y':'ies')+' from '+erpEsc(previousType)+'. Existing data was retained. Click Save Date Sheet to save.</span>';
+  await renderExamDateSheet();
+}
+
 async function renderExamDateSheet(){
   const admin=examDateSheetIsAdmin();
   const tb=document.querySelector('#examDateSheetTable tbody'),thead=document.querySelector('#examDateSheetTable thead');
@@ -8775,8 +8833,8 @@ async function renderExamDateSheet(){
     return;
   }
   thead.innerHTML='<tr><th style="min-width:115px">DATE</th>'+dates.map(d=>{
-    const remove=admin?'<button type="button" class="btn btn-sm btn-link text-danger p-0 ms-1 no-print" title="Remove date" onclick="removeExamDateSheetDate(\''+d+'\')">×</button>':'';
-    return '<th style="min-width:190px">'+erpEsc(examDateSheetDisplayDate(d))+remove+'</th>';
+    const edit=admin?'<input type="date" class="form-control form-control-sm exam-sheet-date-editor no-print" value="'+d+'" title="Edit exam date" onchange="editExamDateSheetDate(\''+d+'\',this.value)">':'<span>'+erpEsc(examDateSheetDisplayDate(d))+'</span>';
+    return '<th style="min-width:190px">'+edit+'</th>';
   }).join('')+'</tr>'+
   '<tr><th>Classes</th>'+dates.map(d=>'<th>'+erpEsc(examDateSheetDay(d))+'</th>').join('')+'</tr>';
 
@@ -8799,8 +8857,9 @@ async function renderExamDateSheet(){
               <option value="W"${r.paper_mode==='W'?' selected':''}>W</option>
               <option value="O"${r.paper_mode==='O'?' selected':''}>O</option>
             </select>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 no-print" title="Remove subject" aria-label="Remove subject" onclick="removeExamDateSheetSubject('${erpEsc(c).replace(/'/g,'&#39;')}','${d}',${i})"><i class="fas fa-times"></i></button>
           </div>`).join('')+'</div>';
-        content+='<div class="d-flex justify-content-end mt-1"><button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 no-print" onclick="addExamDateSheetSubject(\''+erpEsc(c).replace(/'/g,'&#39;')+'\',\''+d+'\')"><i class="fas fa-plus me-1"></i>Subject</button></div>';
+        content+='<div class="d-flex justify-content-end mt-1"><button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 no-print" title="Add subject" aria-label="Add subject" onclick="addExamDateSheetSubject(\''+erpEsc(c).replace(/'/g,'&#39;')+'\',\''+d+'\')"><i class="fas fa-plus"></i></button></div>';
       }else{
         content=rows.map(r=>{
           const subj=String(r.subject_name||'').trim();
@@ -8851,6 +8910,7 @@ async function loadExamDateSheet(){
   const admin=examDateSheetIsAdmin(),mg=document.getElementById('examDateSheetAdmin');
   if(mg)mg.style.display=admin?'block':'none';
   const type=document.getElementById('examDateSheetType')?.value||'1st Term';
+  updateExamDateSheetPreviousButton();
   examDateSheetState={type,dates:[],cells:{},existingIds:[],removedIds:[]};
   document.querySelectorAll('.exam-sheet-option').forEach(b=>b.classList.toggle('active',b.dataset.exam===type));
   const tb=document.querySelector('#examDateSheetTable tbody'),thead=document.querySelector('#examDateSheetTable thead');
@@ -8880,25 +8940,47 @@ async function saveExamDateSheetAll(){
     (examDateSheetState.cells[key]||[]).forEach(r=>{
       if(String(r.subject_name||'').trim()){
         const parts=key.split('|'),cls=parts.slice(0,-1).join('|'),date=parts[parts.length-1];
-        rows.push({id:r.id||undefined,session:examDateSheetState.type?ACADEMIC_SESSION:ACADEMIC_SESSION,exam_type:examDateSheetState.type,class_name:cls,exam_date:date,day_name:examDateSheetDay(date),subject_name:String(r.subject_name).trim(),paper_mode:(String(r.paper_mode||'').toUpperCase()==='O'?'O':(String(r.paper_mode||'').toUpperCase()==='W'?'W':null))});
+        rows.push({id:r.id||null,session:ACADEMIC_SESSION,exam_type:examDateSheetState.type,class_name:cls,exam_date:date,day_name:examDateSheetDay(date),subject_name:String(r.subject_name).trim(),paper_mode:(String(r.paper_mode||'').toUpperCase()==='O'?'O':(String(r.paper_mode||'').toUpperCase()==='W'?'W':null))});
       }
     });
   });
-  if(!rows.length){
+  if(!rows.length && !examDateSheetState.removedIds.length){
     if(msg)msg.innerHTML='<span class="text-warning">Add at least one subject before saving.</span>';
     return;
   }
   if(msg)msg.innerHTML='<span class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Saving date sheet...</span>';
-  rows.forEach(r=>{ if(!r.id) delete r.id; });
-  const {error}=await supabaseClient.from('exam_date_sheet').upsert(rows,{onConflict:'session,exam_type,class_name,exam_date,subject_name,paper_mode'});
-  if(error){if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(error.message||error)+'</span>';return;}
-  const keepIds=rows.map(r=>r.id).filter(Boolean);
-  const deleteIds=[...new Set(examDateSheetState.removedIds.concat(examDateSheetState.existingIds.filter(id=>!keepIds.includes(id))))];
+
+  // Existing rows are updated by their primary key. This is important when an
+  // exam date is edited: the record ID stays the same and the existing row is
+  // updated in place, so no old record is deleted or recreated.
+  for(const r of rows){
+    let error=null;
+    if(r.id){
+      const res=await supabaseClient.from('exam_date_sheet').update({
+        session:r.session,exam_type:r.exam_type,class_name:r.class_name,exam_date:r.exam_date,
+        day_name:r.day_name,subject_name:r.subject_name,paper_mode:r.paper_mode
+      }).eq('id',r.id);
+      error=res.error;
+    }else{
+      const payload={session:r.session,exam_type:r.exam_type,class_name:r.class_name,exam_date:r.exam_date,
+        day_name:r.day_name,subject_name:r.subject_name,paper_mode:r.paper_mode};
+      const res=await supabaseClient.from('exam_date_sheet').upsert(payload,{onConflict:'session,exam_type,class_name,exam_date,subject_name,paper_mode'});
+      error=res.error;
+    }
+    if(error){
+      if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(error.message||error)+'</span>';
+      return;
+    }
+  }
+
+  // Only an explicitly removed subject (×) is deleted. Saving or editing a date
+  // never deletes records simply because the current screen state changed.
+  const deleteIds=[...new Set(examDateSheetState.removedIds.filter(Boolean))];
   if(deleteIds.length){
     const {error:de}=await supabaseClient.from('exam_date_sheet').delete().in('id',deleteIds);
     if(de){if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(de.message||de)+'</span>';return;}
   }
-  if(msg)msg.innerHTML='<span class="text-success">Exam date sheet saved successfully.</span>';
+  if(msg)msg.innerHTML='<span class="text-success">Exam date sheet saved successfully. Existing data was preserved.</span>';
   await loadExamDateSheet();
 }
 function openExamDateSheetTab(btn){switchNavTab('examDateSheetTab',btn);loadExamDateSheet();}
