@@ -3093,6 +3093,7 @@
             <div class="col-md-2"><label class="form-label small fw-bold">Section</label><select id="inchargeSection" class="form-select"></select></div>
             <div class="col-md-4"><label class="form-label small fw-bold">Staff / Teacher</label><select id="inchargeStaff" class="form-select"></select></div>
             <div class="col-md-3"><button class="btn btn-primary fw-bold w-100" onclick="saveClassIncharge()"><i class="fas fa-user-check me-1"></i>Assign / Replace</button></div>
+            <div class="col-md-3"><button type="button" class="btn btn-success fw-bold w-100" onclick="syncClassInchargesFromTimetable()"><i class="fas fa-sync-alt me-1"></i>Sync from Timetable</button></div>
           </div>
         </div>
         <div class="academic-table-wrap"><table class="table table-bordered table-sm academic-grid" id="classInchargeTable"><thead><tr><th>Class</th><th>Section</th><th>Employee ID</th><th>Staff / Display Name</th><th>Mobile (Last 5)</th><th>Session</th><th class="no-print">Action</th></tr></thead><tbody></tbody></table></div>
@@ -11028,6 +11029,96 @@ async function saveClassIncharge(){
   }
 }
 
+async function syncClassInchargesFromTimetable(){
+  if(!academicAdmin())return;
+  if(!await __erpConfirm('Sync Class Incharge assignments from the current Timetable?\n\n• For NRY/LKG/UKG/1ST/2ND: if Mother Teacher / No Periods is enabled and a Mother Teacher is selected, that teacher will be used.\n• Otherwise: the teacher having Period 1 will be used.\n• If no teacher is selected/found for a class in the timetable, that class will be skipped.\n\nExisting Class Incharge assignments for this session will be updated/replaced where a timetable teacher is found.'))return;
+  const btns=[...document.querySelectorAll('#classInchargeTab button')];
+  const syncBtn=btns.find(b=>String(b.textContent||'').includes('Sync from Timetable'));
+  const oldHtml=syncBtn?.innerHTML;
+  try{
+    if(syncBtn){syncBtn.disabled=true;syncBtn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Syncing...';}
+
+    const {data:ttRows,error:ttError}=await supabaseClient.from('school_timetable')
+      .select('id,session,timetable_mode,day_name,period_no,class_name,section_name,employee_code,subject_name')
+      .eq('session',ACADEMIC_SESSION)
+      .order('day_name').order('period_no');
+    if(ttError)throw ttError;
+
+    const rows=ttRows||[];
+    if(!rows.length){__erpAlert('No timetable data found for the current academic session.');return;}
+    // school_timetable stores employee_code, not teacher_name. Teacher display names
+    // are resolved from the staff master so this sync never requests a missing column.
+
+    const motherMap=await loadMotherTeacherMap();
+    const candidates=new Map();
+    const missing=[];
+
+    // First collect every class + section present in the timetable. For normal
+    // classes, the first available teacher in Period 1 is the source. For
+    // Mother Teacher / No Periods classes, the selected Mother Teacher wins.
+    const sectionKeys=new Set();
+    rows.forEach(r=>{
+      const cls=String(r.class_name||'').trim(),sec=String(r.section_name||'').trim();
+      if(cls&&sec)sectionKeys.add(`${cls}|||${sec}`);
+    });
+
+    const dayRank={}; TA_DAYS.forEach((d,i)=>dayRank[d]=i);
+    const periodOneRows=rows.filter(r=>Number(r.period_no)===1 && String(r.employee_code||'').trim());
+    periodOneRows.sort((a,b)=>{
+      const ad=Object.prototype.hasOwnProperty.call(dayRank,a.day_name)?dayRank[a.day_name]:99;
+      const bd=Object.prototype.hasOwnProperty.call(dayRank,b.day_name)?dayRank[b.day_name]:99;
+      return ad-bd || String(a.class_name||'').localeCompare(String(b.class_name||'')) || String(a.section_name||'').localeCompare(String(b.section_name||''));
+    });
+
+    sectionKeys.forEach(key=>{
+      const parts=key.split('|||'),cls=parts[0],sec=parts[1];
+      if(isMotherTeacherClass(cls) && getMotherTeacherMode(cls,sec)){
+        const m=motherMap[key];
+        const emp=String(m?.employee_code||'').trim();
+        if(emp)candidates.set(key,{class_name:cls,section_name:sec,employee_code:emp,teacher_name:m.teacher_name||getAcademicStaffDisplayName(emp,emp),source:'Mother Teacher'});
+        else missing.push(`${cls} / ${sec} — Mother Teacher / No Periods is enabled but no Mother Teacher is selected.`);
+        return;
+      }
+      const r=periodOneRows.find(x=>String(x.class_name||'').trim()===cls&&String(x.section_name||'').trim()===sec);
+      if(r){
+        const emp=String(r.employee_code||'').trim();
+        if(emp)candidates.set(key,{class_name:cls,section_name:sec,employee_code:emp,teacher_name:getAcademicStaffDisplayName(emp,emp),source:`Period 1${r.day_name?` (${r.day_name})`:''}`});
+        else missing.push(`${cls} / ${sec} — Period 1 has no teacher selected.`);
+      }
+      else missing.push(`${cls} / ${sec} — no teacher found in Period 1.`);
+    });
+
+    if(!candidates.size){
+      __erpAlert('No Class Incharge assignments could be derived from the timetable.\n\n'+(missing.length?missing.join('\n'):'No matching timetable rows found.'));
+      return;
+    }
+
+    let updated=0,created=0;
+    for(const item of candidates.values()){
+      const q=await supabaseClient.from('class_incharges').select('id').eq('session',ACADEMIC_SESSION).eq('class_name',item.class_name).eq('section_name',item.section_name).order('id',{ascending:true}).limit(1);
+      if(q.error)throw q.error;
+      if(q.data?.length){
+        const {error}=await supabaseClient.from('class_incharges').update({employee_code:item.employee_code,teacher_name:item.teacher_name}).eq('id',q.data[0].id);
+        if(error)throw error;
+        updated++;
+      }else{
+        const id=await nextUniqueNumericId('class_incharges');
+        const {error}=await supabaseClient.from('class_incharges').insert({id,session:ACADEMIC_SESSION,class_name:item.class_name,section_name:item.section_name,employee_code:item.employee_code,teacher_name:item.teacher_name});
+        if(error)throw error;
+        created++;
+      }
+    }
+
+    await loadClassInchargeManager();
+    const note=missing.length?`\n\nNot synced:\n${missing.join('\n')}`:'';
+    __erpAlert(`Class Incharge sync completed.\n\nUpdated: ${updated}\nCreated: ${created}${note}`);
+  }catch(err){
+    __erpAlert('Class Incharge timetable sync failed: '+(err?.message||err));
+  }finally{
+    if(syncBtn){syncBtn.disabled=false;if(oldHtml)syncBtn.innerHTML=oldHtml;}
+  }
+}
+
 async function deleteClassIncharge(id){if(!academicAdmin())return;if(!await __erpConfirm('Remove this class incharge assignment?'))return;const {error}=await supabaseClient.from('class_incharges').delete().eq('id',id);if(error)__erpAlert(error.message);else loadClassInchargeManager();}
 async function fillTeacherAllocationSections(){
   const cls=document.getElementById('taClass')?.value||'',sel=document.getElementById('taSection');
@@ -11430,7 +11521,7 @@ function resolveRecoveryTeacherCode(name){
 function recoveryRowsWithStaff(){
   return screenshotRecoveryRows().map(r=>({...r,employee_code:resolveRecoveryTeacherCode(r.recovery_teacher_name)}));
 }
-const MOTHER_TEACHER_CLASSES=new Set(['NRY','LKG','UKG','1ST']);
+const MOTHER_TEACHER_CLASSES=new Set(['NRY','LKG','UKG','1ST','2ND']);
 function isMotherTeacherClass(cls){return MOTHER_TEACHER_CLASSES.has(String(cls||'').trim().toUpperCase());}
 function motherTeacherStorageKey(cls,sec){return `erp_mother_teacher_${ACADEMIC_SESSION}_${cls}|||${sec}`;}
 function getMotherTeacherMode(cls,sec){if(!isMotherTeacherClass(cls))return false;const raw=localStorage.getItem(motherTeacherStorageKey(cls,sec));return raw===null?true:raw==='1';}
