@@ -4017,6 +4017,20 @@
   </div>
 </div>
 
+<div class="modal fade" id="adminPasswordResetModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header bg-warning"><h5 class="modal-title fw-bold"><i class="fas fa-key me-2"></i>Admin Password Reset</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <form onsubmit="submitAdminPasswordReset(event)"><div class="modal-body">
+      <p class="small text-muted mb-2">Set a new password for this user. Only an administrator can use this option.</p>
+      <input type="hidden" id="adminResetUsername">
+      <div class="mb-3"><label class="form-label fw-bold">User</label><input class="form-control" id="adminResetUsernameLabel" disabled></div>
+      <div class="mb-3"><label class="form-label fw-bold">New password</label><input class="form-control" id="adminResetPassword" type="password" minlength="8" autocomplete="new-password" required placeholder="At least 8 characters"></div>
+      <div class="mb-3"><label class="form-label fw-bold">Confirm new password</label><input class="form-control" id="adminResetPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required></div>
+      <div id="adminResetMessage" class="small" role="status"></div>
+    </div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-warning fw-bold" id="adminResetSubmit">Reset Password</button></div></form>
+  </div></div>
+</div>
+
 <div class="modal fade" id="selfProfileModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -7047,12 +7061,10 @@ function portalModuleAction(tabId, action) {
   function legacyHash(v){let h=2166136261>>>0;for(let i=0;i<String(v||'').length;i++){h^=String(v).charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(36);}
   function legacyUserAuthEmail(username){const seed=String(currentSchoolCode||'')+'|legacy|' + String(username||'').trim().toLowerCase();return 'l'+legacyHash(seed)+'@portal.school';}
   async function establishLegacyAuthSession(legacyUser,password){
-    // Legacy users are validated by legacy_login_user.  They still need an
-    // authenticated Supabase JWT so the existing school-wide RLS policies can
-    // see classes, students, staff, fees, attendance, holidays, etc.
-    // Prefer an anonymous Auth identity (no email dependency); fall back to a
-    // deterministic private email identity for projects where Anonymous Sign-ins
-    // are not enabled.
+    // Legacy credentials are verified by legacy_login_user. A JWT is still
+    // required for the existing RLS policies, so try anonymous auth first.
+    // If anonymous auth is disabled, try all previously supported internal
+    // mobile identity formats before attempting to create a legacy identity.
     try{await supabaseRawClient.auth.signOut();}catch(_){ }
     let authUser=null, authError=null;
     try{
@@ -7061,17 +7073,44 @@ function portalModuleAction(tabId, action) {
       else authError=anon.error||new Error('Anonymous sign-in did not return a session.');
     }catch(e){authError=e;}
 
+    const mobile=normalizeMobile(legacyUser.username);
+    const candidateEmails=[legacyUserAuthEmail(legacyUser.username)];
+    if(mobile.length===10) candidateEmails.push(authEmail(mobile),legacyAuthEmail(mobile));
+    const emails=[...new Set(candidateEmails.filter(Boolean))];
+    let lastAuthError=authError;
+
     if(!authUser){
-      const email=legacyUserAuthEmail(legacyUser.username);
-      let r=await supabaseRawClient.auth.signInWithPassword({email,password});
-      if(r.data?.user) authUser=r.data.user;
-      else if(/invalid.*credentials|user.*not.*found/i.test(String(r.error?.message||''))){
-        r=await supabaseRawClient.auth.signUp({email,password});
-        if(r.data?.user&&r.data?.session)authUser=r.data.user;
-        else if(r.data?.user)throw new Error('Supabase Authentication did not return an active session for the legacy login. Enable Anonymous Sign-ins, or turn OFF Email confirmation in Authentication → Providers → Email.');
-        else throw r.error||new Error('Could not create the internal authentication identity.');
-      }else throw r.error||authError||new Error('Could not create an authenticated session.');
+      // Resume an existing internal account when its password matches.
+      for(const email of emails){
+        try{
+          const r=await supabaseRawClient.auth.signInWithPassword({email,password});
+          if(r.data?.user && r.data?.session){authUser=r.data.user;break;}
+          if(r.error) lastAuthError=r.error;
+        }catch(e){lastAuthError=e;}
+      }
     }
+
+    if(!authUser){
+      // Create only the deterministic legacy identity as a last resort.
+      // Do not stop on "already registered": that identity may exist in one of
+      // the other formats, and those were already tried above.
+      const email=legacyUserAuthEmail(legacyUser.username);
+      try{
+        const r=await supabaseRawClient.auth.signUp({email,password});
+        if(r.data?.user&&r.data?.session) authUser=r.data.user;
+        else if(r.data?.user) throw new Error('Supabase Authentication did not return an active session for the legacy login. Enable Anonymous Sign-ins, or turn OFF Email confirmation in Authentication → Providers → Email.');
+        else lastAuthError=r.error||lastAuthError;
+      }catch(e){lastAuthError=e;}
+    }
+
+    if(!authUser){
+      const detail=String(lastAuthError?.message||'');
+      if(/already registered|user already exists/i.test(detail)){
+        throw new Error('The portal password is valid, but its internal Supabase login identity already exists with a different password. Enable Anonymous Sign-ins in Supabase Authentication → Sign-in methods, or have the administrator securely relink/reset this account.');
+      }
+      throw lastAuthError||new Error('Could not create an authenticated session. In Supabase Authentication → Sign-in methods, enable Anonymous Sign-ins, or turn OFF Confirm email for this internal mobile-login system.');
+    }
+
     const {data:bind,error:bindError}=await supabaseRawClient.rpc('legacy_bind_current_auth_user',{
       p_school_id:currentSchoolId,p_username:legacyUser.username,p_password:password,
       p_role_type:legacyUser.type,p_associated_id:legacyUser.associated_id||null
@@ -7522,40 +7561,61 @@ function portalModuleAction(tabId, action) {
     finally{loginBtn.disabled=false;loginBtn.innerHTML='<i class="fas fa-sign-in-alt me-1"></i> Sign In';}
   }
   async function activatePortalAccount(e){
-    e.preventDefault();const mobile=normalizeMobile(document.getElementById('activateMobile').value),p1=document.getElementById('activatePassword').value,p2=document.getElementById('activatePassword2').value,msg=document.getElementById('activationMessage'),btn=document.getElementById('activateAccountBtn');
-    if(mobile.length!==10){msg.innerHTML='<span class="text-danger">Enter a valid 10-digit mobile number.</span>';return}
-    if(p1!==p2){msg.innerHTML='<span class="text-danger">Passwords do not match.</span>';return}
-    if(p1.length<8){msg.innerHTML='<span class="text-danger">Password must be at least 8 characters.</span>';return}
+    e.preventDefault();
+    const mobile=normalizeMobile(document.getElementById('activateMobile').value),p1=document.getElementById('activatePassword').value,p2=document.getElementById('activatePassword2').value,msg=document.getElementById('activationMessage'),btn=document.getElementById('activateAccountBtn');
+    if(mobile.length!==10){msg.innerHTML='<span class="text-danger">Enter a valid 10-digit mobile number.</span>';return;}
+    if(p1!==p2){msg.innerHTML='<span class="text-danger">Passwords do not match.</span>';return;}
+    if(p1.length<8){msg.innerHTML='<span class="text-danger">Password must be at least 8 characters.</span>';return;}
     btn.disabled=true;msg.innerHTML='<span class="text-muted">Checking school records...</span>';
     try{
       await resolveSchoolForLogin(mobile);
-      const ident=await findRegisteredIdentity(mobile);if(!ident.role){msg.innerHTML='<span class="text-danger fw-bold">This mobile number is not present in the school database. Account cannot be created.</span>';return;}
-      const email=authEmail(mobile);
-      if(!email)throw new Error('Could not create the internal login identity. Please enter a valid 10-digit mobile number.');
-      const {data,error}=await supabaseClient.auth.signUp({email,password:p1});
-      if(error){
-        // If a previous activation created the Auth user but the portal link was not completed,
-        // allow the user to finish the link with the password they have just entered.
-        if(/already registered|user already exists/i.test(String(error.message||''))){
-          const retry=await supabaseClient.auth.signInWithPassword({email,password:p1});
-          if(retry.error||!retry.data?.user)throw retry.error||new Error('Unable to sign in to the existing account.');
-          await establishPortalAccount(retry.data.user,ident);
-          msg.innerHTML='<span class="text-success fw-bold">Existing account linked successfully. You can now login.</span>';
-          document.getElementById('loginUsername').value=mobile;document.getElementById('loginPassword').value=p1;
-          setTimeout(()=>bootstrap.Modal.getInstance(document.getElementById('accountActivationModal'))?.hide(),800);
-          return;
+      const ident=await findRegisteredIdentity(mobile);
+      if(!ident.role){msg.innerHTML='<span class="text-danger fw-bold">This mobile number is not present in the school database. Account cannot be created.</span>';return;}
+      const emails=[...new Set([authEmail(mobile),legacyAuthEmail(mobile)].filter(Boolean))];
+      if(!emails.length)throw new Error('Could not create the internal login identity. Please enter a valid 10-digit mobile number.');
+      let authUser=null,authSession=null,lastError=null,created=false;
+
+      // First resume an account created by an earlier/partial activation, using
+      // either internal identity format supported by the login routine.
+      for(const email of emails){
+        try{
+          const r=await supabaseRawClient.auth.signInWithPassword({email,password:p1});
+          if(r.data?.user&&r.data?.session){authUser=r.data.user;authSession=r.data.session;break;}
+          if(r.error)lastError=r.error;
+        }catch(err){lastError=err;}
+      }
+
+      // If no identity accepts this password, attempt sign-up with each supported
+      // internal identity. An existing identity is skipped rather than stopping
+      // activation before trying the alternate format.
+      if(!authUser){
+        for(const email of emails){
+          try{
+            const r=await supabaseRawClient.auth.signUp({email,password:p1});
+            if(r.data?.user&&r.data?.session){authUser=r.data.user;authSession=r.data.session;created=true;break;}
+            if(r.error){lastError=r.error;if(/already registered|user already exists/i.test(String(r.error.message||'')))continue;}
+            else if(r.data?.user){lastError=new Error('Supabase returned a user without an active session.');}
+          }catch(err){
+            lastError=err;
+            if(/already registered|user already exists/i.test(String(err?.message||'')))continue;
+          }
         }
-        throw error;
       }
-      if(data.session&&data.user){
-        await establishPortalAccount(data.user,ident);
-        msg.innerHTML='<span class="text-success fw-bold">Account created successfully. You can now login with your mobile number and password.</span>';
-        document.getElementById('loginUsername').value=mobile;document.getElementById('loginPassword').value=p1;
-        setTimeout(()=>bootstrap.Modal.getInstance(document.getElementById('accountActivationModal'))?.hide(),800);
-      } else {
-        msg.innerHTML='<span class="text-danger fw-bold">'+erpEsc('Supabase returned no active session. '+authConfigMessage('Confirm email is enabled'))+'</span>';
+
+      if(!authUser||!authSession){
+        const detail=String(lastError?.message||'');
+        if(/invalid.*credentials/i.test(detail)||/already registered|user already exists/i.test(detail)){
+          throw new Error('An internal login identity already exists for this mobile number but the entered password does not match it. Try the password previously used for this portal account, or ask the school administrator to reset/relink the account.');
+        }
+        throw lastError||new Error('Could not create an active login session. In Supabase Authentication → Providers → Email, enable Email and turn OFF Confirm email.');
       }
-    }catch(err){console.error(err);msg.innerHTML='<span class="text-danger">'+erpEsc(authConfigMessage(err))+'</span>'}
+
+      await establishPortalAccount(authUser,ident);
+      msg.innerHTML='<span class="text-success fw-bold">'+(created?'Account created successfully.':'Account linked successfully.')+' You can now login with your mobile number and password.</span>';
+      document.getElementById('loginUsername').value=mobile;
+      document.getElementById('loginPassword').value=p1;
+      setTimeout(()=>bootstrap.Modal.getInstance(document.getElementById('accountActivationModal'))?.hide(),800);
+    }catch(err){console.error(err);msg.innerHTML='<span class="text-danger">'+erpEsc(authConfigMessage(err))+'</span>';}
     finally{btn.disabled=false;}
   }
   function openAccountActivation(){document.getElementById('activateMobile').value=document.getElementById('loginUsername').value.trim();document.getElementById('activationMessage').innerHTML='';new bootstrap.Modal(document.getElementById('accountActivationModal')).show();}
@@ -7621,7 +7681,25 @@ function portalModuleAction(tabId, action) {
     } else if(isTeacher){
       if(isPortalTeacher) await fetchPortalAccount();
       await fetchRolePermissions('teacher');
-      document.getElementById('currentUserDisplay').innerText='Teacher '+(associatedId||'');
+      // Show the teacher's ID and registered name beside Logout when available.
+      let teacherDisplayName='';
+      try{
+        if(associatedId){
+          let teacherQuery=supabaseClient.from('users').select('*').eq('associated_id',associatedId);
+          if(currentSchoolId) teacherQuery=teacherQuery.eq('school_id',currentSchoolId);
+          const {data:teacherRow,error:teacherNameError}=await teacherQuery.limit(1).maybeSingle();
+          if(!teacherNameError && teacherRow){
+            const nameKeys=['name','full_name','employee_name','teacher_name','staff_name','display_name','username'];
+            for(const key of nameKeys){
+              const value=String(teacherRow[key]??'').trim();
+              if(value && value!==String(username||'').trim() && !/^\d+$/.test(value)){
+                teacherDisplayName=value;break;
+              }
+            }
+          }
+        }
+      }catch(e){console.warn('Teacher display name lookup skipped:',e?.message||e);}
+      document.getElementById('currentUserDisplay').innerText='Teacher '+(associatedId||'')+(teacherDisplayName?' • '+teacherDisplayName:'');
       document.getElementById('staffNavGroup').style.display='none';
       document.getElementById('studentNavGroup').style.display='none';
       document.getElementById('limitedUserNavGroup').style.display='block';
@@ -10444,9 +10522,9 @@ function portalModuleAction(tabId, action) {
     if(!users.length){tbody.innerHTML='<tr><td colspan="6" class="text-center text-muted py-4">No matching users found.</td></tr>';return;}
     users.forEach(u=>{
       const role=canonicalPortalRole(u.type||'staff'),st=(window._schoolUserStaffMap||{})[String(u.associated_id||'').trim()]||{};
-      const actions=isUserRoleManager()
-        ? `<button class="btn btn-sm btn-outline-secondary fw-bold me-1" onclick="openEditUserModal('${erpEsc(u.username)}')" title="Change role"><i class="fas fa-user-edit"></i></button><button class="btn btn-sm btn-outline-primary fw-bold me-1" onclick="openRolePermissionForUser('${erpEsc(role)}')" title="Manage role permissions"><i class="fas fa-user-shield"></i></button>${canCreateUserAccounts()?`<button class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteUser('${erpEsc(u.username)}')" title="Delete"><i class="fas fa-trash"></i></button>`:''}`
-        : '<span class="text-muted small">View only</span>';
+      const actions=canCreateUserAccounts()
+        ? `<button class="btn btn-sm btn-outline-secondary fw-bold me-1" onclick="openEditUserModal('${erpEsc(u.username)}')" title="Change role"><i class="fas fa-user-edit"></i></button><button class="btn btn-sm btn-outline-warning fw-bold me-1" onclick="openAdminPasswordReset('${erpEsc(u.username)}')" title="Reset password"><i class="fas fa-key"></i></button><button class="btn btn-sm btn-outline-primary fw-bold me-1" onclick="openRolePermissionForUser('${erpEsc(role)}')" title="Manage role permissions"><i class="fas fa-user-shield"></i></button><button class="btn btn-sm btn-outline-danger fw-bold" onclick="deleteUser('${erpEsc(u.username)}')" title="Permanently delete user"><i class="fas fa-trash"></i></button>`
+        : (isUserRoleManager()?`<button class="btn btn-sm btn-outline-secondary fw-bold me-1" onclick="openEditUserModal('${erpEsc(u.username)}')" title="Change role"><i class="fas fa-user-edit"></i></button><button class="btn btn-sm btn-outline-primary fw-bold" onclick="openRolePermissionForUser('${erpEsc(role)}')" title="Manage role permissions"><i class="fas fa-user-shield"></i></button>`:'<span class="text-muted small">View only</span>');
       tbody.innerHTML+=`<tr><td><strong>${erpEsc(u.username)}</strong></td><td>${erpEsc(st.name||'—')}</td><td><span class="badge bg-light text-dark border">${erpEsc(portalRoleLabel(role))}</span></td><td>${erpEsc(u.associated_id||'-')}</td><td><span class="badge bg-success-subtle text-success border access-badge">Role based</span></td><td>${actions}</td></tr>`;
     });
   }
@@ -10498,14 +10576,51 @@ function portalModuleAction(tabId, action) {
     }catch(err){__erpAlert('Error saving user: '+(err?.message||err));}
     finally{setButtonLoading('btnSaveUserModalAction',false);}
   }
+  function openAdminPasswordReset(username){
+    if(!canCreateUserAccounts()){__erpAlert('Only Administrator or Master Portal Administrator can reset user passwords.');return;}
+    document.getElementById('adminResetUsername').value=username;
+    document.getElementById('adminResetUsernameLabel').value=username;
+    document.getElementById('adminResetPassword').value='';document.getElementById('adminResetPasswordConfirm').value='';
+    document.getElementById('adminResetMessage').textContent='';
+    new bootstrap.Modal(document.getElementById('adminPasswordResetModal')).show();
+  }
+  async function submitAdminPasswordReset(e){
+    e.preventDefault();
+    if(!canCreateUserAccounts()){__erpAlert('Only Administrator or Master Portal Administrator can reset user passwords.');return;}
+    const username=document.getElementById('adminResetUsername').value;
+    const password=document.getElementById('adminResetPassword').value;
+    const confirmPassword=document.getElementById('adminResetPasswordConfirm').value;
+    const msg=document.getElementById('adminResetMessage'),btn=document.getElementById('adminResetSubmit');
+    if(password.length<8){msg.className='small text-danger';msg.textContent='Password must contain at least 8 characters.';return;}
+    if(password!==confirmPassword){msg.className='small text-danger';msg.textContent='Passwords do not match.';return;}
+    const schoolId=window.currentSchoolId||currentSchoolId||null;
+    if(!schoolId){msg.className='small text-danger';msg.textContent='No active school context.';return;}
+    btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Resetting…';
+    try{
+      const {error}=await supabaseClient.rpc('school_admin_reset_user_password',{p_school_id:schoolId,p_username:username,p_new_password:password});
+      if(error)throw error;
+      msg.className='small text-success';msg.textContent='Password reset successfully.';
+      document.getElementById('adminResetPassword').value='';document.getElementById('adminResetPasswordConfirm').value='';
+      setTimeout(()=>bootstrap.Modal.getInstance(document.getElementById('adminPasswordResetModal'))?.hide(),900);
+    }catch(err){msg.className='small text-danger';msg.textContent=String(err?.message||err)+' — Check that the users table allows this update.';}
+    finally{btn.disabled=false;btn.textContent='Reset Password';}
+  }
+
   async function deleteUser(username){
-    if(!canCreateUserAccounts()){__erpAlert('Only Administrator can delete user accounts.');return;}
-    if(!await __erpConfirm(`Delete user account "${username}" from this school?`))return;
+    if(!canCreateUserAccounts()){__erpAlert('Only Administrator or Master Portal Administrator can permanently delete user accounts.');return;}
+    if(String(username||'').toLowerCase()==='admin' && String(currentUser?.username||'').toLowerCase()==='admin'){
+      __erpAlert('You cannot delete the currently signed-in administrator account.');return;
+    }
+    if(!await __erpConfirm(`PERMANENTLY DELETE user "${username}"?\n\nThis permanently removes the user record from this school portal. This action cannot be undone.`))return;
+    const second=await __erpConfirm(`Final confirmation: permanently delete "${username}"?`);if(!second)return;
     try{
       const schoolId=window.currentSchoolId||currentSchoolId||null;
+      if(!schoolId)throw new Error('No active school context.');
       const {error}=await supabaseClient.rpc('school_admin_delete_user',{p_school_id:schoolId,p_username:username});
-      if(error)throw error;__erpAlert('User deleted successfully from this school.');await loadUsersList();
-    }catch(err){__erpAlert('Error deleting user: '+(err?.message||err));}
+      if(error)throw error;
+      __erpAlert('User permanently deleted from this school portal.');
+      await loadUsersList();
+    }catch(err){__erpAlert('Error permanently deleting user: '+(err?.message||err)+'\n\nCheck the users table permissions and school_id column.');}
   }
 
   function printReceipt() {
@@ -13993,7 +14108,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCalendarDetailP
     if(!sections.length){tb.innerHTML=`<tr><td colspan="${periods.length+1}" class="text-center text-muted p-4">No class sections found.</td></tr>`;return;}
     const uniqueSections=[],seen=new Set();sections.forEach(x=>{const k=`${x.class_name}|||${x.section_name}`;if(!seen.has(k)){seen.add(k);uniqueSections.push(x);}});
     const allSubjectsByRow={};
-    for(const row of uniqueSections){let resultSubs=[];try{resultSubs=sortResultSubjectNames([...new Set((await getResultAllocations(row.class_name)||[]).map(x=>x.subject_name||x.result_subject_master?.subject_name).filter(Boolean))],row.class_name);}catch(e){}const a=allocations.filter(x=>String(x.class_name)===String(row.class_name)&&String(x.section_name)===String(row.section_name)&&x.active!==false);const rec=SCREENSHOT_TIMETABLE_RECOVERY.find(x=>x[0]===row.class_name&&x[1]===row.section_name);const recoverySubs=rec?[...new Set(rec[2].map(v=>String(v||'').split('|')[0].trim()).filter(Boolean))]:[];allSubjectsByRow[timetableRowKey(row.class_name,row.section_name)]=sortResultSubjectNames([...new Set([...resultSubs,...a.map(x=>x.subject_name).filter(Boolean),...recoverySubs])],row.class_name);}
+    for(const row of uniqueSections){
+      let resultSubs=[];
+      try{resultSubs=sortResultSubjectNames([...new Set((await getResultAllocations(row.class_name)||[]).map(x=>x.subject_name||x.result_subject_master?.subject_name).filter(Boolean))],row.class_name);}catch(e){console.warn('Timetable class subject load:',row.class_name,e.message||e);}
+      const isSenior=!!(typeof seniorGroupForClass==='function'&&seniorGroupForClass(row.class_name));
+      if(isSenior){
+        // For classes 11th/12th, the student-wise Subjects module is the source of truth.
+        // Do not add stale timetable allocations or recovered screenshot subjects to the dropdown.
+        allSubjectsByRow[timetableRowKey(row.class_name,row.section_name)]=resultSubs;
+      }else{
+        const a=allocations.filter(x=>String(x.class_name)===String(row.class_name)&&String(x.section_name)===String(row.section_name)&&x.active!==false);
+        const rec=SCREENSHOT_TIMETABLE_RECOVERY.find(x=>x[0]===row.class_name&&x[1]===row.section_name);
+        const recoverySubs=rec?[...new Set(rec[2].map(v=>String(v||'').split('|')[0].trim()).filter(Boolean))]:[];
+        allSubjectsByRow[timetableRowKey(row.class_name,row.section_name)]=sortResultSubjectNames([...new Set([...resultSubs,...a.map(x=>x.subject_name).filter(Boolean),...recoverySubs])],row.class_name);
+      }
+    }
     const dataMap=unifiedRowsFromCache(data);let html='';const motherMap=await loadMotherTeacherMap();
     uniqueSections.forEach(row=>{
       const rk=timetableRowKey(row.class_name,row.section_name),motherMode=getMotherTeacherMode(row.class_name,row.section_name),motherKey=`${row.class_name}|||${row.section_name}`,currentMotherCode=String(motherMap[motherKey]?.employee_code||'');const motherOptions=activeStaff().map(x=>`<option value="${esc(x.employee_code)}" ${currentMotherCode===String(x.employee_code)?'selected':''}>${esc(x.teacher_name)}</option>`).join('');const labelExtra=isMotherTeacherClass(row.class_name)?`<div class="tt-mother-box no-print"><label><input type="checkbox" class="tt-mother-mode" ${motherMode?'checked':''} onchange="toggleMotherTeacherMode(this)"> Mother Teacher / No Periods</label><select class="tt-mother-teacher" onchange="handleMotherTeacherChange(this)"><option value="">Select Mother Teacher</option>${motherOptions}</select></div>`:'';
