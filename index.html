@@ -1303,7 +1303,7 @@ document.addEventListener('click',function(e){const el=e.target.closest('button,
       <div class="content-box">
         <div class="section-title"><i class="fas fa-list-ol text-primary"></i> Incharge — Result Lists</div>
         <p class="small text-muted">View result lists for your class + section. This is view-only for Class Incharge.</p>
-        <div class="row g-2 align-items-end no-print mb-3"><div class="col-md-3"><label class="form-label small fw-bold">Class / Section</label><select id="teacherInchargeResultClass" class="form-select"></select></div><div class="col-md-3"><label class="form-label small fw-bold">Section</label><select id="teacherInchargeResultSection" class="form-select"></select></div><div class="col-md-3"><label class="form-label small fw-bold">Result</label><select id="teacherInchargeResultTerm" class="form-select"><option>1st Term</option><option>2nd Term</option><option>Final Term</option><option>Final Result</option></select></div><div class="col-md-3"><button class="btn btn-primary fw-bold w-100" onclick="generateTeacherInchargeResults()">Generate Result List</button></div></div>
+        <div class="row g-2 align-items-end no-print mb-3"><div class="col-md-3"><label class="form-label small fw-bold">Class / Section</label><select id="teacherInchargeResultClass" class="form-select" onchange="refreshTeacherInchargeResultSections()"></select></div><div class="col-md-3"><label class="form-label small fw-bold">Section</label><select id="teacherInchargeResultSection" class="form-select" onchange="clearTeacherInchargeGeneratedResult('list')"></select></div><div class="col-md-3"><label class="form-label small fw-bold">Result</label><select id="teacherInchargeResultTerm" class="form-select" onchange="clearTeacherInchargeGeneratedResult('list')"><option>1st Term</option><option>2nd Term</option><option>Final Term</option><option>Final Result</option></select></div><div class="col-md-3"><button class="btn btn-primary fw-bold w-100" id="teacherInchargeResultGenerateBtn" onclick="generateTeacherInchargeResults()">Generate Result List</button></div></div>
         <div id="teacherInchargeResultArea" class="bg-white p-2"><div class="text-center text-muted py-4">Select your incharge class and section.</div></div>
       </div>
     </div>
@@ -1313,10 +1313,10 @@ document.addEventListener('click',function(e){const el=e.target.closest('button,
         <div class="section-title"><i class="fas fa-receipt text-primary"></i> Incharge — Result Slips</div>
         <p class="small text-muted">View and print result slips only for your own Class Incharge class + section.</p>
         <div class="row g-2 align-items-end no-print mb-3">
-          <div class="col-md-3"><label class="form-label small fw-bold">Class</label><select id="teacherInchargeSlipClass" class="form-select"></select></div>
-          <div class="col-md-3"><label class="form-label small fw-bold">Section</label><select id="teacherInchargeSlipSection" class="form-select"></select></div>
-          <div class="col-md-3"><label class="form-label small fw-bold">Term</label><select id="teacherInchargeSlipTerm" class="form-select"><option value="1st Term">1st Term</option><option value="2nd Term">2nd Term</option><option value="Final Term">Final Term</option><option value="Final Result">Final Result — All 3 Terms</option></select></div>
-          <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary fw-bold flex-fill" onclick="generateTeacherInchargeResultSlips()"><i class="fas fa-receipt me-1"></i> Generate</button><button class="btn btn-outline-dark fw-bold" onclick="printTeacherInchargeResultSlips()"><i class="fas fa-print me-1"></i> Print</button></div>
+          <div class="col-md-3"><label class="form-label small fw-bold">Class</label><select id="teacherInchargeSlipClass" class="form-select" onchange="refreshTeacherInchargeSlipSections()"></select></div>
+          <div class="col-md-3"><label class="form-label small fw-bold">Section</label><select id="teacherInchargeSlipSection" class="form-select" onchange="clearTeacherInchargeGeneratedResult('slips')"></select></div>
+          <div class="col-md-3"><label class="form-label small fw-bold">Term</label><select id="teacherInchargeSlipTerm" class="form-select" onchange="clearTeacherInchargeGeneratedResult('slips')"><option value="1st Term">1st Term</option><option value="2nd Term">2nd Term</option><option value="Final Term">Final Term</option><option value="Final Result">Final Result — All 3 Terms</option></select></div>
+          <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary fw-bold flex-fill" id="teacherInchargeSlipGenerateBtn" onclick="generateTeacherInchargeResultSlips()"><i class="fas fa-receipt me-1"></i> Generate</button><button class="btn btn-outline-dark fw-bold" id="teacherInchargeSlipPrintBtn" onclick="printTeacherInchargeResultSlips()" disabled><i class="fas fa-print me-1"></i> Print</button></div>
         </div>
         <div id="teacherInchargeResultSlipsPrintArea"></div>
       </div>
@@ -5474,30 +5474,118 @@ function portalModuleAction(tabId, action) {
     body.innerHTML=`<div class="row g-4 align-items-start"><div class="col-md-8"><div class="pe-md-3">${field('Name',erpEsc(s.name))}${field('Roll No',erpEsc(s.roll_no||'-'))}${field('Admission No',erpEsc(s.adm_no))}${field('Class / Section',`${erpEsc(s.class_name)} / ${erpEsc(s.section||'-')}`)}${field('Father',erpEsc(s.father_name||'-'))}${field('Mother',erpEsc(s.mother_name||'-'))}${field('Contact 1',erpEsc(s['contact 1']||'-'))}${field('Contact 2',erpEsc(s['contact 2']||'-'))}${field('Date of Birth',erpEsc(s.dob||'-'))}${field('Village / Town',erpEsc(s.village_town||s.village||'-'))}${field('Admission Date',erpEsc(s.doa||'-'))}</div></div><div class="col-md-4 border-start"><div class="student-profile-photo-panel"><div class="fw-bold text-primary mb-2"><i class="fas fa-images me-1"></i> Photos</div>${photoBox(studentPhoto,'Student Photo')}${photoBox(fatherPhoto,"Father's Photo")}${photoBox(motherPhoto,"Mother's Photo")}</div></div></div>${resultTable('Current Session — Term Results',currentRows)}${resultTable('Previous Academic Year Results',previousRows,'No previous-year result is available in the result database.')}${rErr?`<div class="alert alert-warning small mt-2">Previous/result history could not be fully loaded: ${erpEsc(rErr.message)}</div>`:''}`;
     new bootstrap.Modal(document.getElementById('teacherStudentProfileModal')).show();
   }
-  async function loadTeacherInchargeResults(){const a=await getTeacherInchargeAssignments(),cls=document.getElementById('teacherInchargeResultClass'),sec=document.getElementById('teacherInchargeResultSection');if(!a.length){document.getElementById('teacherInchargeResultArea').innerHTML='<div class="alert alert-warning">No Class Incharge assignment found.</div>';return;}cls.innerHTML=[...new Set(a.map(x=>x.class_name))].map(x=>`<option>${erpEsc(x)}</option>`).join('');sec.innerHTML=a.filter(x=>x.class_name===cls.value).map(x=>`<option>${erpEsc(x.section_name)}</option>`).join('');await generateTeacherInchargeResults();}
-  async function generateTeacherInchargeResults(){const cls=document.getElementById('teacherInchargeResultClass')?.value||'',sec=document.getElementById('teacherInchargeResultSection')?.value||'',mode=document.getElementById('teacherInchargeResultTerm')?.value||'Final Term',a=await getTeacherInchargeAssignments();if(!a.some(x=>x.class_name===cls&&x.section_name===sec)){__erpAlert('Access denied.');return;}const d=await fetchResultDataset(cls,sec,mode);const area=document.getElementById('teacherInchargeResultArea');if(!d.records?.length){area.innerHTML='<div class="alert alert-info">No result records found.</div>';return;}let h=`<div class="text-center fw-bold mb-2">${erpEsc(cls)} — Section ${erpEsc(sec)} — ${erpEsc(resultListHeader(mode))}</div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Roll</th><th>Adm No</th><th>Student</th>`;d.subjects.forEach(x=>h+=`<th>${erpEsc(x.name)}</th>`);h+=`<th>Total</th><th>%</th><th>Result</th></tr></thead><tbody>`;d.records.forEach(r=>{h+=`<tr><td>${erpEsc(r.student.roll_no||'-')}</td><td>${erpEsc(r.student.adm_no)}</td><td>${erpEsc(r.student.name)}</td>`;r.subjects.forEach(x=>h+=`<td class="text-center">${mode==='Final Result'?(x.evaluation==='grade'?x.grades.map((g,j)=>x.absent[j]?'Absent':(g||'-')).join(' / '):`${x.absent[0]?'Absent':x.marks[0]} / ${x.absent[1]?'Absent':x.marks[1]} / ${x.absent[2]?'Absent':x.marks[2]}`):(x.evaluation==='grade'?(x.absent?'Absent':x.grade):(x.absent?'Absent':x.marks[0]))}</td>`);h+=`<td>${r.total==null?'—':r.total+' / '+r.max}</td><td>${r.pct==null?'—':r.pct.toFixed(2)+'%'}</td><td>${erpEsc(r.status)}</td></tr>`});area.innerHTML=h+'</tbody></table></div>';}
+  async function loadTeacherInchargeResults(){
+    const a=await getTeacherInchargeAssignments(),cls=document.getElementById('teacherInchargeResultClass'),sec=document.getElementById('teacherInchargeResultSection'),area=document.getElementById('teacherInchargeResultArea');
+    if(!cls||!sec||!area)return;
+    if(!a.length){cls.innerHTML='<option value="">No Incharge Class</option>';sec.innerHTML='<option value="">No Section</option>';area.innerHTML='<div class="alert alert-warning">No Class Incharge assignment found.</div>';return;}
+    const old=cls.value,classes=[...new Set(a.map(x=>x.class_name).filter(Boolean))];
+    cls.innerHTML=classes.map(x=>`<option value="${erpEsc(x)}">${erpEsc(x)}</option>`).join('');
+    if(old&&classes.includes(old))cls.value=old;
+    refreshTeacherInchargeResultSections();
+    clearTeacherInchargeGeneratedResult('list');
+  }
+  function enableTeacherInchargeGenerateButtons(){
+    ['teacherInchargeResultGenerateBtn','teacherInchargeSlipGenerateBtn'].forEach(id=>{
+      const b=document.getElementById(id);
+      if(!b)return;
+      b.disabled=false;
+      b.removeAttribute('disabled');
+      b.removeAttribute('aria-disabled');
+      b.classList.remove('disabled');
+      b.style.pointerEvents='auto';
+      b.style.opacity='1';
+      b.style.cursor='pointer';
+    });
+  }
 
+  function refreshTeacherInchargeResultSections(){
+    const cls=document.getElementById('teacherInchargeResultClass'),sec=document.getElementById('teacherInchargeResultSection');
+    if(!cls||!sec)return;
+    const old=sec.value;
+    getTeacherInchargeAssignments().then(a=>{
+      const sections=[...new Set(a.filter(x=>x.class_name===cls.value).map(x=>x.section_name).filter(Boolean))];
+      sec.innerHTML=sections.map(x=>`<option value="${erpEsc(x)}">${erpEsc(x)}</option>`).join('');
+      if(old&&sections.includes(old))sec.value=old;
+      clearTeacherInchargeGeneratedResult('list');
+      enableTeacherInchargeGenerateButtons();
+    });
+  }
   async function loadTeacherInchargeResultSlips(){
     const a=await getTeacherInchargeAssignments();
     const cls=document.getElementById('teacherInchargeSlipClass'),sec=document.getElementById('teacherInchargeSlipSection');
     if(!cls||!sec)return;
     if(!a.length){cls.innerHTML='<option value="">No Incharge Class</option>';sec.innerHTML='<option value="">No Section</option>';document.getElementById('teacherInchargeResultSlipsPrintArea').innerHTML='<div class="alert alert-warning">No Class Incharge assignment found.</div>';return;}
-    const classes=[...new Set(a.map(x=>x.class_name).filter(Boolean))];
-    const old=cls.value;cls.innerHTML=classes.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');if(old&&classes.includes(old))cls.value=old;
-    const sections=[...new Set(a.filter(x=>x.class_name===cls.value).map(x=>x.section_name).filter(Boolean))];
-    const oldSec=sec.value;sec.innerHTML=sections.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');if(oldSec&&sections.includes(oldSec))sec.value=oldSec;
-    if(!sections.length)document.getElementById('teacherInchargeResultSlipsPrintArea').innerHTML='<div class="alert alert-warning">No section assigned.</div>';
+    const classes=[...new Set(a.map(x=>x.class_name).filter(Boolean))],old=cls.value;
+    cls.innerHTML=classes.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+    if(old&&classes.includes(old))cls.value=old;
+    refreshTeacherInchargeSlipSections();
+    clearTeacherInchargeGeneratedResult('slips');
+    enableTeacherInchargeGenerateButtons();
   }
+  function refreshTeacherInchargeSlipSections(){
+    const cls=document.getElementById('teacherInchargeSlipClass'),sec=document.getElementById('teacherInchargeSlipSection');
+    if(!cls||!sec)return;
+    const old=sec.value;
+    getTeacherInchargeAssignments().then(a=>{
+      const sections=[...new Set(a.filter(x=>x.class_name===cls.value).map(x=>x.section_name).filter(Boolean))];
+      sec.innerHTML=sections.map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
+      if(old&&sections.includes(old))sec.value=old;
+      clearTeacherInchargeGeneratedResult('slips');
+      enableTeacherInchargeGenerateButtons();
+    });
+  }
+  document.addEventListener('DOMContentLoaded', enableTeacherInchargeGenerateButtons);
+  setTimeout(enableTeacherInchargeGenerateButtons, 0);
+
+  function clearTeacherInchargeGeneratedResult(which){
+    if(which==='list'){
+      const area=document.getElementById('teacherInchargeResultArea');
+      if(area)area.innerHTML='<div class="text-center text-muted py-4"><i class="fas fa-info-circle me-1"></i>Select class, section and result term, then click <b>Generate Result List</b>.</div>';
+    }else{
+      const area=document.getElementById('teacherInchargeResultSlipsPrintArea');
+      if(area)area.innerHTML='<div class="text-center text-muted py-4"><i class="fas fa-info-circle me-1"></i>Select class, section and term, then click <b>Generate</b>.</div>';
+      const print=document.getElementById('teacherInchargeSlipPrintBtn');if(print)print.disabled=true;
+    }
+  }
+
+  async function generateTeacherInchargeResults(){
+    const cls=document.getElementById('teacherInchargeResultClass')?.value||'',sec=document.getElementById('teacherInchargeResultSection')?.value||'',mode=document.getElementById('teacherInchargeResultTerm')?.value||'Final Term',area=document.getElementById('teacherInchargeResultArea');
+    if(!cls||!sec||!mode){__erpAlert('Please select class, section and result term.');return;}
+    const a=await getTeacherInchargeAssignments();
+    if(!a.some(x=>x.class_name===cls&&x.section_name===sec)){__erpAlert('Access denied.');return;}
+    showPortalOperationLoading('Generating Result List','Loading students, subjects, marks and result calculations…');
+    try{
+      setPortalOperationProgress(12,'Verifying your incharge class and section…');
+      const d=await fetchResultDataset(cls,sec,mode);
+      setPortalOperationProgress(58,`Loaded ${d.records?.length||0} students · preparing result rows…`);
+      if(!d.records?.length){area.innerHTML='<div class="alert alert-info">No result records found.</div>';return;}
+      let h=`<div class="text-center fw-bold mb-2">${erpEsc(cls)} — Section ${erpEsc(sec)} — ${erpEsc(resultListHeader(mode))}</div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Roll</th><th>Adm No</th><th>Student</th>`;
+      d.subjects.forEach(x=>h+=`<th>${erpEsc(x.name)}</th>`);
+      h+=`<th>Total</th><th>%</th><th>Result</th></tr></thead><tbody>`;
+      d.records.forEach(r=>{h+=`<tr><td>${erpEsc(r.student.roll_no||'-')}</td><td>${erpEsc(r.student.adm_no)}</td><td>${erpEsc(r.student.name)}</td>`;
+        r.subjects.forEach(x=>h+=`<td class="text-center">${mode==='Final Result'?(x.evaluation==='grade'?x.grades.map((g,j)=>x.absent[j]?'Absent':(g||'-')).join(' / '):`${x.absent[0]?'Absent':x.marks[0]} / ${x.absent[1]?'Absent':x.marks[1]} / ${x.absent[2]?'Absent':x.marks[2]}`):(x.evaluation==='grade'?(x.absent?'Absent':x.grade):(x.absent?'Absent':x.marks[0]))}</td>`);
+        h+=`<td>${r.total==null?'—':r.total+' / '+r.max}</td><td>${r.pct==null?'—':r.pct.toFixed(2)+'%'}</td><td>${erpEsc(r.status)}</td></tr>`;
+      });
+      area.innerHTML=h+'</tbody></table></div>';
+      setPortalOperationProgress(100,'Result list generated successfully.');
+    }catch(e){area.innerHTML=`<div class="alert alert-danger">Could not generate result list: ${erpEsc(e.message||e)}</div>`;__erpAlert('Error generating result list: '+(e.message||e));}
+    finally{hidePortalOperationLoading();}
+  }
+
   async function generateTeacherInchargeResultSlips(){
     const cls=document.getElementById('teacherInchargeSlipClass')?.value||'',sec=document.getElementById('teacherInchargeSlipSection')?.value||'',mode=document.getElementById('teacherInchargeSlipTerm')?.value||'1st Term';
     if(!(await teacherIsIncharge(cls,sec))){__erpAlert('Access denied. You are not the Class Incharge of this class/section.');return;}
     showPortalOperationLoading('Generating Result Slips','Preparing result slips for your incharge class…');
     try{
+      setPortalOperationProgress(12,'Verifying class, section and selected term…');
       const d=await fetchResultDataset(cls,sec,mode),area=document.getElementById('teacherInchargeResultSlipsPrintArea');
+      setPortalOperationProgress(58,`Loaded ${d.records?.length||0} students · formatting slips…`);
       if(!d.records?.length){area.innerHTML='<div class="alert alert-warning">No students found.</div>';return;}
       const logoSrc=escapeHtml(document.getElementById('headerLogo')?.src||'');
       const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':''}</td><td class="text-center">${mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=Number(stat?.pct??0);return `<div class="result-slip-item"><div class="result-slip-header"><img src="${logoSrc}" alt="School Logo"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct.toFixed(2)}%</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
-      const pages=[];for(let i=0;i<d.records.length;i+=6){pages.push(`<div class="result-slips-page result-slips-grid-page">${d.records.slice(i,i+6).map(renderSlip).join('')}</div>`);}area.innerHTML=pages.join('');
+      const pages=[];for(let i=0;i<d.records.length;i+=6){pages.push(`<div class="result-slips-page result-slips-grid-page">${d.records.slice(i,i+6).map(renderSlip).join('')}</div>`);if(i%18===0)setPortalOperationProgress(Math.min(92,65+Math.round((i/d.records.length)*25)),`Formatting slips ${Math.min(i+6,d.records.length)} of ${d.records.length}…`);}area.innerHTML=pages.join('');
+      const printBtn=document.getElementById('teacherInchargeSlipPrintBtn');if(printBtn)printBtn.disabled=false;
+      setPortalOperationProgress(100,'Result slips generated successfully.');
     }catch(e){__erpAlert('Error generating result slips: '+(e.message||e));}finally{hidePortalOperationLoading();}
   }
   function printTeacherInchargeResultSlips(){const a=document.getElementById('teacherInchargeResultSlipsPrintArea');if(!a?.innerHTML.trim())return;window.print();}
@@ -5569,7 +5657,7 @@ function portalModuleAction(tabId, action) {
       const unique=[...new Set(subjects.map(x=>x.trim()).filter(Boolean))];
       unique.forEach(subject=>{
         const exists=rows.some(r=>String(r.class_name)===cls&&String(r.section_name)===sec&&String(r.subject_name||'').trim().toLowerCase()===subject.toLowerCase());
-        if(!exists)rows.push({session:ACADEMIC_SESSION,employee_code:emp, class_name:cls,section_name:sec,subject_name:subject,can_view:true,can_edit:true,active:true,_motherTeacherIncharge:true});
+        if(!exists)rows.push({session:ACADEMIC_SESSION,employee_code:emp, class_name:cls,section_name:sec,subject_name:subject,can_view:true,can_edit:false,active:true,_motherTeacherIncharge:true});
       });
     }
     return rows.sort((a,b)=>String(a.class_name||'').localeCompare(String(b.class_name||''))||String(a.section_name||'').localeCompare(String(b.section_name||''))||String(a.subject_name||'').localeCompare(String(b.subject_name||'')));
@@ -5716,6 +5804,23 @@ function portalModuleAction(tabId, action) {
     await loadTeacherResultMarks();
   }
 
+  async function teacherOwnsTimetableSubject(cls,sec,subject){
+    // Authoritative edit permission: the teacher must be the employee assigned
+    // to this exact subject in the active session timetable. Class Incharge
+    // visibility and stale teacher_subject_allocations.can_edit flags never grant edit rights.
+    const emp=String(currentUser?.associatedId||'').trim();
+    if(!emp||!cls||!sec||!subject)return false;
+    const {data,error}=await supabaseClient.from('school_timetable')
+      .select('employee_code,subject_name')
+      .eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('section_name',sec);
+    if(error){console.error('Unable to verify timetable subject ownership:',error);return false;}
+    return (data||[]).some(r=>
+      String(r.employee_code||'').trim()===emp &&
+      String(r.subject_name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()===
+      String(subject||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()
+    );
+  }
+
   async function loadTeacherResultMarks(){
     const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',body=document.getElementById('teacherResultBody'),note=document.getElementById('teacherResultPermissionNote'),save=document.getElementById('btnTeacherResultSave'),teacherInfo=document.getElementById('teacherResultSubjectTeacherInfo');
     if(!body||!note||!save)return;
@@ -5726,13 +5831,16 @@ function portalModuleAction(tabId, action) {
     }
 
     const incharge=await teacherIsIncharge(cls,sec);
-    const assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim()===String(subject||'').trim()&&x.active!==false);
-    const canEdit=(!!assigned && assigned.can_edit!==false) || incharge;
+    const assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()===String(subject||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()&&x.active!==false);
+    // Never trust an old/stale can_edit=true allocation on its own. The current
+    // timetable's employee_code assignment is the source of truth for editing.
+    const ownsTimetableSubject=await teacherOwnsTimetableSubject(cls,sec,subject);
+    const canEdit=!!assigned && assigned.can_edit!==false && ownsTimetableSubject;
 
     if(incharge){
       note.innerHTML=canEdit
-        ? '<span class="text-danger fw-bold">You are Class Incharge for this class + section. You can VIEW all subjects, and because this subject is also assigned to you, you can ADD, EDIT and UPDATE marks/grades for this subject only.</span>'
-        : '<span class="text-danger fw-bold">You are Class Incharge for this class + section. Result is VIEW ONLY here; you cannot add or edit marks/grades for this subject.</span>';
+        ? '<span class="text-success fw-bold">Class Incharge: you can VIEW all subjects in this class, but you can ADD, EDIT and UPDATE marks/grades only for this subject because it is assigned to you as Subject Teacher.</span>'
+        : '<span class="text-danger fw-bold">Class Incharge: VIEW ONLY for this subject. Marks, grades and attendance cannot be added or edited unless this subject is independently assigned to you as Subject Teacher.</span>';
     }else if(assigned){
       note.innerHTML='<span class="text-success fw-bold">This Class + Section + Subject is assigned to you. You can add, view and update marks/grades for this subject only.</span>';
     }else{
@@ -5906,9 +6014,9 @@ function portalModuleAction(tabId, action) {
   }
 
   async function saveTeacherResultMarks(){
-    const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim()===String(subject||'').trim()&&x.active!==false);
-    const incharge=await teacherIsIncharge(cls,sec);
-    if((!assigned||assigned.can_edit===false) && !incharge){__erpAlert('You do not have edit permission for this subject.');return;}
+    const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()===String(subject||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()&&x.active!==false);
+    const ownsTimetableSubject=await teacherOwnsTimetableSubject(cls,sec,subject);
+    if(!assigned||assigned.can_edit===false||!ownsTimetableSubject){__erpAlert('View-only: marks/grades can be saved only by the Subject Teacher assigned to this subject in the current timetable. Class Incharge status alone does not grant edit permission.');await loadTeacherResultMarks();return;}
     const ra=await getResultAllocations(cls),alloc=ra.find(x=>String(x.subject_name||x.result_subject_master?.subject_name||'').trim()===String(subject).trim()),mode=getResultEvaluationMode(cls,subject);
     showPortalOperationLoading('Saving Marks','Saving marks, grades and attendance…');
     try{
@@ -6268,9 +6376,15 @@ function portalModuleAction(tabId, action) {
     if(!cls){resetResultMarksEntryList();return;}
     let alloc=await getResultAllocations(cls);
     if(canonicalPortalRole(currentUser.type)==='teacher'){
-      const perms=(currentUser.staffPermissions||[]).filter(p=>String(p.class_name)===String(cls)&&p.can_view);
-      const allowedSubjects=perms.map(p=>String(p.subject_name||'').trim()).filter(Boolean);
-      if(allowedSubjects.length)alloc=alloc.filter(a=>allowedSubjects.includes(String(a.subject_name||a.result_subject_master?.subject_name||'').trim()));
+      // Class Incharge can access every result subject for the class they manage;
+      // subject-teacher permissions continue to apply to other classes.
+      const inchargeRows=await getTeacherInchargeAssignments();
+      const isClassIncharge=inchargeRows.some(p=>String(p.class_name)===String(cls));
+      if(!isClassIncharge){
+        const perms=(currentUser.staffPermissions||[]).filter(p=>String(p.class_name)===String(cls)&&p.can_view);
+        const allowedSubjects=perms.map(p=>String(p.subject_name||'').trim()).filter(Boolean);
+        if(allowedSubjects.length)alloc=alloc.filter(a=>allowedSubjects.includes(String(a.subject_name||a.result_subject_master?.subject_name||'').trim()));
+      }
     }
     resultAllocationCache=alloc;
     if(!alloc.length){
@@ -6293,11 +6407,13 @@ function portalModuleAction(tabId, action) {
     let studentQuery=supabaseClient.from('students').select('*').eq('class_name',cls).order('roll_no',{ascending:true,nullsFirst:false}).order('name',{ascending:true});
     const staffMode=canonicalPortalRole(currentUser.type)==='teacher';
     const staffPerm=staffMode?(currentUser.staffPermissions||[]).filter(x=>String(x.class_name)===String(cls)):[];
-    if(staffMode && !staffPerm.length){body.innerHTML='<tr><td colspan="9" class="text-center text-danger py-4">This class is not assigned to your account.</td></tr>';return;}
+    const inchargeRows=staffMode?await getTeacherInchargeAssignments():[];
+    const isSelectedClassIncharge=staffMode&&inchargeRows.some(p=>String(p.class_name)===String(cls)&&String(p.section_name)===String(sec));
+    if(staffMode && !staffPerm.length && !isSelectedClassIncharge){body.innerHTML='<tr><td colspan="9" class="text-center text-danger py-4">This class is not assigned to your account.</td></tr>';return;}
     const {data:students,error}=await studentQuery;
     if(error){__erpAlert('Error loading students: '+error.message);return;}
     let filtered=sec?(students||[]).filter(s=>String(s.section||'')===String(sec)):(students||[]);
-    if(staffMode){filtered=filtered.filter(s=>staffPerm.some(p=>(!p.section||String(p.section)===String(s.section))&&(!p.subject_name||String(p.subject_name)===String(subject))&&p.can_view));}
+    if(staffMode&&!isSelectedClassIncharge){filtered=filtered.filter(s=>staffPerm.some(p=>(!p.section||String(p.section)===String(s.section))&&(!p.subject_name||String(p.subject_name)===String(subject))&&p.can_view));}
     const seniorMap=await getSeniorStudentSubjectMap(cls,filtered.map(s=>s.adm_no).filter(Boolean));
     const subjectKey=normalizeResultSubjectKey(subject),isSenior=isSeniorResultClass(cls);
     if(alloc?.is_additional && !isSenior){
@@ -6396,10 +6512,15 @@ function portalModuleAction(tabId, action) {
   }
 
   async function saveResultMarksList(){
-    if(!hasPermission('resultMarksTab','edit')){__erpAlert('You do not have Edit permission for Enter / Edit Marks.');return;}
+    const _resultRole=canonicalPortalRole(currentUser.type);
+    const _resultCls=document.getElementById('resEditClass')?.value||'';
+    const _resultSec=document.getElementById('resEditSection')?.value||'';
+    const _resultIncharge=_resultRole==='teacher'&&_resultCls&&_resultSec?await teacherIsIncharge(_resultCls,_resultSec):false;
+    if(!hasPermission('resultMarksTab','edit')&&!_resultIncharge){__erpAlert('You do not have Edit permission for Enter / Edit Marks.');return;}
     if(canonicalPortalRole(currentUser.type)==='teacher'){
       const cls=document.getElementById('resEditClass')?.value||'',sub=document.getElementById('resEditSubject')?.selectedOptions?.[0]?.textContent||'',sec=document.getElementById('resEditSection')?.value||'';
-      const ok=(currentUser.staffPermissions||[]).some(p=>String(p.class_name)===String(cls)&&(!p.section||String(p.section)===String(sec))&&(!p.subject_name||String(p.subject_name)===String(sub))&&p.can_edit);
+      const incharge=await teacherIsIncharge(cls,sec);
+      const ok=incharge||(currentUser.staffPermissions||[]).some(p=>String(p.class_name)===String(cls)&&(!p.section||String(p.section)===String(sec))&&(!p.subject_name||String(p.subject_name)===String(sub))&&p.can_edit);
       if(!ok){__erpAlert('You are not authorized to edit marks for this class/section/subject.');return;}
     }
     if(currentUser.type==='student'){__erpAlert('Student accounts cannot edit results.');return;}
@@ -11902,13 +12023,18 @@ async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode
   if(nextEmp){
     const teacherName=getAcademicStaffDisplayName(nextEmp,nextEmp);
     for(const subjectName of subjects){
+      // A Mother Teacher can see every class subject, but may edit only the
+      // subjects assigned to them as Subject Teacher in the saved timetable.
+      const isOwnSubject=(ttRows||[]).some(t=>
+        String(t.subject_name||'').trim().toLocaleLowerCase()===String(subjectName||'').trim().toLocaleLowerCase() &&
+        String(t.employee_code||'').trim()===nextEmp);
       const saved=await saveTeacherAllocationNoConflict({
         session:ACADEMIC_SESSION,employee_code:nextEmp,teacher_name:teacherName,
-        class_name:cls,section_name:sec,subject_name:subjectName,can_edit:true,active:true
+        class_name:cls,section_name:sec,subject_name:subjectName,can_edit:isOwnSubject,active:true
       });
       if(saved.error)throw saved.error;
       const permission=await saveStaffResultPermissionNoConflict({
-        employee_code:nextEmp,class_name:cls,section:sec,subject_name:subjectName,can_view:true,can_edit:true
+        employee_code:nextEmp,class_name:cls,section:sec,subject_name:subjectName,can_view:true,can_edit:isOwnSubject
       });
       if(permission.error)throw permission.error;
     }
@@ -11921,10 +12047,15 @@ async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode
       !(String(x.class_name)===cls&&String(x.section_name)===sec&&
         (String(x.employee_code||'')===oldEmp||String(x.employee_code||'')===nextEmp)));
     if(nextEmp){
-      subjects.forEach(subjectName=>currentUser.teacherAllocations.push({
-        session:ACADEMIC_SESSION,employee_code:nextEmp,teacher_name:getAcademicStaffDisplayName(nextEmp,nextEmp),
-        class_name:cls,section_name:sec,subject_name:subjectName,can_edit:true,active:true
-      }));
+      subjects.forEach(subjectName=>{
+        const isOwnSubject=(ttRows||[]).some(t=>
+          String(t.subject_name||'').trim().toLocaleLowerCase()===String(subjectName||'').trim().toLocaleLowerCase() &&
+          String(t.employee_code||'').trim()===nextEmp);
+        currentUser.teacherAllocations.push({
+          session:ACADEMIC_SESSION,employee_code:nextEmp,teacher_name:getAcademicStaffDisplayName(nextEmp,nextEmp),
+          class_name:cls,section_name:sec,subject_name:subjectName,can_edit:isOwnSubject,active:true
+        });
+      });
     }
   }
   return subjects.length;
@@ -14926,6 +15057,10 @@ window.printTimetableChart=function(){
       defaults.forEach(x=>rows.push({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:String(st.adm_no),class_name:cls,section:st.section||null,group_name:group,subject_slot:x.slot,subject_code:x.code||null,subject_name:x.name,active:true}));
     });
     if(rows.length){const r=await supabaseClient.from('student_subject_selections').insert(rows);if(r.error)throw r.error;}
+  }
+  // Compatibility alias for older result-loading paths that still call the previous helper name.
+  async function syncSeniorSubjectSlotsToResults(cls){
+    return await syncSeniorSubjectsToResults(cls);
   }
   async function syncSeniorSubjectsToResults(cls){
     const group=seniorGroupForClass(cls);if(!group||!currentSchoolId)return;
