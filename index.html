@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>I.T. Senior Secondary School, Bhagwanpura (Tarn Taran) - Portal</title>
+  <title>I.T. Senior Secondary School, Bhagwanpura (Tarn Taran) - Portal V215</title>
 
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -191,7 +191,10 @@
     #portalOperationLoading .pol-spinner{width:3.5rem;height:3.5rem;margin:0 auto 14px;}
     #portalOperationLoading .pol-title{font-family:"Times New Roman",Times,serif;font-size:20px;font-weight:800;color:#1e3a8a;margin-bottom:6px;}
     #portalOperationLoading .pol-text{font-size:13px;color:#64748b;}
-    #portalOperationLoading .pol-progress{height:8px;margin-top:16px;overflow:hidden;border-radius:20px;background:#e2e8f0;}
+    #portalOperationLoading .pol-progress{height:10px;margin-top:16px;overflow:hidden;border-radius:20px;background:#e2e8f0;}
+    #portalOperationLoading .pol-progress-bar{height:100%;width:0;background:linear-gradient(90deg,#087f8c,#22c5a5);border-radius:20px;transition:width .24s ease;}
+    #portalOperationLoading .pol-progress-meta{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:12px;color:#64748b;}
+    #portalOperationLoading .pol-percent{font-size:22px;font-weight:800;color:#087f8c;}
     .portal-busy{cursor:wait;}
 #portalOperationLoading .pol-progress-bar{height:100%;width:35%;background:#2563eb;border-radius:20px;animation:polProgress 1.15s ease-in-out infinite;}
     @keyframes polProgress{0%{transform:translateX(-140%)}100%{transform:translateX(380%)}}
@@ -230,8 +233,10 @@
     }
 
     .result-sub-pane{min-height:180px}.result-card-item{page-break-inside:avoid;border:1px solid #1e3a8a;padding:18px;margin-bottom:18px;background:#fff}.result-card-item table{font-size:12px}.result-print-list table{font-size:11px}.result-print-list th,.result-print-list td{padding:4px!important}
-    .result-slips-page{width:100%;display:flex;flex-direction:column;gap:6px}
-    .result-slip-item{page-break-inside:avoid;border:1px solid #1e3a8a;padding:8px;margin:0;background:#fff;box-sizing:border-box;font-size:9px;line-height:1.08}
+    .result-slips-page{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;box-sizing:border-box}
+    .result-slips-grid-page{width:min(100%,190mm);height:277mm;margin:8mm auto;padding:3mm;background:#fff;box-shadow:0 1px 7px rgba(0,0,0,.18);overflow:hidden;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm}
+    .result-slip-item{page-break-inside:avoid;border:1px solid #1e3a8a;padding:8px;margin:0;background:#fff;box-sizing:border-box;font-size:9px;line-height:1.08;min-width:0;min-height:0;overflow:hidden}
+    .result-slips-preview-title{max-width:190mm;margin:10px auto 0;padding:8px 12px;background:#eaf2ff;border:1px solid #bfd3f7;border-radius:6px;color:#173d72;font-weight:700}
     .result-slip-header{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;border-bottom:1px solid #d9e1ec;padding:2px 28px 4px;margin-bottom:4px}
     .result-slip-header .result-slip-school{font-family:'Times New Roman',serif;font-size:12px;font-weight:700;line-height:1.05;text-align:center}
     .result-slip-header img{height:27px!important;width:auto;object-fit:contain;flex:none}
@@ -241,11 +246,12 @@
     @media print{
       #resultSlipsPrintArea,#resultSlipsPrintArea *{visibility:visible!important}
       #resultSlipsPrintArea{position:absolute;left:0;top:0;width:100%;margin:0;padding:0}
+      .result-slips-preview-title{display:none!important}
       #teacherInchargeResultSlipsPrintArea,#teacherInchargeResultSlipsPrintArea *{visibility:visible!important}
       #teacherInchargeResultSlipsPrintArea{position:absolute;left:0;top:0;width:100%;margin:0;padding:0}
-      .result-slips-page{height:100vh;min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;gap:5px;page-break-after:always;box-sizing:border-box;padding:4mm 5mm}
+      .result-slips-page{width:100%;height:100%;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;page-break-after:always;box-sizing:border-box;padding:0}
       .result-slips-page:last-child{page-break-after:auto}
-      .result-slip-item{flex:1 1 0;min-height:0;overflow:hidden;padding:5px;font-size:8.5px;line-height:1.02}
+      .result-slip-item{min-width:0;min-height:0;overflow:hidden;padding:2mm;font-size:7pt;line-height:1.02}
       .result-slip-header{gap:5px;padding:1px 20px 2px;margin-bottom:2px}
       .result-slip-header .result-slip-school{font-size:10px}
       .result-slip-header img{height:21px!important}
@@ -303,6 +309,15 @@
     .result-mark-input-error{border-color:#dc3545 !important;box-shadow:0 0 0 .12rem rgba(220,53,69,.15) !important;}
     .rc-grade-scale th{width:8%;background:#fff;color:#111;font-size:8px;}.rc-grade-scale td{font-size:7.2px;text-align:center;}
     .rc-signatures{display:grid;grid-template-columns:1fr 1fr;row-gap:9mm;column-gap:8mm;padding:6mm 1mm 0;font-size:7.8px;}
+    /* On-screen report-card preview mirrors the A4 print sheet and margins. */
+    .rc-preview-stage{display:flex;flex-direction:column;align-items:center;gap:18px;padding:18px 10px 30px;background:#e8edf2;min-height:120px;overflow:visible;}
+    .rc-preview-empty{width:100%;text-align:center;padding:28px 12px;color:#64748b;background:#fff;border:1px dashed #94a3b8;border-radius:8px;}
+    .rc-preview-page{width:210mm;min-height:297mm;box-sizing:border-box;padding:65mm 20.32mm 20.32mm;background:#fff;color:#111;box-shadow:0 3px 14px rgba(15,23,42,.2);position:relative;overflow:visible;flex:0 0 auto;}
+    .rc-preview-page .rc-pdf-card{width:100%;max-width:none;margin:0 auto;padding:0!important;border:0!important;}
+    .rc-preview-page::after{content:'A4 PRINT PREVIEW';position:absolute;top:6mm;right:8mm;font:700 8px Arial,sans-serif;letter-spacing:.5px;color:#94a3b8;}
+    @media(max-width:900px){.rc-preview-stage{align-items:flex-start;overflow-x:auto}.rc-preview-page{transform-origin:top left;}}
+    @media print{.rc-preview-stage{display:block!important;background:#fff!important;padding:0!important;gap:0!important}.rc-preview-page{width:auto!important;min-height:0!important;padding:0!important;box-shadow:none!important;overflow:visible!important}.rc-preview-page::after{display:none!important}.rc-preview-empty{display:none!important}}
+
     @media print{
       @page{size:A4 portrait;margin:65mm 20.32mm 20.32mm 20.32mm;}
       body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
@@ -535,7 +550,11 @@
     .tt-chart .tt-cell{vertical-align:top!important}
     .tt-chart .tt-subject,.tt-chart .tt-teacher{display:block;width:100%;margin-bottom:2px}
     @media print{.tt-days-picker{display:none!important}.tt-chart .tt-cell{height:72px!important}.tt-chart .tt-subject,.tt-chart .tt-teacher{display:block!important;width:100%!important;font-size:10px!important}}
-</style>
+
+    @media print {
+      .result-slips-grid-page { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:repeat(2,minmax(0,1fr)) !important; }
+    }
+  </style>
 <!-- V57: selected role permissions now work independently; login opens first allowed tab. -->
 <!-- V97: Exam Date Sheet date editing/fetch/remove UI and mobile login keyboard fix. No other module changes. -->
 
@@ -602,6 +621,53 @@
 <style id="v152-teacher-timetable-style">
 .teacher-day-list{font-weight:700;white-space:nowrap;}
 </style>
+
+<style id="senior-subject-column-sizing-v194">
+/* Subjects — 11th & 12th Class: compact view-only columns, wider selectable columns */
+#studentSubjectsTable { min-width: 1550px; table-layout: fixed; }
+#studentSubjectsTable th:nth-child(1), #studentSubjectsTable td:nth-child(1) { width: 82px; }
+#studentSubjectsTable th:nth-child(2), #studentSubjectsTable td:nth-child(2) { width: 62px; }
+#studentSubjectsTable th:nth-child(3), #studentSubjectsTable td:nth-child(3) { width: 175px; }
+#studentSubjectsTable th:nth-child(4), #studentSubjectsTable td:nth-child(4) { width: 78px; }
+#studentSubjectsTable th:nth-child(n+5):nth-child(-n+9),
+#studentSubjectsTable td:nth-child(n+5):nth-child(-n+9) {
+  width: 78px; max-width: 78px; padding-left: 3px; padding-right: 3px;
+  font-size: 11px; overflow-wrap: anywhere; text-align: center;
+}
+#studentSubjectsTable th:nth-child(n+10):nth-child(-n+13),
+#studentSubjectsTable td:nth-child(n+10):nth-child(-n+13) { width: 205px; min-width: 205px; }
+#studentSubjectsTable .ss-selected-subject { min-height: 30px; display:flex; align-items:center; justify-content:center; padding:4px 2px; white-space:normal; overflow-wrap:anywhere; }
+#studentSubjectsTable td:nth-child(n+10):nth-child(-n+13) .form-select,
+#studentSubjectsTable td:nth-child(n+10):nth-child(-n+13) select,
+#studentSubjectsTable td:nth-child(n+10):nth-child(-n+13) .ss-subject {
+  width: 100%; min-width: 190px; white-space: normal;
+}
+#studentSubjectsTable th:nth-child(14), #studentSubjectsTable td:nth-child(14) { width: 90px; }
+</style>
+<style id="v197-global-click-animations">
+:root{--portal-click-duration:150ms}
+button,.btn,[role="button"],a.nav-link,.nav-link, .sidebar a, [onclick],input[type="button"],input[type="submit"]{transition:transform var(--portal-click-duration) ease,filter var(--portal-click-duration) ease,box-shadow var(--portal-click-duration) ease}
+button:active,.btn:active,[role="button"]:active,a.nav-link:active,.sidebar a:active,[onclick]:active,input[type="button"]:active,input[type="submit"]:active{transform:scale(.965);filter:brightness(.94)}
+@keyframes v197TapPulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.28)}100%{box-shadow:0 0 0 7px rgba(37,99,235,0)}}
+.v197-click-pulse{animation:v197TapPulse .32s ease-out}
+@keyframes v197Saving{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.v197-saving{pointer-events:none!important;opacity:.82!important;cursor:wait!important;background-image:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.22) 45%,transparent 65%)!important;background-size:200% 100%!important;animation:v197Saving .8s linear infinite!important}
+.v197-save-disabled{pointer-events:none!important;opacity:.7!important}
+#studentSubjectEditModal .modal-content{animation:v197ModalIn .18s ease-out}
+/* V200: compact fixed/view-only subject labels; remove redundant View only text */
+.ss-fixed-subject{font-size:.66rem!important;line-height:1.15;overflow-wrap:anywhere;padding:1px 0}
+#studentSubjectEditModal #ssEditorSubjects td:nth-child(2){font-size:.68rem!important;line-height:1.12!important;padding:.35rem .5rem!important;overflow-wrap:anywhere}
+#studentSubjectEditModal #ssEditorSubjects td:nth-child(3) .ss-fixed-subject{font-size:.62rem!important;line-height:1.1!important}
+#studentSubjectEditModal #ssEditorSubjects td:nth-child(1){width:48px;padding:.35rem .45rem!important}
+#studentSubjectEditModal #ssEditorSubjects td:nth-child(3){padding:.35rem .5rem!important}
+#studentSubjectEditModal .modal-footer{justify-content:flex-end!important;gap:.45rem;flex-wrap:wrap}
+#studentSubjectEditModal .modal-footer>.d-flex{margin-left:auto;gap:.4rem!important}
+@keyframes v197ModalIn{from{opacity:.65;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+<script id="v197-global-click-feedback">
+document.addEventListener('click',function(e){const el=e.target.closest('button,.btn,[role="button"],a.nav-link,.sidebar a,[onclick],input[type="button"],input[type="submit"]');if(!el||el.disabled||el.classList.contains('v197-saving'))return;el.classList.remove('v197-click-pulse');void el.offsetWidth;el.classList.add('v197-click-pulse');setTimeout(()=>el.classList.remove('v197-click-pulse'),340);},true);
+</script>
 </head>
 <body>
 
@@ -661,7 +727,8 @@
     <div class="spinner-border text-primary pol-spinner" role="status"><span class="visually-hidden">Loading</span></div>
     <div id="portalOperationLoadingTitle" class="pol-title">Please Wait</div>
     <div id="portalOperationLoadingText" class="pol-text">Processing your request…</div>
-    <div class="pol-progress"><div class="pol-progress-bar"></div></div>
+    <div class="pol-progress"><div id="portalOperationProgressBar" class="pol-progress-bar"></div></div>
+    <div class="pol-progress-meta"><strong id="portalOperationProgressPct" class="pol-percent">0%</strong><span id="portalOperationProgressCount">Starting…</span></div>
   </div>
 </div>
 
@@ -1436,7 +1503,7 @@
             <div class="col-md-3"><label class="form-label small fw-bold">Report</label><select id="resCardTermFilter" class="form-select"><option value="1st Term">1st Term</option><option value="2nd Term">2nd Term</option><option value="Final Term">Final Term</option><option value="Final Result" selected>3-Term Report Card — All 3 Terms</option></select></div>
             <div class="col-md-4 d-flex gap-2"><button class="btn btn-primary fw-bold flex-fill" onclick="generateResultCards()"><i class="fas fa-id-card me-1"></i> Generate Cards</button><button class="btn btn-outline-dark fw-bold" onclick="printResultCards()"><i class="fas fa-print me-1"></i> Print</button></div>
           </div>
-          <div id="resultCardsPrintArea"></div>
+          <div id="resultCardsPrintArea" class="rc-preview-stage"><div class="rc-preview-empty">Generate report cards to see the A4 print preview here.</div></div>
         </div>
     
         <!-- 4. PRINT MARKS SLIPS -->
@@ -2558,7 +2625,7 @@
         </div>
         <div id="studentSubjectsGroupInfo" class="alert alert-info small"></div>
         <div class="d-flex flex-wrap gap-2 align-items-center mb-2 no-print">
-          <button class="btn btn-success btn-sm fw-bold" onclick="saveAllStudentSubjectRows()"><i class="fas fa-save me-1"></i>Save All Visible</button>
+          <button class="btn btn-success btn-sm fw-bold" onclick="submitStudentSubjectChanges()"><i class="fas fa-check-circle me-1"></i>Submit Changes</button>
           <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="filterStudentSubjectsRows(true)"><i class="fas fa-eye me-1"></i>Show All</button>
           <span class="small text-muted" id="studentSubjectsCount"></span>
         </div>
@@ -5429,8 +5496,8 @@ function portalModuleAction(tabId, action) {
       const d=await fetchResultDataset(cls,sec,mode),area=document.getElementById('teacherInchargeResultSlipsPrintArea');
       if(!d.records?.length){area.innerHTML='<div class="alert alert-warning">No students found.</div>';return;}
       const logoSrc=escapeHtml(document.getElementById('headerLogo')?.src||'');
-      const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':''}</td><td class="text-center">${mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=Number(stat?.pct??0);return `<div class="result-slip-item"><div class="result-slip-header"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div><img src="${logoSrc}" alt="School Logo"></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct.toFixed(2)}%</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
-      const pages=[];for(let i=0;i<d.records.length;i+=3){pages.push(`<div class="result-slips-page">${d.records.slice(i,i+3).map(renderSlip).join('')}</div>`);}area.innerHTML=pages.join('');
+      const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':''}</td><td class="text-center">${mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=Number(stat?.pct??0);return `<div class="result-slip-item"><div class="result-slip-header"><img src="${logoSrc}" alt="School Logo"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct.toFixed(2)}%</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
+      const pages=[];for(let i=0;i<d.records.length;i+=6){pages.push(`<div class="result-slips-page result-slips-grid-page">${d.records.slice(i,i+6).map(renderSlip).join('')}</div>`);}area.innerHTML=pages.join('');
     }catch(e){__erpAlert('Error generating result slips: '+(e.message||e));}finally{hidePortalOperationLoading();}
   }
   function printTeacherInchargeResultSlips(){const a=document.getElementById('teacherInchargeResultSlipsPrintArea');if(!a?.innerHTML.trim())return;window.print();}
@@ -5479,7 +5546,33 @@ function portalModuleAction(tabId, action) {
       .select('*').eq('session',ACADEMIC_SESSION).eq('employee_code',emp).eq('active',true)
       .order('class_name').order('section_name').order('subject_name');
     if(error)throw error;
-    return data||[];
+    const rows=data||[];
+    // A timetable Mother Teacher is also the Class Incharge. Show every
+    // subject for that incharge class in Teacher Login even if individual
+    // teacher_subject_allocations rows were not created/synced.
+    const incharges=await getTeacherInchargeAssignments();
+    for(const inc of incharges){
+      const cls=String(inc.class_name||'').trim(),sec=String(inc.section_name||'').trim();
+      if(!cls||!sec)continue;
+      let subjects=[];
+      try{
+        const resultRows=await getResultAllocations(cls);
+        subjects=(resultRows||[]).map(r=>String(r.subject_name||r.result_subject_master?.subject_name||'').trim()).filter(Boolean);
+      }catch(e){console.warn('Unable to load incharge class subjects:',cls,sec,e.message||e);}
+      // Include subjects listed on the timetable too, in case a subject has
+      // not yet been added to Result Subject Allocation.
+      try{
+        const {data:tt,error:ttErr}=await supabaseClient.from('school_timetable')
+          .select('subject_name').eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('section_name',sec);
+        if(!ttErr)(tt||[]).forEach(r=>{const n=String(r.subject_name||'').trim();if(n)subjects.push(n);});
+      }catch(e){console.warn('Unable to load timetable subjects:',e.message||e);}
+      const unique=[...new Set(subjects.map(x=>x.trim()).filter(Boolean))];
+      unique.forEach(subject=>{
+        const exists=rows.some(r=>String(r.class_name)===cls&&String(r.section_name)===sec&&String(r.subject_name||'').trim().toLowerCase()===subject.toLowerCase());
+        if(!exists)rows.push({session:ACADEMIC_SESSION,employee_code:emp, class_name:cls,section_name:sec,subject_name:subject,can_view:true,can_edit:true,active:true,_motherTeacherIncharge:true});
+      });
+    }
+    return rows.sort((a,b)=>String(a.class_name||'').localeCompare(String(b.class_name||''))||String(a.section_name||'').localeCompare(String(b.section_name||''))||String(a.subject_name||'').localeCompare(String(b.subject_name||'')));
   }
 
   async function loadTeacherDashboard(){
@@ -5585,8 +5678,9 @@ function portalModuleAction(tabId, action) {
   async function loadTeacherResultWorkspace(){
     const emp=String(currentUser.associatedId||'').trim(),msg=document.getElementById('teacherResultMessage');
     if(!emp)return;
-    const {data:alloc,error}=await supabaseClient.from('teacher_subject_allocations').select('*').eq('session',ACADEMIC_SESSION).eq('employee_code',emp).eq('active',true).order('class_name').order('section_name').order('subject_name');
-    if(error){if(msg)msg.innerHTML='<span class="text-danger">Unable to load teacher allocations: '+erpEsc(error.message)+'</span>';return;}
+    let alloc=[];
+    try{alloc=await getTeacherSubjectAllocations();}
+    catch(error){if(msg)msg.innerHTML='<span class="text-danger">Unable to load teacher allocations: '+erpEsc(error.message)+'</span>';return;}
     currentUser.teacherAllocations=alloc||[];
     const cls=document.getElementById('teacherResultClass');
     if(!cls)return;
@@ -5632,8 +5726,8 @@ function portalModuleAction(tabId, action) {
     }
 
     const incharge=await teacherIsIncharge(cls,sec);
-    const assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&x.subject_name===subject&&x.active!==false);
-    const canEdit=!!assigned && assigned.can_edit!==false;
+    const assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim()===String(subject||'').trim()&&x.active!==false);
+    const canEdit=(!!assigned && assigned.can_edit!==false) || incharge;
 
     if(incharge){
       note.innerHTML=canEdit
@@ -5812,12 +5906,9 @@ function portalModuleAction(tabId, action) {
   }
 
   async function saveTeacherResultMarks(){
-    const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&x.subject_name===subject&&x.active!==false);
-    if(!assigned||assigned.can_edit===false){__erpAlert('You do not have edit permission for this subject.');return;}
+    const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim()===String(subject||'').trim()&&x.active!==false);
     const incharge=await teacherIsIncharge(cls,sec);
-    // A Class Incharge may edit ONLY a subject that is independently assigned to them as Subject Teacher.
-    // Being an Incharge alone never grants result-edit permission.
-    if(incharge && !assigned){__erpAlert('You are Class Incharge, but this subject is not assigned to you. Result is view-only.');return;}
+    if((!assigned||assigned.can_edit===false) && !incharge){__erpAlert('You do not have edit permission for this subject.');return;}
     const ra=await getResultAllocations(cls),alloc=ra.find(x=>String(x.subject_name||x.result_subject_master?.subject_name||'').trim()===String(subject).trim()),mode=getResultEvaluationMode(cls,subject);
     showPortalOperationLoading('Saving Marks','Saving marks, grades and attendance…');
     try{
@@ -6463,6 +6554,11 @@ function portalModuleAction(tabId, action) {
   }
 
   function resultListHeader(mode){return mode==='Final Result'?'FINAL RESULT — ALL 3 TERMS':mode.toUpperCase();}
+  function setPortalOperationProgress(percent,label){
+    const n=Math.max(0,Math.min(100,Number(percent)||0));
+    const bar=document.getElementById('portalOperationProgressBar'),pct=document.getElementById('portalOperationProgressPct'),count=document.getElementById('portalOperationProgressCount');
+    if(bar)bar.style.width=n+'%';if(pct)pct.textContent=Math.round(n)+'%';if(count&&label)count.textContent=label;
+  }
   function showPortalOperationLoading(title='Please Wait', text='Processing your request…'){
     const el=document.getElementById('portalOperationLoading');
     if(!el)return;
@@ -6470,6 +6566,7 @@ function portalModuleAction(tabId, action) {
     const x=document.getElementById('portalOperationLoadingText');
     if(t)t.textContent=title;
     if(x)x.textContent=text;
+    setPortalOperationProgress(3,'Starting…');
     el.style.display='flex';
     document.body.classList.add('portal-busy');
   }
@@ -6483,14 +6580,16 @@ function portalModuleAction(tabId, action) {
     const cls=document.getElementById('resListClass').value,sec=document.getElementById('resListSection').value,mode=document.getElementById('resListTerm').value;
     showPortalOperationLoading('Generating Result List','Loading students, subjects, marks, rankings and results…');
     try{
+      setPortalOperationProgress(12,'Loading students and subject data…');
       const d=await fetchResultDataset(cls,sec,mode),area=document.getElementById('resultListPrintArea');
+      setPortalOperationProgress(58,`Loaded ${d.records.length} students · preparing result rows…`);
       if(!d.subjects.length){area.innerHTML='<div class="alert alert-warning">No subjects are allocated for this class.</div>';return;}
       let h=`<div class="result-print-list"><div class="text-center mb-2"><img src="${escapeHtml(document.getElementById('headerLogo').src)}" style="height:48px"><h4 class="fw-bold mb-0">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</h4><div class="fw-bold">${resultListHeader(mode)}</div><small>Class: ${escapeHtml(cls)}${sec?' | Section: '+escapeHtml(sec):' | All Sections'}</small></div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Sr.</th><th>Roll No</th><th>Adm No</th><th>Student Name</th><th>Section</th>`;
       const subjectLabel=s=>escapeHtml(s.name)+(s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':'');
       d.subjects.forEach(s=>h+=`<th>${subjectLabel(s)}<br><small>${s.evaluation==='grade'?'Grade T1/T2/Final':'T1/T2/Final / Max'}</small></th>`);
       h+=`<th>Total</th><th>Percentage</th><th>Position</th><th>Result</th></tr></thead><tbody>`;
       d.records.forEach((r,i)=>{const byName=new Map((r.subjects||[]).map(s=>[normalizeResultSubjectKey(s.name),s]));h+=`<tr><td>${i+1}</td><td>${escapeHtml(r.student.roll_no||'-')}</td><td>${escapeHtml(r.student.adm_no)}</td><td class="fw-bold">${escapeHtml(r.student.name)}</td><td>${escapeHtml(r.student.section||'-')}</td>`;d.subjects.forEach(col=>{const s=byName.get(normalizeResultSubjectKey(col.name));if(!s){h+='<td class="text-center text-muted">—</td>';return;}h+=`<td class="text-center">${mode==='Final Result'?`${s.evaluation==='grade'?s.grades.map((g,j)=>s.absent[j]?'Absent':(g||'-')).join(' / '):`${s.absent[0]?'Absent':s.marks[0]} / ${s.absent[1]?'Absent':s.marks[1]} / ${s.absent[2]?'Absent':s.marks[2]} / ${s.max}`}`:`${s.evaluation==='grade'?(s.absent?'Absent':s.grade):`${s.absent?'Absent':s.marks[0]} / ${s.max}`}`}</td>`;});h+=`<td class="fw-bold">${r.total==null?'Not Calculated':r.total+' / '+r.max}</td><td class="fw-bold">${r.pct==null?'—':r.pct.toFixed(2)+'%'}</td><td class="fw-bold">${r.position}</td><td class="fw-bold ${r.status==='Pass'?'text-success':'text-danger'}">${r.status}</td></tr>`;});
-      h+=`</tbody></table></div></div>`;area.innerHTML=h;
+      h+=`</tbody></table></div></div>`;area.innerHTML=h;setPortalOperationProgress(100,`Complete · ${d.records.length} students processed`);
     }catch(e){__erpAlert('Error generating result list: '+e.message);}finally{hidePortalOperationLoading();}
   }
   function printResultList(){if(!document.getElementById('resultListPrintArea').innerHTML.trim())return;window.print();}
@@ -6606,22 +6705,58 @@ function portalModuleAction(tabId, action) {
   async function generateResultCards(){
     showPortalOperationLoading('Generating Report Cards','Preparing report cards, photos, marks, rankings and attendance…');
     try{
+      setPortalOperationProgress(10,'Loading students, marks and attendance…');
       const cls=document.getElementById('resCardClassFilter').value,sec=document.getElementById('resCardSectionFilter').value,mode='Final Result';
       const d=await fetchResultDataset(cls,sec,mode);
+      setPortalOperationProgress(52,`Loaded ${d.records.length} students · building report cards…`);
       const area=document.getElementById('resultCardsPrintArea');
       if(!d.subjects.length){area.innerHTML='<div class="alert alert-warning">No subjects are allocated for this class.</div>';return;}
-      area.innerHTML=d.records.map(r=>buildResultCard(r,mode,cls)).join('')||'<div class="text-muted">No students found.</div>';
+      area.innerHTML=d.records.map((r,i)=>`<div class="rc-preview-page" data-report-page="${i+1}">${buildResultCard(r,mode,cls)}</div>`).join('')||'<div class="text-muted">No students found.</div>';setPortalOperationProgress(100,`Complete · ${d.records.length} report cards ready`);
     }catch(e){__erpAlert('Error generating report cards: '+e.message);}finally{hidePortalOperationLoading();}
   }
-  function printResultCards(){if(!document.getElementById('resultCardsPrintArea').innerHTML.trim())return;window.print();}
+  function printResultCards(){
+    const source=document.getElementById('resultCardsPrintArea');
+    if(!source||!source.innerHTML.trim()||!source.querySelector('.rc-pdf-card'))return;
+    const printWin=window.open('','_blank','width=1100,height=850');
+    if(!printWin){__erpAlert('Please allow pop-ups for this portal to print report cards.');return;}
+    const headStyles=Array.from(document.querySelectorAll('style')).map(el=>el.outerHTML).join('\n');
+    const headLinks=Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(el=>el.outerHTML).join('\n');
+    // Print only the report-card contents, not the screen-preview page wrappers.
+    const cards=Array.from(source.querySelectorAll('.rc-pdf-card')).map(card=>card.outerHTML).join('');
+    printWin.document.open();
+    printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Student Report Cards</title>${headLinks}${headStyles}
+      <style>
+        @page{size:A4 portrait;margin:65mm 20.32mm 20.32mm 20.32mm!important;}
+        html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+        body{font-family:Arial,Helvetica,sans-serif!important;}
+        #resultCardsPrintArea{display:block!important;position:static!important;left:auto!important;top:auto!important;width:100%!important;margin:0!important;padding:0!important;background:#fff!important;}
+        .result-card-item,.rc-pdf-card{display:block!important;position:relative!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-sizing:border-box!important;page-break-inside:avoid!important;break-inside:avoid-page!important;page-break-after:always!important;break-after:page!important;}
+        .result-card-item:last-child,.rc-pdf-card:last-child{page-break-after:auto!important;break-after:auto!important;}
+        .no-print,button,.sidebar,.sidebar-overlay,#portalOperationLoading{display:none!important;}
+        .rc-photo img{width:25mm!important;height:30mm!important;max-width:25mm!important;max-height:30mm!important;object-fit:contain!important;}
+        .rc-main-title,.rc-section-title,.rc-academic-table th,.rc-field span,.rc-grand-total td,.rc-total-row td{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important;}
+      </style></head><body><div id="resultCardsPrintArea">${cards}</div>
+      <script>
+        (function(){
+          function startPrint(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},350);}
+          var imgs=Array.from(document.images);if(!imgs.length){startPrint();return;}
+          var left=imgs.length,done=function(){left--;if(left<=0)startPrint();};
+          imgs.forEach(function(img){if(img.complete)done();else{img.addEventListener('load',done,{once:true});img.addEventListener('error',done,{once:true});}});
+          setTimeout(startPrint,2500);
+        })();
+      <\/script></body></html>`);
+    printWin.document.close();
+  }
 
   async function loadResultSlipClasses(){fillResultClassSelect('resSlipClass');await loadResultSlipSections();}
   async function loadResultSlipSections(){await fillResultSections('resSlipSection',document.getElementById('resSlipClass')?.value||'');}
   async function generateResultSlips(){
     showPortalOperationLoading('Generating Marks Slips','Preparing student marks, grades, totals and positions…');
     try{
+      setPortalOperationProgress(10,'Loading student marks and grades…');
       const cls=document.getElementById('resSlipClass').value,sec=document.getElementById('resSlipSection').value,mode=document.getElementById('resSlipTerm').value;
       const d=await fetchResultDataset(cls,sec,mode);
+      setPortalOperationProgress(55,`Loaded ${d.records.length} students · arranging slips…`);
       const area=document.getElementById('resultSlipsPrintArea');
       if(!d.records.length){area.innerHTML='<div class="alert alert-warning">No students found.</div>';return;}
 
@@ -6639,8 +6774,8 @@ function portalModuleAction(tabId, action) {
         const pct=Number(stat?.pct??0);
         return `<div class="result-slip-item">
           <div class="result-slip-header">
-            <div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div>
             <img src="${logoSrc}" alt="School Logo">
+            <div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div>
           </div>
           <div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div>
           <div class="result-slip-meta">
@@ -6665,14 +6800,55 @@ function portalModuleAction(tabId, action) {
       };
 
       const pages=[];
-      for(let i=0;i<d.records.length;i+=3){
-        const group=d.records.slice(i,i+3);
-        pages.push(`<div class="result-slips-page">${group.map(renderSlip).join('')}</div>`);
+      for(let i=0;i<d.records.length;i+=8){
+        const group=d.records.slice(i,i+8);
+        pages.push(`<div class="result-slips-page result-slips-grid-page">${group.map(renderSlip).join('')}</div>`);
       }
-      area.innerHTML=pages.join('');
+      area.innerHTML=`<div class="result-slips-preview-title no-print">Print Preview — A4 Portrait · 2 slips left-to-right × 4 slips top-to-bottom (8 per page)</div>`+pages.join('');setPortalOperationProgress(100,`Complete · ${d.records.length} marks slips ready`);
     }catch(e){__erpAlert('Error generating marks slips: '+(e.message||e));}finally{hidePortalOperationLoading();}
   }
-  function printResultSlips(){if(!document.getElementById('resultSlipsPrintArea').innerHTML.trim())return;window.print();}
+  function printResultSlips(){
+    const area=document.getElementById('resultSlipsPrintArea');
+    if(!area||!area.innerHTML.trim())return;
+    const pages=[...area.querySelectorAll('.result-slips-grid-page')];
+    if(!pages.length){__erpAlert('Please generate marks slips before printing.');return;}
+    // Use an isolated print document so the portal's other print rules cannot
+    // create blank pages or override the A4 slip layout.
+    const w=window.open('','_blank');
+    if(!w){__erpAlert('Please allow pop-ups for this portal to print marks slips.');return;}
+    const pageHtml=pages.map((page,i)=>`<section class="slip-page${i===pages.length-1?' last-page':''}">${[...page.querySelectorAll('.result-slip-item')].map(el=>el.outerHTML).join('')}</section>`).join('');
+    w.document.open();
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Marks Slips</title><style>
+      @page{size:A4 portrait;margin:4mm}
+      *{box-sizing:border-box}
+      html,body{margin:0!important;padding:0!important;width:100%;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff}
+      .slip-page{width:202mm;height:288mm;max-height:288mm;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));column-gap:2mm;row-gap:2mm;overflow:hidden;break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid}
+      .slip-page.last-page{break-after:auto;page-break-after:auto}
+      .result-slip-item{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;min-height:0;max-height:none;overflow:hidden;border:1px solid #3157a4;padding:2mm;margin:0;font-size:7pt;line-height:1.02;break-inside:avoid;page-break-inside:avoid}
+      .result-slip-header{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:2mm;padding:0 0 1mm;margin:0 0 1mm;border-bottom:1px solid #ccd5e5;min-height:10mm}
+      .result-slip-header img{display:block;height:8mm;max-width:9mm;width:auto;object-fit:contain;flex:0 0 auto}
+      .result-slip-header .result-slip-school{flex:1 1 auto;min-width:0;font-size:7.3pt;font-weight:700;text-align:left;overflow-wrap:anywhere}
+      .result-slip-meta{font-size:6.3pt;line-height:1.05;margin:0 0 1mm}
+      .result-slip-item .row{display:flex;flex-wrap:wrap;margin:0!important}
+      .result-slip-item .col-6{width:50%;flex:0 0 50%;padding:0!important}
+      .result-slip-item .col-4{width:33.3333%;flex:0 0 33.3333%;padding:0!important}
+      .result-slip-item table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:6pt;line-height:1.02;margin:0 0 1mm}
+      .result-slip-item th,.result-slip-item td{border:1px solid #b9c2ce;padding:.45mm .6mm;vertical-align:top;overflow-wrap:anywhere}
+      .result-slip-item th{font-weight:700;background:#252a30;color:#fff;text-align:left}
+      .result-slip-item th:first-child,.result-slip-item td:first-child{width:8%}
+      .result-slip-item th:nth-child(2),.result-slip-item td:nth-child(2){width:42%}
+      .result-slip-item th:nth-child(3),.result-slip-item td:nth-child(3){width:25%;text-align:center}
+      .result-slip-item th:nth-child(4),.result-slip-item td:nth-child(4){width:25%;text-align:center}
+      .result-slip-item .text-center{text-align:center!important}
+      .result-slip-item .text-end{text-align:right!important}
+      .result-slip-item .fw-bold{font-weight:700!important}
+      .result-slip-item .mb-1{margin-bottom:1mm!important}
+      .result-slip-footer{font-size:6pt;margin-top:auto!important;padding-top:1mm;margin-bottom:0;min-height:9mm;display:flex;align-items:flex-end;justify-content:flex-end;text-align:right;border-top:1px solid #ccd5e5;flex:0 0 auto}
+      @media screen{body{background:#e8e8e8}.slip-page{background:#fff;margin:8mm auto;box-shadow:0 0 3px #777}}
+      @media print{html,body{width:202mm!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important}.slip-page{width:202mm!important;height:288mm!important;max-height:288mm!important;margin:0!important;box-shadow:none!important;break-inside:avoid!important;page-break-inside:avoid!important}.slip-page:not(.last-page){break-after:page!important;page-break-after:always!important}.slip-page.last-page{break-after:auto!important;page-break-after:auto!important}}
+    </style></head><body>${pageHtml}<script>window.onload=function(){const imgs=[...document.images];Promise.all(imgs.map(i=>i.complete?Promise.resolve():new Promise(r=>{i.onload=r;i.onerror=r}))).then(()=>setTimeout(()=>{window.focus();window.print();},150));};window.onafterprint=function(){window.close();};<\/script></body></html>`);
+    w.document.close();
+  }
 
   const COSCHOLASTIC_FIELDS = [
     {key:'discipline', label:'Discipline'},
@@ -6828,7 +7004,7 @@ function portalModuleAction(tabId, action) {
 
     // The deployed database has no identity/default on result_subject_master.id,
     // so assign a globally unused ID explicitly.
-    const nextId=await nextGlobalResultId('result_subject_master');
+    const nextId=await nextUniqueNumericId('result_subject_master');
     const {data,error}=await supabaseRawClient.from('result_subject_master')
       .insert({id:nextId,subject_name:normalized,active:true,school_id:currentSchoolId})
       .select('id,subject_name,active,created_at,school_id')
@@ -11224,6 +11400,14 @@ async function syncClassInchargesFromTimetable(){
       }
     }
 
+    // Keep timetable Mother Teacher as the actual Class Incharge and synchronize
+    // all subjects for that class/section, including existing assignments.
+    for(const item of candidates.values()){
+      if(item.source!=='Mother Teacher')continue;
+      const previousEmployee=String(motherMap[`${item.class_name}|||${item.section_name}`]?.employee_code||'').trim();
+      await syncMotherTeacherSubjects(item.class_name,item.section_name,item.employee_code,previousEmployee);
+    }
+
     await loadClassInchargeManager();
     const note=missing.length?`\n\nNot synced:\n${missing.join('\n')}`:'';
     __erpAlert(`Class Incharge sync completed.\n\nUpdated: ${updated}\nCreated: ${created}${note}`);
@@ -11657,9 +11841,111 @@ async function saveMotherTeacherAssignment(cls,sec,emp){
     return true;
   }catch(e){__erpAlert('Mother Teacher save failed: '+(e.message||e));return false;}
 }
+async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode=''){
+  cls=String(cls||'').trim();sec=String(sec||'').trim();
+  const nextEmp=String(newEmployeeCode||'').trim(),oldEmp=String(oldEmployeeCode||'').trim();
+  if(!cls||!sec)throw new Error('Class and section are required for Mother Teacher synchronization.');
+
+  // Build the complete subject list from the saved timetable plus the existing
+  // result subject allocation for this class. This does not alter result subjects.
+  const {data:ttRows,error:ttError}=await supabaseClient.from('school_timetable')
+    .select('subject_name,employee_code')
+    .eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('section_name',sec);
+  if(ttError)throw ttError;
+  const subjectMap=new Map();
+  (ttRows||[]).forEach(r=>{
+    const name=String(r.subject_name||'').trim();
+    if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
+  });
+  try{
+    const resultRows=await getResultAllocations(cls);
+    (resultRows||[]).forEach(r=>{
+      const name=String(r.subject_name||r.result_subject_master?.subject_name||'').trim();
+      if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
+    });
+  }catch(e){console.warn('Mother Teacher result subject lookup:',e.message||e);}
+
+  const {data:allocRows,error:allocError}=await supabaseClient.from('teacher_subject_allocations')
+    .select('id,session,employee_code,teacher_name,class_name,section_name,subject_name,active,can_edit')
+    .eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('section_name',sec);
+  if(allocError)throw allocError;
+  (allocRows||[]).filter(r=>r.active!==false).forEach(r=>{
+    const name=String(r.subject_name||'').trim();
+    if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
+  });
+  const subjects=[...subjectMap.values()];
+  if(nextEmp&&!subjects.length)throw new Error(`No subjects were found for ${cls} / ${sec}. Add the class subjects to the timetable or Result Subject Allocation first.`);
+
+  // Remove the former Mother Teacher's extra all-subject access, but preserve
+  // any subject that teacher is independently assigned to in the timetable.
+  if(oldEmp&&oldEmp!==nextEmp){
+    for(const a of (allocRows||[]).filter(r=>r.active!==false&&String(r.employee_code||'').trim()===oldEmp)){
+      const sub=String(a.subject_name||'').trim();
+      const remainsSubjectTeacher=(ttRows||[]).some(t=>
+        String(t.subject_name||'').trim()===sub&&String(t.employee_code||'').trim()===oldEmp);
+      if(remainsSubjectTeacher)continue;
+      const {error}=await supabaseClient.from('teacher_subject_allocations')
+        .update({active:false,can_edit:false}).eq('id',a.id);
+      if(error)throw error;
+      const {data:stillActive,error:checkError}=await supabaseClient.from('teacher_subject_allocations')
+        .select('id').eq('session',ACADEMIC_SESSION).eq('employee_code',oldEmp)
+        .eq('class_name',cls).eq('section_name',sec).eq('subject_name',sub).eq('active',true);
+      if(checkError)throw checkError;
+      if(!(stillActive||[]).length){
+        const {error:permError}=await supabaseClient.from('staff_result_permissions').delete()
+          .eq('employee_code',oldEmp).eq('class_name',cls).eq('section',sec).eq('subject_name',sub);
+        if(permError)throw permError;
+      }
+    }
+  }
+
+  if(nextEmp){
+    const teacherName=getAcademicStaffDisplayName(nextEmp,nextEmp);
+    for(const subjectName of subjects){
+      const saved=await saveTeacherAllocationNoConflict({
+        session:ACADEMIC_SESSION,employee_code:nextEmp,teacher_name:teacherName,
+        class_name:cls,section_name:sec,subject_name:subjectName,can_edit:true,active:true
+      });
+      if(saved.error)throw saved.error;
+      const permission=await saveStaffResultPermissionNoConflict({
+        employee_code:nextEmp,class_name:cls,section:sec,subject_name:subjectName,can_view:true,can_edit:true
+      });
+      if(permission.error)throw permission.error;
+    }
+  }
+  // Refresh shared caches so the changed Mother Teacher and edit permissions
+  // are picked up by teacher/result screens without changing any schema.
+  teacherAllocCache=[];
+  if(currentUser && Array.isArray(currentUser.teacherAllocations)){
+    currentUser.teacherAllocations=currentUser.teacherAllocations.filter(x=>
+      !(String(x.class_name)===cls&&String(x.section_name)===sec&&
+        (String(x.employee_code||'')===oldEmp||String(x.employee_code||'')===nextEmp)));
+    if(nextEmp){
+      subjects.forEach(subjectName=>currentUser.teacherAllocations.push({
+        session:ACADEMIC_SESSION,employee_code:nextEmp,teacher_name:getAcademicStaffDisplayName(nextEmp,nextEmp),
+        class_name:cls,section_name:sec,subject_name:subjectName,can_edit:true,active:true
+      }));
+    }
+  }
+  return subjects.length;
+}
 async function handleMotherTeacherChange(sel){
   const tr=sel.closest('tr'),cls=tr?.dataset.class||'',sec=tr?.dataset.section||'';
-  await saveMotherTeacherAssignment(cls,sec,sel.value||'');
+  const nextEmp=String(sel.value||'').trim();
+  try{
+    const before=await supabaseClient.from('class_incharges').select('employee_code')
+      .eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('section_name',sec)
+      .order('id',{ascending:true}).limit(1);
+    if(before.error)throw before.error;
+    const oldEmp=String(before.data?.[0]?.employee_code||'').trim();
+    if(!(await saveMotherTeacherAssignment(cls,sec,nextEmp)))return;
+    const count=await syncMotherTeacherSubjects(cls,sec,nextEmp,oldEmp);
+    __erpAlert(nextEmp
+      ? `Mother Teacher saved as Class Incharge for ${cls} / ${sec}. All ${count} class subjects are assigned with marks/grade add-edit permission.`
+      : `Mother Teacher removed from ${cls} / ${sec}. The former Mother Teacher's extra all-subject access has been removed where applicable.`);
+  }catch(e){
+    __erpAlert('Mother Teacher / subject synchronization failed: '+(e.message||e));
+  }
 }
 function toggleMotherTeacherMode(cb){
   const tr=cb.closest('tr'),cls=tr?.dataset.class||'',sec=tr?.dataset.section||''; setMotherTeacherMode(cls,sec,cb.checked); loadTimetableGrid();
@@ -12917,7 +13203,8 @@ async function saveExamDateSheetAll(){
   }
 
   if(msg)msg.innerHTML='<span class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Saving date sheet...</span>';
-  showPortalOperationLoading('Saving Exam Date Sheet','Saving exam dates, subjects and paper options…');
+  showPortalOperationLoading('Saving Exam Date Sheet','Preparing exam dates, subjects and paper options…');
+  setPortalOperationProgress(8,`Prepared ${rows.length} exam entries…`);
 
   try {
     // Existing rows are updated by primary-key id; they are never re-inserted.
@@ -12925,6 +13212,9 @@ async function saveExamDateSheetAll(){
     const existingRows=rows.filter(r=>r.id);
     const newRows=rows.filter(r=>!r.id);
 
+    let dateSheetDone=0;
+    const dateSheetTotal=Math.max(1,existingRows.length+newRows.length+explicitlyRemoved.length);
+    setPortalOperationProgress(12,`Updating ${existingRows.length} saved entries…`);
     for(const r of existingRows){
     const payload={
       session:r.session,
@@ -12937,8 +13227,10 @@ async function saveExamDateSheetAll(){
     };
     const {error}=await supabaseClient.from('exam_date_sheet').update(payload).eq('id',r.id);
     if(error)throw error;
+    dateSheetDone++;setPortalOperationProgress(12+Math.round(48*dateSheetDone/dateSheetTotal),`Updated ${dateSheetDone} of ${dateSheetTotal} entries…`);
   }
 
+  setPortalOperationProgress(60,'Adding new exam entries…');
   for(const r of newRows){
     const payload={
       session:r.session,
@@ -12951,17 +13243,20 @@ async function saveExamDateSheetAll(){
     };
     const {error}=await supabaseClient.from('exam_date_sheet').insert(payload);
     if(error)throw error;
+    dateSheetDone++;setPortalOperationProgress(60+Math.round(28*dateSheetDone/dateSheetTotal),`Saved ${dateSheetDone} of ${dateSheetTotal} entries…`);
   }
 
   if(explicitlyRemoved.length){
+    setPortalOperationProgress(90,'Removing deleted exam entries…');
     const {error:de}=await supabaseClient.from('exam_date_sheet').delete().in('id',explicitlyRemoved);
     if(de)throw de;
   }
 
+    setPortalOperationProgress(96,'Refreshing date sheet…');
     if(msg)msg.innerHTML='<span class="text-success">Exam date sheet saved successfully. Existing data was preserved and requested changes were applied.</span>';
+    await loadExamDateSheet();setPortalOperationProgress(100,'Complete · Date sheet saved');
     hidePortalOperationLoading();
     __erpAlert('Exam Date Sheet saved successfully.');
-    await loadExamDateSheet();
   }catch(e){
     if(msg)msg.innerHTML='<span class="text-danger">'+erpEsc(e.message||e)+'</span>';
     hidePortalOperationLoading();
@@ -14143,7 +14438,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCalendarDetailP
     setBusy();
     try{
       portalSyncBusy=true;
-      const slowTimer=setTimeout(()=>{busyShown=true;if(typeof showPortalOperationLoading==='function')showPortalOperationLoading('Saving Timetable','Saving subjects, teachers and selected working days…');},250);
+      const slowTimer=setTimeout(()=>{busyShown=true;if(typeof showPortalOperationLoading==='function')showPortalOperationLoading('Saving Timetable','Preparing subjects, teachers and selected working days…');},250);
       try{
         if(!(await checkTimetableClashes())){clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;return;}
         const rows=[];
@@ -14163,6 +14458,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCalendarDetailP
         const del=await supabaseClient.from('school_timetable').delete().eq('session',ACADEMIC_SESSION);if(del.error)throw del.error;
         if(rows.length){const ids=await getNextSchoolTimetableId(rows.length);rows.forEach((r,i)=>r.id=ids[i]);const ins=await supabaseClient.from('school_timetable').insert(rows);if(ins.error)throw ins.error;}
         const wanted=new Map();rows.forEach(r=>{if(r.employee_code)wanted.set(`${r.class_name}|||${r.section_name}|||${r.subject_name}|||${r.employee_code}`,r);});
+        let ttSyncDone=0;const ttSyncTotal=Math.max(1,wanted.size);
         for(const r of wanted.values()){
           const existing=await supabaseClient.from('teacher_subject_allocations').select('id').eq('session',ACADEMIC_SESSION).eq('class_name',r.class_name).eq('section_name',r.section_name).eq('subject_name',r.subject_name).eq('employee_code',r.employee_code).eq('active',true).limit(1);if(existing.error)throw existing.error;
           const payload={session:ACADEMIC_SESSION,employee_code:r.employee_code,teacher_name:getAcademicStaffDisplayName(r.employee_code,r.employee_code),class_name:r.class_name,section_name:r.section_name,subject_name:r.subject_name,can_edit:true,active:true};
@@ -14436,7 +14732,7 @@ window.printTimetableChart=function(){
     setBusy(); let busyShown=false;
     try{
       portalSyncBusy=true;
-      const slowTimer=setTimeout(()=>{busyShown=true;if(typeof showPortalOperationLoading==='function')showPortalOperationLoading('Saving Timetable','Saving subjects, teachers and selected working days…');},250);
+      const slowTimer=setTimeout(()=>{busyShown=true;if(typeof showPortalOperationLoading==='function')showPortalOperationLoading('Saving Timetable','Preparing timetable rows…');},250);
       try{
         if(!(await window.checkTimetableClashes())){clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;return;}
         const rows=[];
@@ -14453,11 +14749,14 @@ window.printTimetableChart=function(){
             });
           });
         });
+        if(busyShown)setPortalOperationProgress(12,`Prepared ${rows.length} timetable entries…`);
         const del=await supabaseClient.from('school_timetable').delete().eq('session',ACADEMIC_SESSION);if(del.error)throw del.error;
+        if(busyShown)setPortalOperationProgress(28,'Cleared old timetable entries…');
         if(rows.length){
           const ids=await getNextSchoolTimetableId(rows.length);rows.forEach((r,i)=>r.id=ids[i]);
           const ins=await supabaseClient.from('school_timetable').insert(rows);if(ins.error)throw ins.error;
         }
+        if(busyShown)setPortalOperationProgress(48,`Saved ${rows.length} timetable entries…`);
         const wanted=new Map();
         rows.forEach(r=>{if(r.employee_code)wanted.set(`${r.class_name}|||${r.section_name}|||${r.subject_name}|||${r.employee_code}`,r);});
         for(const r of wanted.values()){
@@ -14467,9 +14766,12 @@ window.printTimetableChart=function(){
           if(existing.data?.length){const u=await supabaseClient.from('teacher_subject_allocations').update(payload).eq('id',existing.data[0].id);if(u.error)throw u.error;}
           else{const u=await saveTeacherAllocationNoConflict(payload);if(u.error)throw u.error;}
           const pr=await saveStaffResultPermissionNoConflict({employee_code:r.employee_code,class_name:r.class_name,section:r.section_name,subject_name:r.subject_name,can_view:true,can_edit:true});if(pr.error)throw pr.error;
+          ttSyncDone++;if(busyShown)setPortalOperationProgress(48+Math.round(42*ttSyncDone/ttSyncTotal),`Synchronizing teacher permissions ${ttSyncDone} of ${wanted.size}…`);
         }
         timetableCache=[];teacherAllocCache=[];
+        if(busyShown)setPortalOperationProgress(95,'Refreshing timetable…');
         await loadTimetableGrid();
+        if(busyShown)setPortalOperationProgress(100,'Complete · Timetable saved');
         clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;
         __erpAlert('Timetable saved successfully. Subject + Teacher + selected days have been saved.');
       }catch(e){clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;throw e;}
@@ -14536,6 +14838,7 @@ window.printTimetableChart=function(){
   ];
   let studentSubjectsRowsCache=[];
   let studentSubjectsLoadedClass='';
+  let studentSubjectsLoadRequest=0; // Prevent an older async class fetch from overwriting the latest visible list.
   const ssEsc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   function seniorGroupForClass(cls){const s=String(cls||'').toUpperCase();if(s.includes('SCIENCE'))return 'SCIENCE';if(s.includes('COMM'))return 'COMMERCE';if(s.includes('ARTS'))return 'HUMANITIES';return '';}
   function seniorGroupConfig(group){
@@ -14545,8 +14848,9 @@ window.printTimetableChart=function(){
   }
   function seniorSubjectLabel(pair){return pair?.[0]?(pair[0]+(pair[1]?` (${pair[1]})`:'')):'';}
   function seniorSelectHtml(slot,options,current){const opts=[...options];const cur=String(current||'');let h=`<select class="form-select form-select-sm ss-subject" data-slot="${slot}"><option value="">-- Select Subject --</option>`;opts.forEach(([n,c])=>{const v=n+'|||'+c;h+=`<option value="${ssEsc(v)}" ${cur===v?'selected':''}>${ssEsc(seniorSubjectLabel([n,c]))}</option>`});return h+'</select>';}
-  function seniorFixedHtml(slot,name){return `<div class="small fw-bold text-success text-center" title="Fixed for this stream/group">${ssEsc(name)}</div><div class="small text-muted text-center">View only</div>`;}
-  function seniorSubjectValueFromRow(row,slot){const x=(row.subjects||{})[String(slot)];if(x)return `${x.subject_name||''}|||${x.subject_code||''}`;const g=seniorGroupForClass(studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'');return seniorDefaultValue(g,slot);}
+  function seniorReadonlySubjectHtml(slot,options,current){const cur=String(current||'');const pair=cur.split('|||');const label=pair[0]?seniorSubjectLabel(pair):'—';return `<div class="ss-selected-subject small fw-bold text-success text-center" data-slot-display="${slot}">${ssEsc(label)}</div><input type="hidden" class="ss-subject" data-slot="${slot}" value="${ssEsc(cur)}">`;}
+  function seniorFixedHtml(slot,name){return `<div class="ss-fixed-subject small fw-bold text-success text-center" title="Fixed for this stream/group">${ssEsc(name)}</div>`;}
+  function seniorSubjectValueFromRow(row,slot){const x=(row.subjects||{})[String(Number(slot))];if(x)return `${x.subject_name||''}|||${x.subject_code||''}`;const g=seniorGroupForClass(studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'');return seniorDefaultValue(g,slot);}
   function seniorDefaultRowsForGroup(group){
     const cfg=seniorGroupConfig(group);const rows=[...SENIOR_SUBJECT_COMMON.map(x=>({...x})),...cfg.fixed.filter(x=>x.slot>5).map(x=>({...x}))];
     Object.entries(cfg.defaults||{}).forEach(([slot,x])=>rows.push({slot:Number(slot),name:x[0],code:x[1]||''}));
@@ -14582,17 +14886,45 @@ window.printTimetableChart=function(){
     Object.values(vals).forEach(x=>{if(!wanted.some(y=>y.slot===x.slot))wanted.push(x);else {const i=wanted.findIndex(y=>y.slot===x.slot);wanted[i]=x;}});
     wanted.sort((a,b)=>a.slot-b.slot);
     const seen=new Set();wanted.forEach(x=>{const k=String(x.subject_name||'').trim().toUpperCase();if(k&&seen.has(k))throw new Error('Duplicate subject selected: '+x.subject_name);if(k)seen.add(k);});
-    const del=await supabaseClient.from('student_subject_selections').delete().eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('adm_no',String(adm));if(del.error)throw del.error;
+    // V217: scope replacement to this exact school + session + student + class.
+    // The previous version deleted by admission number alone, which could remove
+    // that student's allocations in another class. Verify the delete before insert.
+    const scope=q=>q.eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('adm_no',String(adm)).eq('class_name',cls);
+    let previous=[];
+    const old=await scope(supabaseClient.from('student_subject_selections').select('school_id,session,adm_no,class_name,section,group_name,subject_slot,subject_code,subject_name,active'));
+    if(old.error)throw old.error;previous=old.data||[];
+    const del=await scope(supabaseClient.from('student_subject_selections').delete().select('id'));if(del.error)throw del.error;
+    const remaining=await scope(supabaseClient.from('student_subject_selections').select('id').limit(1));
+    if(remaining.error)throw remaining.error;
+    if((remaining.data||[]).length){throw new Error('Database did not remove the previous subject rows. No new subjects were inserted. Check DELETE RLS permissions and school access.');}
     const payload=wanted.map(x=>({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:String(adm),class_name:cls,section:section||null,group_name:group,subject_slot:x.slot,subject_code:x.subject_code||null,subject_name:x.subject_name,active:true}));
-    const ins=await supabaseClient.from('student_subject_selections').insert(payload);if(ins.error)throw ins.error;
+    const ins=await supabaseClient.from('student_subject_selections').insert(payload);
+    if(ins.error){if(previous.length){const restore=await supabaseClient.from('student_subject_selections').insert(previous);if(restore.error)console.error('Senior subject editor rollback failed:',restore.error.message||restore.error);}throw ins.error;}
+    const check=await scope(supabaseClient.from('student_subject_selections').select('subject_slot,subject_name,subject_code,active'));
+    if(check.error)throw check.error;
+    const normalize=x=>`${Number(x.subject_slot)}|${String(x.subject_name||'').trim().toUpperCase()}|${String(x.subject_code||'').trim().toUpperCase()}`;
+    const actual=(check.data||[]).filter(x=>x.active!==false).map(normalize).sort(),expected=payload.map(normalize).sort();
+    if(actual.length!==expected.length||actual.some((x,i)=>x!==expected[i])){
+      const clean=await scope(supabaseClient.from('student_subject_selections').delete());
+      if(!clean.error&&previous.length){const restore=await supabaseClient.from('student_subject_selections').insert(previous);if(restore.error)console.error('Senior subject editor verification rollback failed:',restore.error.message||restore.error);}
+      throw new Error('Database verification failed: saved subjects do not match the selected subjects. Previous subjects were restored where possible.');
+    }
     await syncSeniorSubjectsToResults(cls);
   }
   async function seedSeniorDefaultSelections(cls,studentList){
+    // V212: Defaults are initial templates only. Never fill individual missing slots
+    // for a student who already has saved selections; doing so can resurrect old
+    // default subjects when a list is reopened. Seed defaults only for students
+    // who have no active subject-selection rows at all in this school/session/class.
     const group=seniorGroupForClass(cls);if(!group||!currentSchoolId||!Array.isArray(studentList)||!studentList.length)return;
     const defaults=seniorDefaultRowsForGroup(group);const ids=studentList.map(s=>String(s.adm_no));
-    const {data:existing,error}=await supabaseClient.from('student_subject_selections').select('adm_no,subject_slot').eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('active',true).in('adm_no',ids);if(error)throw error;
-    const have=new Set((existing||[]).map(x=>String(x.adm_no)+'|'+String(x.subject_slot)));const rows=[];
-    studentList.forEach(st=>defaults.forEach(x=>{const key=String(st.adm_no)+'|'+x.slot;if(!have.has(key))rows.push({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:String(st.adm_no),class_name:cls,section:st.section||null,group_name:group,subject_slot:x.slot,subject_code:x.code||null,subject_name:x.name,active:true});}));
+    const {data:existing,error}=await supabaseClient.from('student_subject_selections').select('adm_no,subject_slot,subject_name').eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('active',true).in('adm_no',ids);if(error)throw error;
+    const studentsWithAnySelection=new Set((existing||[]).map(x=>String(x.adm_no)));
+    const rows=[];
+    studentList.forEach(st=>{
+      if(studentsWithAnySelection.has(String(st.adm_no)))return;
+      defaults.forEach(x=>rows.push({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:String(st.adm_no),class_name:cls,section:st.section||null,group_name:group,subject_slot:x.slot,subject_code:x.code||null,subject_name:x.name,active:true}));
+    });
     if(rows.length){const r=await supabaseClient.from('student_subject_selections').insert(rows);if(r.error)throw r.error;}
   }
   async function syncSeniorSubjectsToResults(cls){
@@ -14627,11 +14959,21 @@ window.printTimetableChart=function(){
         const r=await supabaseRawClient.from(table).insert({id,school_id:currentSchoolId,class_name:cls,subject_id:sid,term1_max:100,term2_max:100,final_max:100,active:true});
         if(r.error)throw r.error;
       }
+      // Optional compatibility: some school databases do not have
+      // result_student_additional_subjects. Student selections remain saved in
+      // student_subject_selections, and this optional result-side mirror must not
+      // block submission when that table is absent.
       if(isAdditional){
-        for(const st of (sel||[]).filter(r=>Number(r.subject_slot)===9&&String(r.subject_name||'').trim().toUpperCase()===String(x.name).toUpperCase())){
-          const {data:ex,error:ee}=await supabaseClient.from('result_student_additional_subjects').select('id').eq('school_id',currentSchoolId).eq('adm_no',String(st.adm_no)).eq('class_name',cls).eq('subject_id',sid).limit(1);
-          if(ee)throw ee;
-          if(!ex?.length){const r=await supabaseRawClient.from('result_student_additional_subjects').insert({school_id:currentSchoolId,adm_no:String(st.adm_no),class_name:cls,subject_id:sid,active:true});if(r.error)throw r.error;}
+        try {
+          for(const st of (sel||[]).filter(r=>Number(r.subject_slot)===9&&String(r.subject_name||'').trim().toUpperCase()===String(x.name).toUpperCase())){
+            const {data:ex,error:ee}=await supabaseClient.from('result_student_additional_subjects').select('id').eq('school_id',currentSchoolId).eq('adm_no',String(st.adm_no)).eq('class_name',cls).eq('subject_id',sid).limit(1);
+            if(ee)throw ee;
+            if(!ex?.length){const r=await supabaseRawClient.from('result_student_additional_subjects').insert({school_id:currentSchoolId,adm_no:String(st.adm_no),class_name:cls,subject_id:sid,active:true});if(r.error)throw r.error;}
+          }
+        } catch(optionalErr) {
+          const msg=String(optionalErr?.message||optionalErr||'');
+          if(!/result_student_additional_subjects|schema cache|does not exist|could not find the table/i.test(msg)) throw optionalErr;
+          console.warn('Optional result_student_additional_subjects table is unavailable; student subjects were saved, skipping optional mirror.',msg);
         }
       }
     }
@@ -14647,11 +14989,17 @@ window.printTimetableChart=function(){
     // Additional 11th/12th subjects use result_class_subjects for marks setup and
     // result_student_additional_subjects for student-wise additional membership.
     if(desiredAdditional.size){
-      const wantedAdditional=[...desiredAdditional];
-      const {data:addStudents,error:addErr}=await supabaseClient.from('result_student_additional_subjects').select('id,subject_id').eq('school_id',currentSchoolId).eq('class_name',cls).eq('active',true);
-      if(addErr)throw addErr;
-      const stale=(addStudents||[]).filter(r=>!wantedAdditional.includes(Number(r.subject_id)));
-      if(stale.length){const ids=stale.map(r=>Number(r.id));const u=await supabaseClient.from('result_student_additional_subjects').update({active:false}).eq('school_id',currentSchoolId).in('id',ids);if(u.error)throw u.error;}
+      try {
+        const wantedAdditional=[...desiredAdditional];
+        const {data:addStudents,error:addErr}=await supabaseClient.from('result_student_additional_subjects').select('id,subject_id').eq('school_id',currentSchoolId).eq('class_name',cls).eq('active',true);
+        if(addErr)throw addErr;
+        const stale=(addStudents||[]).filter(r=>!wantedAdditional.includes(Number(r.subject_id)));
+        if(stale.length){const ids=stale.map(r=>Number(r.id));const u=await supabaseClient.from('result_student_additional_subjects').update({active:false}).eq('school_id',currentSchoolId).in('id',ids);if(u.error)throw u.error;}
+      } catch(optionalErr) {
+        const msg=String(optionalErr?.message||optionalErr||'');
+        if(!/result_student_additional_subjects|schema cache|does not exist|could not find the table/i.test(msg)) throw optionalErr;
+        console.warn('Optional result_student_additional_subjects table is unavailable; skipping optional additional-subject cleanup.',msg);
+      }
     }
   }
 
@@ -14708,7 +15056,7 @@ window.printTimetableChart=function(){
         const a=await getTeacherSeniorInchargeAssignments();
         sections=[...new Set(a.filter(x=>String(x.class_name)===String(cls)).map(x=>String(x.section_name||'').trim()).filter(Boolean))];
       }else{
-        const {data,error}=await supabaseClient.from('students').select('section').eq('class_name',cls).order('section');if(error)throw error;sections=[...new Set((data||[]).map(x=>String(x.section||'').trim()).filter(Boolean))];
+        let sectionQuery=supabaseClient.from('students').select('section').eq('class_name',cls);if(currentSchoolId)sectionQuery=sectionQuery.eq('school_id',currentSchoolId);const {data,error}=await sectionQuery.order('section');if(error)throw error;sections=[...new Set((data||[]).map(x=>String(x.section||'').trim()).filter(Boolean))];
       }
       sections.forEach(s=>secEl.insertAdjacentHTML('beforeend',`<option value="${ssEsc(s)}">${ssEsc(s)}</option>`));
       if(!sections.length && isTeacher)secEl.innerHTML='<option value="">No Incharge Section</option>';
@@ -14716,23 +15064,41 @@ window.printTimetableChart=function(){
     await loadStudentSubjectsStudents();
   }
   async function loadStudentSubjectsStudents(){
+    const requestId=++studentSubjectsLoadRequest;
     const cls=document.getElementById('studentSubjectsClass')?.value||'';const sec=document.getElementById('studentSubjectsSection')?.value||'';const body=document.getElementById('studentSubjectsBody');
     const isTeacher=canonicalPortalRole(currentUser?.type)==='teacher';
     if(!body)return;if(!cls){body.innerHTML='<tr><td colspan="14" class="text-center text-muted py-4">Select a 11th / 12th class to load students.</td></tr>';return;}
     if(isTeacher && !(await teacherCanManageSeniorSubjects(cls,sec))){body.innerHTML='<tr><td colspan="14" class="text-center text-danger py-4">Access denied. You can manage subjects only for your own 11th/12th Class Incharge class/section.</td></tr>';return;}
     body.innerHTML='<tr><td colspan="14" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading students and subject selections...</td></tr>';
     try{
-      let q=supabaseClient.from('students').select('adm_no,roll_no,name,father_name,section').eq('class_name',cls).order('roll_no',{ascending:true,nullsFirst:false}).order('name',{ascending:true});if(sec)q=q.eq('section',sec);const {data:students,error}=await q;if(error)throw error;
+      let q=supabaseClient.from('students').select('adm_no,roll_no,name,father_name,section').eq('class_name',cls);if(currentSchoolId)q=q.eq('school_id',currentSchoolId);q=q.order('roll_no',{ascending:true,nullsFirst:false}).order('name',{ascending:true});if(sec)q=q.eq('section',sec);const {data:students,error}=await q;if(error)throw error;
+      if(requestId!==studentSubjectsLoadRequest||cls!==(document.getElementById('studentSubjectsClass')?.value||'')||sec!==(document.getElementById('studentSubjectsSection')?.value||''))return;
       const studentList=students||[];
       if(!studentList.length){studentSubjectsRowsCache=[];document.getElementById('studentSubjectsCount').textContent='Showing 0 students';body.innerHTML='<tr><td colspan="14" class="text-center text-muted py-4">No students found in this class/section.</td></tr>';return;}
       await seedSeniorDefaultSelections(cls,studentList);
-      await syncSeniorSubjectsToResults(cls);
+      if(requestId!==studentSubjectsLoadRequest||cls!==(document.getElementById('studentSubjectsClass')?.value||'')||sec!==(document.getElementById('studentSubjectsSection')?.value||''))return;
       const ids=studentList.map(s=>String(s.adm_no));let selections=[];
-      if(ids.length){const {data,error:se}=await supabaseClient.from('student_subject_selections').select('adm_no,subject_slot,subject_code,subject_name,active').eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('active',true);if(se){if(/relation .*student_subject_selections.* does not exist|could not find the table .*student_subject_selections/i.test(se.message||'')){const a=document.getElementById('studentSubjectsSetupAlert');if(a)a.style.display='block';throw new Error('The student_subject_selections table is not created yet. Run the supplied SQL setup file once.');}throw se;}const a=document.getElementById('studentSubjectsSetupAlert');if(a)a.style.display='none';selections=se||[];}
-      const map={};selections.forEach(r=>{const a=String(r.adm_no);if(!map[a])map[a]={};map[a][String(r.subject_slot)]=r;});
+      if(ids.length){const {data:selectionData,error:se}=await supabaseClient.from('student_subject_selections').select('id,school_id,session,adm_no,class_name,section,subject_slot,subject_code,subject_name,active').eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('active',true).in('adm_no',ids).order('id',{ascending:false});if(se){if(/relation .*student_subject_selections.* does not exist|could not find the table .*student_subject_selections/i.test(se.message||'')){const a=document.getElementById('studentSubjectsSetupAlert');if(a)a.style.display='block';throw new Error('The student_subject_selections table is not created yet. Run the supplied SQL setup file once.');}throw se;}const a=document.getElementById('studentSubjectsSetupAlert');if(a)a.style.display='none';selections=selectionData||[];}
+      const map={};
+      // V220 authoritative display mapping: normalize admission number and slot,
+      // and keep the first row for each slot because query is newest-id-first.
+      // Never substitute the configured default when an active database row exists.
+      selections.slice().sort((a,b)=>{
+        const aCurrent=String(a.session||'')===String(ACADEMIC_SESSION||'')?1:0;
+        const bCurrent=String(b.session||'')===String(ACADEMIC_SESSION||'')?1:0;
+        return bCurrent-aCurrent || (Number(b.id)||0)-(Number(a.id)||0);
+      }).forEach(r=>{
+        const a=String(r.adm_no??'').trim();
+        const slot=String(Number(r.subject_slot));
+        if(!a||!Number.isFinite(Number(r.subject_slot))||Number(r.subject_slot)<1||Number(r.subject_slot)>9)return;
+        if(!map[a])map[a]={};
+        if(!map[a][slot])map[a][slot]={...r,subject_name:String(r.subject_name??'').trim(),subject_code:String(r.subject_code??'').trim()};
+      });
+      if(requestId!==studentSubjectsLoadRequest||cls!==(document.getElementById('studentSubjectsClass')?.value||'')||sec!==(document.getElementById('studentSubjectsSection')?.value||''))return;
+      studentSubjectsLoadedClass=cls;
       studentSubjectsRowsCache=studentList.map(s=>({...s,subjects:map[String(s.adm_no)]||{}}));
       renderStudentSubjectsRows();
-    }catch(e){body.innerHTML=`<tr><td colspan="14" class="text-center text-danger py-4">${ssEsc(e.message||e)}</td></tr>`;}
+    }catch(e){if(requestId===studentSubjectsLoadRequest)body.innerHTML=`<tr><td colspan="14" class="text-center text-danger py-4">${ssEsc(e.message||e)}</td></tr>`;}
   }
   function renderStudentSubjectsRows(){
     const body=document.getElementById('studentSubjectsBody');if(!body)return;const cls=studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'';const group=seniorGroupForClass(cls);const cfg=seniorGroupConfig(group);const search=(document.getElementById('studentSubjectsSearch')?.value||'').toLowerCase().trim();
@@ -14742,40 +15108,298 @@ window.printTimetableChart=function(){
     body.innerHTML=rows.map(r=>{
       let cells='';for(let slot=1;slot<=9;slot++){
         const fixed=cfg.fixed.find(x=>x.slot===slot);if(fixed)cells+=`<td>${seniorFixedHtml(slot,fixed.name)}</td>`;
-        else cells+=`<td>${seniorSelectHtml(slot,cfg.optional[slot]||[],seniorSubjectValueFromRow(r,slot))}</td>`;
+        else cells+=`<td>${seniorReadonlySubjectHtml(slot,cfg.optional[slot]||[],seniorSubjectValueFromRow(r,slot))}</td>`;
       }
-      return `<tr data-adm="${ssEsc(r.adm_no)}"><td>${ssEsc(r.adm_no)}</td><td>${ssEsc(r.roll_no||'')}</td><td><b>${ssEsc(r.name)}</b><div class="small text-muted">${ssEsc(r.father_name||'')}</div></td><td>${ssEsc(r.section||'')}</td>${cells}<td class="no-print"><button class="btn btn-success btn-sm fw-bold" onclick="saveStudentSubjectRow('${ssEsc(r.adm_no)}')"><i class="fas fa-save"></i> Save</button></td></tr>`;
+      return `<tr data-adm="${ssEsc(r.adm_no)}"><td>${ssEsc(r.adm_no)}</td><td>${ssEsc(r.roll_no||'')}</td><td><b>${ssEsc(r.name)}</b><div class="small text-muted">${ssEsc(r.father_name||'')}</div></td><td>${ssEsc(r.section||'')}</td>${cells}<td class="no-print"><button class="btn btn-primary btn-sm fw-bold" onclick="openStudentSubjectEditor('${ssEsc(r.adm_no)}')"><i class="fas fa-eye me-1"></i>View</button></td></tr>`;
     }).join('');
   }
   function filterStudentSubjectsRows(showAll){if(showAll){const x=document.getElementById('studentSubjectsSearch');if(x)x.value='';}renderStudentSubjectsRows();}
   function readStudentSubjectRow(tr){const values={};tr.querySelectorAll('.ss-subject').forEach(s=>{const slot=s.dataset.slot;const v=s.value||'';if(!v)return;const [name,code='']=v.split('|||');values[String(slot)]={slot:Number(slot),subject_name:name,subject_code:code||null};});return values;}
-  async function saveStudentSubjectRow(adm){
-    const isTeacher=canonicalPortalRole(currentUser?.type)==='teacher';
-    if(!academicAdmin() && !isTeacher)return;
-    const tr=document.querySelector(`#studentSubjectsBody tr[data-adm="${CSS.escape(String(adm))}"]`);if(!tr)return;const cls=studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'';const student=studentSubjectsRowsCache.find(x=>String(x.adm_no)===String(adm));if(!student||!cls)return;
-    if(isTeacher && !(await teacherCanManageSeniorSubjects(cls,student.section||''))){__erpAlert('Access denied. You can edit subjects only for students in your own 11th/12th Class Incharge class/section.');return;}
-    const group=seniorGroupForClass(cls);const cfg=seniorGroupConfig(group);const vals=readStudentSubjectRow(tr);
-    // Validate required optional slots. Science/Commerce slot 8 is optional but must be chosen before saving; slot 9 is optional additional and may remain blank.
-    if((group==='SCIENCE'||group==='COMMERCE')&&!vals['8']){__erpAlert('Please select Subject 8 for this student.');return;}
-    if(group==='HUMANITIES'){for(const slot of [6,7,8])if(!vals[String(slot)]){__erpAlert(`Please select Subject ${slot} for this Humanities student.`);return;}}
-    const wanted=[];SENIOR_SUBJECT_COMMON.forEach(x=>wanted.push({slot:x.slot,subject_name:x.name,subject_code:x.code||null}));cfg.fixed.filter(x=>x.slot>5).forEach(x=>wanted.push({slot:x.slot,subject_name:x.name,subject_code:x.code||null}));Object.entries(cfg.defaults||{}).forEach(([slot,x])=>{if(!vals[String(slot)])vals[String(slot)]={slot:Number(slot),subject_name:x[0],subject_code:x[1]||null};});Object.values(vals).forEach(x=>wanted.push(x));
-    const seen=new Set();for(const x of wanted){const k=(x.subject_name||'').toUpperCase();if(k&&seen.has(k)){__erpAlert(`Duplicate subject selected: ${x.subject_name}`);return;}if(k)seen.add(k);}
+
+  let ssEditorAdmList=[], ssEditorIndex=0;
+  const ssEditorPendingValues=new Map();
+  function ensureStudentSubjectEditor(){
+    let m=document.getElementById('studentSubjectEditModal');if(m)return m;
+    m=document.createElement('div');m.id='studentSubjectEditModal';m.className='modal fade';m.tabIndex=-1;
+    if(!document.getElementById('ssEditorCompactModalCss')){const css=document.createElement('style');css.id='ssEditorCompactModalCss';css.textContent=`#studentSubjectEditModal .modal-dialog{max-width:min(760px,94vw);margin:.65rem auto;}#studentSubjectEditModal .modal-content{max-height:78vh;overflow:hidden;}#studentSubjectEditModal .modal-body{overflow-y:auto;max-height:54vh;padding:.8rem 1rem;}#studentSubjectEditModal .modal-header{padding:.65rem .9rem;}#studentSubjectEditModal .modal-footer{padding:.55rem .75rem;gap:.35rem;flex-wrap:wrap;}#studentSubjectEditModal .modal-footer .btn{padding:.35rem .6rem;font-size:.85rem;}@media(max-width:576px){#studentSubjectEditModal .modal-dialog{max-width:94vw;margin:.45rem auto;}#studentSubjectEditModal .modal-content{max-height:72dvh;}#studentSubjectEditModal .modal-body{max-height:46dvh;padding:.65rem .7rem;}#studentSubjectEditModal .modal-title{font-size:1rem;}#studentSubjectEditModal .modal-footer{justify-content:center!important;}#studentSubjectEditModal .modal-footer .btn{font-size:.78rem;padding:.32rem .45rem;}}`;document.head.appendChild(css);}
+    m.innerHTML=`<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header bg-primary text-white"><div><h5 class="modal-title fw-bold mb-1">Edit Student Subjects</h5><div id="ssEditorStudentSub" class="small"></div></div><button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="closeStudentSubjectEditor()"></button></div>
+      <div class="modal-body"><div id="ssEditorStudentDetails" class="alert alert-light border mb-3"></div><div class="table-responsive"><table class="table table-bordered align-middle"><thead class="table-light"><tr><th>Slot</th><th>Subject</th><th>Selection</th></tr></thead><tbody id="ssEditorSubjects"></tbody></table></div><div id="ssEditorMessage" class="small text-muted"></div></div>
+      <div class="modal-footer d-flex justify-content-end"><button class="btn btn-outline-secondary" onclick="closeStudentSubjectEditor()">Close</button><button class="btn btn-outline-secondary" onclick="studentSubjectEditorPrevious()"><i class="fas fa-arrow-left me-1"></i>Previous</button><button class="btn btn-outline-primary fw-bold" onclick="studentSubjectEditorNext()"><i class="fas fa-forward me-1"></i>Next</button><button class="btn btn-success fw-bold" onclick="studentSubjectEditorSaveNext()"><i class="fas fa-save me-1"></i>Save &amp; Next</button></div>
+    </div></div>`;
+    document.body.appendChild(m);return m;
+  }
+  function openStudentSubjectEditor(adm){
+    const rows=[...document.querySelectorAll('#studentSubjectsBody tr[data-adm]')];ssEditorAdmList=rows.map(x=>String(x.dataset.adm));ssEditorIndex=ssEditorAdmList.indexOf(String(adm));if(ssEditorIndex<0)return;
+    const modalEl=ensureStudentSubjectEditor();
+    renderStudentSubjectEditor();
+    // V209: robustly open the editor even if Bootstrap's modal plugin is unavailable.
+    try {
+      if(window.bootstrap && window.bootstrap.Modal){
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      } else {
+        modalEl.classList.add('show');
+        modalEl.style.display='block';
+        modalEl.style.position='fixed';
+        modalEl.style.inset='0';
+        modalEl.style.zIndex='20000';
+        modalEl.style.background='rgba(0,0,0,.5)';
+        modalEl.setAttribute('aria-modal','true');
+        modalEl.setAttribute('role','dialog');
+      }
+    } catch(openErr) {
+      console.error('Subject editor modal open failed:',openErr);
+      modalEl.classList.add('show');
+      modalEl.style.display='block';
+      modalEl.style.position='fixed';
+      modalEl.style.inset='0';
+      modalEl.style.zIndex='20000';
+      modalEl.style.background='rgba(0,0,0,.5)';
+      modalEl.setAttribute('aria-modal','true');
+      modalEl.setAttribute('role','dialog');
+    }
+  }
+  function renderStudentSubjectEditor(){
+    const adm=ssEditorAdmList[ssEditorIndex],tr=document.querySelector(`#studentSubjectsBody tr[data-adm="${CSS.escape(String(adm))}"]`),st=studentSubjectsRowsCache.find(x=>String(x.adm_no)===String(adm));if(!tr||!st)return;
+    // V210: resolve the stream/group inside this function; the previous version
+    // referenced an undeclared `group`, causing every View click to fail.
+    const editorClass=studentSubjectsLoadedClass||st.class_name||document.getElementById('studentSubjectsClass')?.value||'';
+    const group=seniorGroupForClass(editorClass);
+    document.getElementById('ssEditorStudentSub').textContent=`Student ${ssEditorIndex+1} of ${ssEditorAdmList.length}`;
+    document.getElementById('ssEditorStudentDetails').innerHTML=`<b>Name:</b> ${ssEsc(st.name||'')} &nbsp; <b>Admission No:</b> ${ssEsc(adm)} &nbsp; <b>Father:</b> ${ssEsc(st.father_name||'')} &nbsp; <b>Class:</b> ${ssEsc(st.class_name||studentSubjectsLoadedClass||'')} &nbsp; <b>Section:</b> ${ssEsc(st.section||'')} &nbsp; <b>Roll No:</b> ${ssEsc(st.roll_no||'')}`;
+    // V214: the main list is deliberately read-only, so it no longer contains
+    // .ss-subject <select> elements. Build editable popup controls from the saved
+    // student cache instead of detecting controls in the read-only table row.
+    document.getElementById('ssEditorSubjects').innerHTML='';
+    const cfg=seniorGroupConfig(group);
+    for(let slot=1;slot<=9;slot++){
+      const cell=tr.cells[3+slot];if(!cell)continue;
+      const fixedDef=cfg.fixed.find(x=>Number(x.slot)===slot)||SENIOR_SUBJECT_COMMON.find(x=>Number(x.slot)===slot);
+      const pending=ssEditorPendingValues.get(String(adm))||{};
+      const saved=pending[String(slot)]||st.subjects?.[String(slot)];
+      const current=saved?`${saved.subject_name||''}|||${saved.subject_code||''}`:seniorDefaultValue(group,slot);
+      let control='';
+      if(!fixedDef && seniorAllOptionsForSlot(group,slot).length){
+        const opts=seniorAllOptionsForSlot(group,slot);
+        control=seniorSelectHtml(slot,opts,current).replace('class="form-select form-select-sm ss-subject"','class="form-select form-select-sm ss-subject" id="ssEditorSlot'+slot+'" style="width:100%"');
+      } else {
+        const label=fixedDef?.name||saved?.subject_name||(cell.innerText||'').replace(/\s*view\s*only\s*/ig,' ').trim();
+        control=`<span class="text-success fw-bold ss-fixed-subject">${ssEsc(label)}</span>`;
+      }
+      const label=fixedDef?.name||saved?.subject_name||(cell.innerText||'').replace(/\s*view\s*only\s*/ig,' ').replace(/\s+/g,' ').trim();
+      document.getElementById('ssEditorSubjects').insertAdjacentHTML('beforeend',`<tr><td>${slot}</td><td>${ssEsc(label)}</td><td>${control}</td></tr>`);
+    }
+    document.getElementById('ssEditorMessage').textContent='';
+  }
+  function readStudentSubjectEditorValues(){
+    const values={};
+    document.querySelectorAll('#ssEditorSubjects .ss-subject').forEach(el=>{
+      const slot=String(el.dataset.slot||'').trim();
+      const v=String(el.value||'').trim();
+      if(!slot || !v)return;
+      const parts=v.split('|||');
+      const name=String(parts.shift()||'').trim();
+      const code=String(parts.join('|||')||'').trim();
+      if(!name)return;
+      values[slot]={slot:Number(slot),subject_name:name,subject_code:code||null};
+    });
+    return values;
+  }
+  function syncStudentSubjectEditorToRow(){
+    // Keep unsaved popup edits per student while navigating, without changing
+    // the canonical loaded cache or making an unsaved selection look persisted.
+    const adm=String(ssEditorAdmList[ssEditorIndex]||'');if(!adm)return;
+    ssEditorPendingValues.set(adm,readStudentSubjectEditorValues());
+  }
+  function studentSubjectEditorNext(){
+    if(ssEditorSaving)return;
+    syncStudentSubjectEditorToRow();
+    if(ssEditorIndex<ssEditorAdmList.length-1){ssEditorIndex++;renderStudentSubjectEditor();}
+    else {const msg=document.getElementById('ssEditorMessage');if(msg){msg.className='small text-muted';msg.textContent='Last student reached. Use Previous to go back, or Submit Changes to save pending edits.';}}
+  }
+  let ssEditorSaving=false;
+  async function studentSubjectEditorSaveNext(){
+    if(ssEditorSaving)return;ssEditorSaving=true;
+    const btn=document.querySelector('#studentSubjectEditModal .modal-footer button.btn-success');
+    const msg=document.getElementById('ssEditorMessage');const oldHtml=btn?btn.innerHTML:'';
+    if(btn){btn.disabled=true;btn.classList.add('v197-saving');btn.innerHTML='<i class="fas fa-circle-notch fa-spin me-1"></i>Saving…';}
+    if(msg){msg.className='small text-primary';msg.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Saving subjects. Please wait…';}
     try{
-      const del=await supabaseClient.from('student_subject_selections').delete().eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('adm_no',String(adm)).eq('class_name',cls);if(del.error)throw del.error;
+      syncStudentSubjectEditorToRow();const adm=ssEditorAdmList[ssEditorIndex];
+      const subjectValues=readStudentSubjectEditorValues();
+      const saved=await saveStudentSubjectRow(adm,{silent:true,subjectValues});
+      if(saved===false){if(msg){msg.className='small text-danger';msg.textContent='Not saved. Please correct the subject selection and try again.';}return;}
+      // V218: verify this student's persisted rows directly before refreshing the
+      // whole class list. This separates a class-list/in(.in) reload issue from a
+      // genuine database write/RLS issue and avoids treating a stale list response
+      // as proof that the just-saved slot is missing.
+      const cls=studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'';
+      const direct=await supabaseClient.from('student_subject_selections')
+        .select('id,adm_no,subject_slot,subject_code,subject_name,active')
+        .eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION)
+        .eq('class_name',cls).eq('adm_no',String(adm)).eq('active',true);
+      if(direct.error)throw direct.error;
+      const directBySlot={};
+      (direct.data||[]).forEach(r=>{
+        const slot=String(r.subject_slot);
+        if(!directBySlot[slot])directBySlot[slot]=[];
+        directBySlot[slot].push(r);
+      });
+      const expected=subjectValues||{};
+      const norm=v=>String(v?.subject_name||'').trim().replace(/\s+/g,' ').toUpperCase()+'|'+String(v?.subject_code||'').trim().toUpperCase();
+      const editableSlots=Object.keys(expected).filter(slot=>expected[slot] && String(expected[slot].subject_name||'').trim());
+      const mismatchSlots=editableSlots.filter(slot=>!(directBySlot[slot]||[]).some(row=>norm(expected[slot])===norm(row)));
+      const directMap={};
+      Object.entries(directBySlot).forEach(([slot,rows])=>{
+        const wanted=expected[slot];
+        directMap[slot]=(wanted?rows.find(row=>norm(wanted)===norm(row)):null)||rows[0];
+      });
+      console.debug('[V219 subject save verification]',{
+        adm_no:String(adm), school_id:currentSchoolId, session:ACADEMIC_SESSION, class_name:cls,
+        expected:editableSlots.map(slot=>({slot,...expected[slot]})),
+        returned:editableSlots.map(slot=>({slot,...(directMap[slot]||{subject_name:null,subject_code:null})}))
+      });
+      if(mismatchSlots.length){
+        const details=mismatchSlots.map(slot=>{const e=expected[slot],a=directMap[slot];return `Slot ${slot}: selected ${e?.subject_name||'(blank)'} (${e?.subject_code||'no code'}), database returned ${a?.subject_name||'(missing)'} (${a?.subject_code||'no code'})`;}).join('; ');
+        if(msg){msg.className='small text-danger fw-bold';msg.textContent='NOT SAVED — '+details+'. This student was not skipped; check the database response.';}
+        throw new Error('Save verification failed. The editor will remain on this student. '+details);
+      }
+      // Clear pending edits only after both save and direct database verification succeed.
+      ssEditorPendingValues.delete(String(adm));
+      // Update only this student's canonical cache from the direct database response,
+      // then refresh the visible class list. The database result remains authoritative.
+      const cache=studentSubjectsRowsCache.find(x=>String(x.adm_no)===String(adm));
+      if(cache)cache.subjects=directMap;
+      await loadStudentSubjectsStudents();
+      renderStudentSubjectsRows();
+      if(ssEditorIndex<ssEditorAdmList.length-1){ssEditorIndex++;renderStudentSubjectEditor();}
+      else if(msg){msg.className='small text-success fw-bold';msg.innerHTML='<i class="fas fa-check-circle me-1"></i>Saved successfully. Last student reached.';}
+    }catch(e){if(msg){msg.className='small text-danger';msg.textContent='Save failed: '+(e.message||e);}}
+    finally{ssEditorSaving=false;if(btn){btn.disabled=false;btn.classList.remove('v197-saving');btn.innerHTML=oldHtml;}}
+  }
+  function studentSubjectEditorPrevious(){syncStudentSubjectEditorToRow();if(ssEditorIndex>0){ssEditorIndex--;renderStudentSubjectEditor();}}
+  function closeStudentSubjectEditor(){try{syncStudentSubjectEditorToRow();renderStudentSubjectsRows();}catch(e){console.warn('Could not sync current popup edits before closing:',e);}const m=document.getElementById('studentSubjectEditModal');if(window.bootstrap&&window.bootstrap.Modal){window.bootstrap.Modal.getOrCreateInstance(m).hide();}else{m.classList.remove('show');m.style.display='none';m.style.position='';m.style.inset='';m.style.zIndex='';m.style.background='';m.removeAttribute('aria-modal');m.removeAttribute('role');}}
+  let ssSubmitInProgress=false;
+  function ensureSubjectSubmitProgress(){
+    let box=document.getElementById('ssSubmitProgressOverlay');if(box)return box;
+    box=document.createElement('div');box.id='ssSubmitProgressOverlay';box.style.cssText='position:fixed;inset:0;z-index:20000;background:rgba(8,22,45,.58);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;';
+    box.innerHTML=`<div style="width:min(460px,96vw);background:#fff;border-radius:18px;padding:26px 28px;box-shadow:0 24px 80px rgba(0,0,0,.28);font-family:inherit;text-align:center"><div style="width:62px;height:62px;border-radius:50%;background:#e8f2ff;color:#1769c2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px"><i class="fas fa-cloud-upload-alt fa-bounce"></i></div><div style="font-size:20px;font-weight:800;color:#173b68;margin-bottom:5px">Submitting Subject Changes</div><div id="ssSubmitProgressStatus" style="font-size:13px;color:#64748b;margin-bottom:18px">Preparing students…</div><div style="height:13px;background:#e8edf4;border-radius:99px;overflow:hidden"><div id="ssSubmitProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#087f8c,#22c5a5);border-radius:99px;transition:width .22s ease"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><strong id="ssSubmitProgressPct" style="font-size:24px;color:#087f8c">0%</strong><span id="ssSubmitProgressCount" style="font-size:12px;color:#64748b">0 / 0 students</span></div><div style="font-size:12px;color:#94a3b8;margin-top:15px"><i class="fas fa-shield-alt me-1"></i>Please keep this window open while saving.</div></div>`;
+    document.body.appendChild(box);return box;
+  }
+  function updateSubjectSubmitProgress(pct,status,count,total){
+    const box=ensureSubjectSubmitProgress();box.style.display='flex';const n=Math.max(0,Math.min(100,Math.round(pct)));
+    const bar=document.getElementById('ssSubmitProgressBar');if(bar)bar.style.width=n+'%';
+    const pc=document.getElementById('ssSubmitProgressPct');if(pc)pc.textContent=n+'%';
+    const st=document.getElementById('ssSubmitProgressStatus');if(st)st.textContent=status;
+    const ct=document.getElementById('ssSubmitProgressCount');if(ct)ct.textContent=`${count} / ${total} students`;
+  }
+  function hideSubjectSubmitProgress(){const box=document.getElementById('ssSubmitProgressOverlay');if(box)box.style.display='none';}
+  function studentSubjectRowHasChanges(tr){
+    if(!tr)return false;
+    const adm=String(tr.dataset.adm||'');
+    const original=studentSubjectsRowsCache.find(x=>String(x.adm_no)===adm);
+    if(!original)return true;
+    const live=readStudentSubjectRow(tr);
+    const normalize=x=>String(x?.subject_name||'').trim().toUpperCase()+'|'+String(x?.subject_code||'').trim().toUpperCase();
+    const slots=new Set([...Object.keys(original.subjects||{}),...Object.keys(live||{})]);
+    for(const slot of slots){
+      const a=original.subjects?.[slot],b=live?.[slot];
+      if(normalize(a)!==normalize(b))return true;
+    }
+    return false;
+  }
+  async function submitStudentSubjectChanges(){
+    if(ssSubmitInProgress)return;
+    const isTeacher=canonicalPortalRole(currentUser?.type)==='teacher';if(!academicAdmin()&&!isTeacher)return;
+    const cls=studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'',sec=document.getElementById('studentSubjectsSection')?.value||'';
+    if(isTeacher&&!(await teacherCanManageSeniorSubjects(cls,sec))){__erpAlert('Access denied.');return;}
+    const visibleRows=[...document.querySelectorAll('#studentSubjectsBody tr[data-adm]')];if(!visibleRows.length){__erpAlert('No student rows to submit.');return;}
+    // V215: popup edits held while navigating are authoritative over hidden/read-only
+    // main-list inputs. Transfer pending values to the save routine per student.
+    const rows=visibleRows.filter(tr=>{
+      const adm=String(tr.dataset.adm||'');
+      if(ssEditorPendingValues.has(adm))return true;
+      return studentSubjectRowHasChanges(tr);
+    });
+    if(!rows.length){__erpAlert('No subject changes detected. Nothing needed to be saved.');return;}
+    if(!confirm(`Submit subject changes for ${rows.length} changed student(s)? Unchanged students will be skipped.`))return;
+    ssSubmitInProgress=true;const submitBtn=document.querySelector('button[onclick="submitStudentSubjectChanges()"]');const oldBtn=submitBtn?.innerHTML;
+    if(submitBtn){submitBtn.disabled=true;submitBtn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Submitting…';}
+    let saved=0,failed=0;
+    try{
+      updateSubjectSubmitProgress(0,`Starting updates for ${rows.length} changed student(s)…`,0,rows.length);
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      for(let i=0;i<rows.length;i++){
+        const tr=rows[i];const adm=String(tr.dataset.adm||'');updateSubjectSubmitProgress((i/rows.length)*90,`Saving ${tr.cells[2]?.querySelector('b')?.textContent?.trim()||'student'}…`,i,rows.length);
+        const pending=ssEditorPendingValues.get(adm);
+        const subjectValues=pending?Object.fromEntries(Object.entries(pending).map(([slot,v])=>[slot,{slot:Number(slot),subject_name:v.subject_name,subject_code:v.subject_code||null}])):undefined;
+        const ok=await saveStudentSubjectRow(adm,{silent:true,subjectValues});if(ok){saved++;ssEditorPendingValues.delete(adm);}else failed++;
+        updateSubjectSubmitProgress(((i+1)/rows.length)*90,failed?`Saved ${saved}; checking failed records…`:`Saving student ${i+1} of ${rows.length}…`,i+1,rows.length);
+      }
+      if(saved){updateSubjectSubmitProgress(93,'Synchronizing subjects with result fields…',saved,rows.length);await new Promise(resolve=>requestAnimationFrame(resolve));await syncSeniorSubjectsToResults(cls);}
+      updateSubjectSubmitProgress(100,failed?`Completed with ${failed} student(s) needing attention.`:'All subject changes saved successfully.',rows.length,rows.length);
+      await new Promise(resolve=>setTimeout(resolve,850));hideSubjectSubmitProgress();
+      __erpAlert(`Submitted subject changes: ${saved} of ${rows.length} changed students saved${failed?`; ${failed} failed and need review`:''}. Unchanged students skipped. ${saved?'Result subject synchronization completed.':''}`);
+    }catch(e){updateSubjectSubmitProgress(saved/Math.max(1,rows.length)*90,'Submission stopped: '+(e.message||e),saved,rows.length);await new Promise(resolve=>setTimeout(resolve,1400));hideSubjectSubmitProgress();__erpAlert('Submit failed: '+(e.message||e));}
+    finally{ssSubmitInProgress=false;if(submitBtn){submitBtn.disabled=false;submitBtn.innerHTML=oldBtn||'<i class="fas fa-check-circle me-1"></i>Submit Changes';}}
+  }
+  async function saveStudentSubjectRow(adm,options={}){
+    const silent=!!options.silent;
+    const isTeacher=canonicalPortalRole(currentUser?.type)==='teacher';
+    if(!academicAdmin()&&!isTeacher){if(!silent)__erpAlert('Access denied.');return false;}
+    const tr=document.querySelector(`#studentSubjectsBody tr[data-adm="${CSS.escape(String(adm))}"]`);
+    if(!tr){if(!silent)__erpAlert('Student row is no longer visible. Please reload the student list.');return false;}
+    const cls=studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'';
+    const student=studentSubjectsRowsCache.find(x=>String(x.adm_no)===String(adm));
+    if(!student||!cls){if(!silent)__erpAlert('Student or class information is missing. Please reload the list.');return false;}
+    if(isTeacher && !(await teacherCanManageSeniorSubjects(cls,student.section||''))){if(!silent)__erpAlert('Access denied. You can edit subjects only for students in your own 11th/12th Class Incharge class/section.');return false;}
+    const group=seniorGroupForClass(cls);const cfg=seniorGroupConfig(group);const vals=options.subjectValues&&typeof options.subjectValues==='object'?{...options.subjectValues}:readStudentSubjectRow(tr);
+    if((group==='SCIENCE'||group==='COMMERCE')&&!vals['8']){if(!silent)__erpAlert('Please select Subject 8 for this student.');return false;}
+    if(group==='HUMANITIES'){for(const slot of [6,7,8])if(!vals[String(slot)]){if(!silent)__erpAlert(`Please select Subject ${slot} for this Humanities student.`);return false;}}
+    const wanted=[];SENIOR_SUBJECT_COMMON.forEach(x=>wanted.push({slot:x.slot,subject_name:x.name,subject_code:x.code||null}));cfg.fixed.filter(x=>x.slot>5).forEach(x=>wanted.push({slot:x.slot,subject_name:x.name,subject_code:x.code||null}));Object.entries(cfg.defaults||{}).forEach(([slot,x])=>{if(!vals[String(slot)])vals[String(slot)]={slot:Number(slot),subject_name:x[0],subject_code:x[1]||null};});Object.values(vals).forEach(x=>wanted.push(x));
+    const seen=new Set();for(const x of wanted){const k=(x.subject_name||'').trim().toUpperCase();if(k&&seen.has(k)){if(!silent)__erpAlert(`Duplicate subject selected: ${x.subject_name}`);return false;}if(k)seen.add(k);}
+    const scope=q=>q.eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('adm_no',String(adm)).eq('class_name',cls);
+    let previous=[];
+    try{
+      // Keep a copy of the previous database rows so a failed replacement can be rolled back.
+      const old=await scope(supabaseClient.from('student_subject_selections').select('school_id,session,adm_no,class_name,section,group_name,subject_slot,subject_code,subject_name,active'));
+      if(old.error)throw old.error;previous=old.data||[];
       const payload=wanted.map(x=>({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:String(adm),class_name:cls,section:student.section||null,group_name:group,subject_slot:x.slot,subject_code:x.subject_code||null,subject_name:x.subject_name,active:true}));
-      if(payload.length){const ins=await supabaseClient.from('student_subject_selections').insert(payload);if(ins.error)throw ins.error;}
-      await syncSeniorSubjectsToResults(cls);
+      // V217: explicitly verify deletion. Supabase may return no error while RLS
+      // or row filters leave old records in place; never append a new selection set
+      // on top of old active rows.
+      const del=await scope(supabaseClient.from('student_subject_selections').delete().select('id'));if(del.error)throw del.error;
+      const remaining=await scope(supabaseClient.from('student_subject_selections').select('id').limit(1));
+      if(remaining.error)throw remaining.error;
+      if((remaining.data||[]).length){throw new Error('Database did not remove the previous subject rows. No new subjects were inserted. Check DELETE RLS permissions and school access.');}
+      const ins=await supabaseClient.from('student_subject_selections').insert(payload);
+      if(ins.error){
+        // Restore the last known-good rows if the new selection set was rejected.
+        if(previous.length){const restore=await supabaseClient.from('student_subject_selections').insert(previous);if(restore.error)console.error('Subject save rollback failed:',restore.error.message||restore.error);}
+        throw ins.error;
+      }
+      // Read back the saved slots; do not report success or update local cache unless DB confirms it.
+      const check=await scope(supabaseClient.from('student_subject_selections').select('subject_slot,subject_name,subject_code,active'));
+      if(check.error)throw check.error;
+      const actual=(check.data||[]).filter(x=>x.active!==false).map(x=>`${Number(x.subject_slot)}|${String(x.subject_name||'').trim().toUpperCase()}|${String(x.subject_code||'').trim().toUpperCase()}`).sort();
+      const expected=payload.map(x=>`${Number(x.subject_slot)}|${String(x.subject_name||'').trim().toUpperCase()}|${String(x.subject_code||'').trim().toUpperCase()}`).sort();
+      if(actual.length!==expected.length||actual.some((x,i)=>x!==expected[i])){
+        // Roll back when read-after-write verification detects incomplete persistence.
+        const clean=await scope(supabaseClient.from('student_subject_selections').delete());
+        if(!clean.error&&previous.length){const restore=await supabaseClient.from('student_subject_selections').insert(previous);if(restore.error)console.error('Subject verification rollback failed:',restore.error.message||restore.error);}
+        throw new Error('Database verification failed: saved subjects do not match the selected subjects. Previous subjects were restored where possible.');
+      }
       const cache=studentSubjectsRowsCache.find(x=>String(x.adm_no)===String(adm));if(cache){cache.subjects={};wanted.forEach(x=>cache.subjects[String(x.slot)]={subject_name:x.subject_name,subject_code:x.subject_code});}
-      tr.classList.add('table-success');setTimeout(()=>tr.classList.remove('table-success'),900);
-    }catch(e){__erpAlert('Student subject save failed: '+(e.message||e));}
+      tr.classList.add('table-success');setTimeout(()=>tr.classList.remove('table-success'),900);return true;
+    }catch(e){if(!silent)__erpAlert('Student subject save failed: '+(e.message||e));return false;}
   }
   async function saveAllStudentSubjectRows(){
     const isTeacher=canonicalPortalRole(currentUser?.type)==='teacher';
     if(!academicAdmin()&&!isTeacher)return;
     const cls=studentSubjectsLoadedClass||document.getElementById('studentSubjectsClass')?.value||'';const sec=document.getElementById('studentSubjectsSection')?.value||'';
     if(isTeacher && !(await teacherCanManageSeniorSubjects(cls,sec))){__erpAlert('Access denied. You can save subjects only for your own 11th/12th Class Incharge class/section.');return;}
-    const rows=[...document.querySelectorAll('#studentSubjectsBody tr[data-adm]')];if(!rows.length){__erpAlert('No student rows to save.');return;}const btn=document.querySelector('button[onclick="saveAllStudentSubjectRows()"]');if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Saving...';}
-    let ok=0;try{for(const tr of rows){await saveStudentSubjectRow(tr.dataset.adm);ok++;}}finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-save me-1"></i>Save All Visible';}}__erpAlert(`Subject allocation processed for ${ok} visible student(s).`);
+    const rows=[...document.querySelectorAll('#studentSubjectsBody tr[data-adm]')];if(!rows.length){__erpAlert('No student rows to save.');return;}const btn=document.querySelector('button[onclick="saveAllStudentSubjectRows()"]');if(btn?.dataset.saving==='1')return;if(btn){btn.dataset.saving='1';btn.disabled=true;btn.classList.add('v197-saving');btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Saving…';}
+    let ok=0;try{for(const tr of rows){if(await saveStudentSubjectRow(tr.dataset.adm,{silent:true}))ok++;}if(ok)await syncSeniorSubjectsToResults(cls);}finally{if(btn){btn.disabled=false;delete btn.dataset.saving;btn.classList.remove('v197-saving');btn.innerHTML='<i class="fas fa-save me-1"></i>Save All Visible';}}__erpAlert(`Subject allocation saved for ${ok} of ${rows.length} visible student(s).`);
   }
 
   const _newSeniorClass=document.getElementById('classDropdown');
@@ -14790,6 +15414,12 @@ window.printTimetableChart=function(){
   window.loadStudentSubjectsSections=loadStudentSubjectsSections;
   window.loadStudentSubjectsStudents=loadStudentSubjectsStudents;
   window.filterStudentSubjectsRows=filterStudentSubjectsRows;
+  window.openStudentSubjectEditor=openStudentSubjectEditor;
+  window.closeStudentSubjectEditor=closeStudentSubjectEditor;
+  window.studentSubjectEditorPrevious=studentSubjectEditorPrevious;
+  window.studentSubjectEditorNext=studentSubjectEditorNext;
+  window.studentSubjectEditorSaveNext=studentSubjectEditorSaveNext;
+  window.submitStudentSubjectChanges=submitStudentSubjectChanges;
   window.saveStudentSubjectRow=saveStudentSubjectRow;
   window.saveAllStudentSubjectRows=saveAllStudentSubjectRows;
   window.openTeacherSeniorSubjects=openTeacherSeniorSubjects;
