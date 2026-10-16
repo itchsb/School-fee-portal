@@ -5821,6 +5821,21 @@ function portalModuleAction(tabId, action) {
     );
   }
 
+  // Mother Teacher / No Periods may edit every result subject for their own class+section.
+  // Other Class Incharges and ordinary Subject Teachers retain the existing subject-specific rules.
+  async function teacherIsMotherTeacherForClass(cls,sec){
+    if(!cls||!sec||typeof isMotherTeacherClass!=='function'||!isMotherTeacherClass(cls))return false;
+    if(typeof getMotherTeacherMode!=='function'||!getMotherTeacherMode(cls,sec))return false;
+    const emp=String(currentUser?.associatedId||'').trim();
+    if(!emp)return false;
+    const assignments=await getTeacherInchargeAssignments();
+    return (assignments||[]).some(x=>
+      String(x.class_name||'').trim()===String(cls).trim() &&
+      String(x.section_name||'').trim()===String(sec).trim() &&
+      String(x.employee_code||'').trim()===emp
+    );
+  }
+
   async function loadTeacherResultMarks(){
     const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',body=document.getElementById('teacherResultBody'),note=document.getElementById('teacherResultPermissionNote'),save=document.getElementById('btnTeacherResultSave'),teacherInfo=document.getElementById('teacherResultSubjectTeacherInfo');
     if(!body||!note||!save)return;
@@ -5831,13 +5846,16 @@ function portalModuleAction(tabId, action) {
     }
 
     const incharge=await teacherIsIncharge(cls,sec);
+    const motherTeacherFullClassEdit=await teacherIsMotherTeacherForClass(cls,sec);
     const assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()===String(subject||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()&&x.active!==false);
-    // Never trust an old/stale can_edit=true allocation on its own. The current
-    // timetable's employee_code assignment is the source of truth for editing.
+    // Normal teachers/incharges must own the exact timetable subject. A configured
+    // Mother Teacher / No Periods for this exact class+section may edit all class subjects.
     const ownsTimetableSubject=await teacherOwnsTimetableSubject(cls,sec,subject);
-    const canEdit=!!assigned && assigned.can_edit!==false && ownsTimetableSubject;
+    const canEdit=motherTeacherFullClassEdit || (!!assigned && assigned.can_edit!==false && ownsTimetableSubject);
 
-    if(incharge){
+    if(motherTeacherFullClassEdit){
+      note.innerHTML='<span class="text-success fw-bold">Mother Teacher / No Periods: you can ADD, EDIT and UPDATE marks/grades for all subjects of your assigned class + section.</span>';
+    }else if(incharge){
       note.innerHTML=canEdit
         ? '<span class="text-success fw-bold">Class Incharge: you can VIEW all subjects in this class, but you can ADD, EDIT and UPDATE marks/grades only for this subject because it is assigned to you as Subject Teacher.</span>'
         : '<span class="text-danger fw-bold">Class Incharge: VIEW ONLY for this subject. Marks, grades and attendance cannot be added or edited unless this subject is independently assigned to you as Subject Teacher.</span>';
@@ -6015,8 +6033,9 @@ function portalModuleAction(tabId, action) {
 
   async function saveTeacherResultMarks(){
     const cls=document.getElementById('teacherResultClass')?.value||'',sec=document.getElementById('teacherResultSection')?.value||'',subject=document.getElementById('teacherResultSubject')?.value||'',term=document.getElementById('teacherResultTerm')?.value||'1st Term',assigned=(currentUser.teacherAllocations||[]).find(x=>x.class_name===cls&&x.section_name===sec&&String(x.subject_name||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()===String(subject||'').trim().replace(/\s+/g,' ').toLocaleLowerCase()&&x.active!==false);
+    const motherTeacherFullClassEdit=await teacherIsMotherTeacherForClass(cls,sec);
     const ownsTimetableSubject=await teacherOwnsTimetableSubject(cls,sec,subject);
-    if(!assigned||assigned.can_edit===false||!ownsTimetableSubject){__erpAlert('View-only: marks/grades can be saved only by the Subject Teacher assigned to this subject in the current timetable. Class Incharge status alone does not grant edit permission.');await loadTeacherResultMarks();return;}
+    if(!motherTeacherFullClassEdit&&(!assigned||assigned.can_edit===false||!ownsTimetableSubject)){__erpAlert('View-only: marks/grades can be saved only by the Subject Teacher assigned to this subject, except Mother Teacher / No Periods who can edit all subjects of their own class.');await loadTeacherResultMarks();return;}
     const ra=await getResultAllocations(cls),alloc=ra.find(x=>String(x.subject_name||x.result_subject_master?.subject_name||'').trim()===String(subject).trim()),mode=getResultEvaluationMode(cls,subject);
     showPortalOperationLoading('Saving Marks','Saving marks, grades and attendance…');
     try{
@@ -11962,7 +11981,7 @@ async function saveMotherTeacherAssignment(cls,sec,emp){
     return true;
   }catch(e){__erpAlert('Mother Teacher save failed: '+(e.message||e));return false;}
 }
-async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode=''){
+async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode='',subjectNamesHint=[]){
   cls=String(cls||'').trim();sec=String(sec||'').trim();
   const nextEmp=String(newEmployeeCode||'').trim(),oldEmp=String(oldEmployeeCode||'').trim();
   if(!cls||!sec)throw new Error('Class and section are required for Mother Teacher synchronization.');
@@ -11974,6 +11993,12 @@ async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode
     .eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('section_name',sec);
   if(ttError)throw ttError;
   const subjectMap=new Map();
+  // Subjects captured before saving a No-Periods timetable must remain available:
+  // the timetable grid intentionally writes no period rows for Mother Teacher classes.
+  (Array.isArray(subjectNamesHint)?subjectNamesHint:[]).forEach(value=>{
+    const name=String(value||'').trim();
+    if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
+  });
   (ttRows||[]).forEach(r=>{
     const name=String(r.subject_name||'').trim();
     if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
@@ -11985,6 +12010,24 @@ async function syncMotherTeacherSubjects(cls,sec,newEmployeeCode,oldEmployeeCode
       if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
     });
   }catch(e){console.warn('Mother Teacher result subject lookup:',e.message||e);}
+
+  // Also include the saved student-wise subject choices for senior classes.
+  // These are authoritative for 11th/12th optional subjects that may not be
+  // represented in the timetable (especially when Mother Teacher / No Periods is enabled).
+  try{
+    const {data:studentSubjectRows,error:studentSubjectError}=await supabaseClient
+      .from('student_subject_selections')
+      .select('subject_name,subject_code,subject_slot,active')
+      .eq('school_id',currentSchoolId)
+      .eq('session',ACADEMIC_SESSION)
+      .eq('class_name',cls)
+      .eq('active',true);
+    if(studentSubjectError)throw studentSubjectError;
+    (studentSubjectRows||[]).forEach(r=>{
+      const name=String(r.subject_name||'').trim();
+      if(name&&!subjectMap.has(name.toUpperCase()))subjectMap.set(name.toUpperCase(),name);
+    });
+  }catch(e){console.warn('Mother Teacher student subject lookup:',e.message||e);}
 
   const {data:allocRows,error:allocError}=await supabaseClient.from('teacher_subject_allocations')
     .select('id,session,employee_code,teacher_name,class_name,section_name,subject_name,active,can_edit')
@@ -12071,8 +12114,12 @@ async function handleMotherTeacherChange(sel){
     const oldEmp=String(before.data?.[0]?.employee_code||'').trim();
     if(!(await saveMotherTeacherAssignment(cls,sec,nextEmp)))return;
     const count=await syncMotherTeacherSubjects(cls,sec,nextEmp,oldEmp);
+    // Refresh the allocation manager so these Mother Teacher subject rows are
+    // immediately visible in Academic Management > Teacher & Subject Allocation.
+    teacherAllocCache=[];
+    try{await loadTeacherAllocationManager();}catch(refreshErr){console.warn('Teacher allocation display refresh:',refreshErr.message||refreshErr);}
     __erpAlert(nextEmp
-      ? `Mother Teacher saved as Class Incharge for ${cls} / ${sec}. All ${count} class subjects are assigned with marks/grade add-edit permission.`
+      ? `Mother Teacher saved as Class Incharge for ${cls} / ${sec}. ${count} class subject allocation(s) are now listed in Teacher & Subject Allocation. Edit permission remains limited to subjects assigned to this teacher in the saved timetable.`
       : `Mother Teacher removed from ${cls} / ${sec}. The former Mother Teacher's extra all-subject access has been removed where applicable.`);
   }catch(e){
     __erpAlert('Mother Teacher / subject synchronization failed: '+(e.message||e));
@@ -14865,6 +14912,18 @@ window.printTimetableChart=function(){
       portalSyncBusy=true;
       const slowTimer=setTimeout(()=>{busyShown=true;if(typeof showPortalOperationLoading==='function')showPortalOperationLoading('Saving Timetable','Preparing timetable rows…');},250);
       try{
+        // Preserve existing subject names before replacing timetable rows. Mother Teacher / No Periods
+        // intentionally has no period rows, so its class subjects must be retained for allocation sync.
+        const priorTtResult=await supabaseClient.from('school_timetable').select('class_name,section_name,subject_name').eq('session',ACADEMIC_SESSION);
+        if(priorTtResult.error)throw priorTtResult.error;
+        const priorSubjectsByClassSection=new Map();
+        (priorTtResult.data||[]).forEach(x=>{
+          const key=`${String(x.class_name||'').trim()}|||${String(x.section_name||'').trim()}`;
+          const name=String(x.subject_name||'').trim();if(!name)return;
+          if(!priorSubjectsByClassSection.has(key))priorSubjectsByClassSection.set(key,new Set());
+          priorSubjectsByClassSection.get(key).add(name);
+        });
+        const previousMotherMap=await loadMotherTeacherMap();
         if(!(await window.checkTimetableClashes())){clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;return;}
         const rows=[];
         document.querySelectorAll('#timetableGrid tbody tr[data-row-key]').forEach(tr=>{
@@ -14890,6 +14949,11 @@ window.printTimetableChart=function(){
         if(busyShown)setPortalOperationProgress(48,`Saved ${rows.length} timetable entries…`);
         const wanted=new Map();
         rows.forEach(r=>{if(r.employee_code)wanted.set(`${r.class_name}|||${r.section_name}|||${r.subject_name}|||${r.employee_code}`,r);});
+        // Keep progress counters local to this active save handler. The previous
+        // override referenced these names without declaring them, which aborted
+        // timetable saves after allocation synchronization began.
+        let ttSyncDone=0;
+        const ttSyncTotal=Math.max(1,wanted.size);
         for(const r of wanted.values()){
           const existing=await supabaseClient.from('teacher_subject_allocations').select('id').eq('session',ACADEMIC_SESSION).eq('class_name',r.class_name).eq('section_name',r.section_name).eq('subject_name',r.subject_name).eq('employee_code',r.employee_code).eq('active',true).limit(1);
           if(existing.error)throw existing.error;
@@ -14899,12 +14963,33 @@ window.printTimetableChart=function(){
           const pr=await saveStaffResultPermissionNoConflict({employee_code:r.employee_code,class_name:r.class_name,section:r.section_name,subject_name:r.subject_name,can_view:true,can_edit:true});if(pr.error)throw pr.error;
           ttSyncDone++;if(busyShown)setPortalOperationProgress(48+Math.round(42*ttSyncDone/ttSyncTotal),`Synchronizing teacher permissions ${ttSyncDone} of ${wanted.size}…`);
         }
+        // Mother Teacher / No Periods rows are excluded from the period grid above, so explicitly
+        // save their Class Incharge and generate all-subject view allocations after timetable save.
+        const motherRows=[...document.querySelectorAll('#timetableGrid tbody tr[data-row-key]')].filter(tr=>{
+          const cls=tr.dataset.class||'',sec=tr.dataset.section||'';
+          return typeof isMotherTeacherClass==='function' && isMotherTeacherClass(cls) &&
+            typeof getMotherTeacherMode==='function' && getMotherTeacherMode(cls,sec) &&
+            tr.querySelector('.tt-mother-mode')?.checked;
+        });
+        let motherSyncCount=0;
+        for(const tr of motherRows){
+          const cls=String(tr.dataset.class||'').trim(),sec=String(tr.dataset.section||'').trim();
+          const nextEmp=String(tr.querySelector('.tt-mother-teacher')?.value||'').trim();
+          if(!nextEmp)continue;
+          const key=`${cls}|||${sec}`;
+          const oldEmp=String(previousMotherMap[key]?.employee_code||'').trim();
+          if(!(await saveMotherTeacherAssignment(cls,sec,nextEmp)))throw new Error(`Could not save Mother Teacher for ${cls} / ${sec}.`);
+          const hints=[...(priorSubjectsByClassSection.get(key)||new Set())];
+          const count=await syncMotherTeacherSubjects(cls,sec,nextEmp,oldEmp,hints);
+          motherSyncCount+=count;
+        }
         timetableCache=[];teacherAllocCache=[];
-        if(busyShown)setPortalOperationProgress(95,'Refreshing timetable…');
+        try{if(typeof loadTeacherAllocationManager==='function')await loadTeacherAllocationManager();}catch(refreshErr){console.warn('Teacher & Subject Allocation refresh:',refreshErr.message||refreshErr);}
+        if(busyShown)setPortalOperationProgress(95,'Refreshing timetable and Mother Teacher subject allocations…');
         await loadTimetableGrid();
         if(busyShown)setPortalOperationProgress(100,'Complete · Timetable saved');
         clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;
-        __erpAlert('Timetable saved successfully. Subject + Teacher + selected days have been saved.');
+        __erpAlert(`Timetable saved successfully. Subject + Teacher + selected days have been saved. ${motherSyncCount} Mother Teacher subject allocation(s) synchronized.`);
       }catch(e){clearTimeout(slowTimer);if(busyShown&&typeof hidePortalOperationLoading==='function')hidePortalOperationLoading();busyShown=false;throw e;}
     }catch(e){__erpAlert('Timetable save failed: '+(e.message||e));}
     finally{portalSyncBusy=false;clearBusy();}
