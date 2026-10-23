@@ -10913,9 +10913,22 @@ function portalModuleAction(tabId, action) {
     if(!schoolId){msg.className='small text-danger';msg.textContent='No active school context.';return;}
     btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Resetting…';
     try{
-      const {error}=await supabaseClient.rpc('school_admin_reset_user_password',{p_school_id:schoolId,p_username:username,p_new_password:password});
+      // Securely synchronize the portal password with the internal Supabase Auth identity.
+      // The Edge Function first runs the existing school-scoped admin RPC, then updates
+      // (or creates, if missing) the matching internal Auth identity using service-role
+      // privileges kept server-side. Never place a service-role key in this HTML.
+      const {data:resetResult,error}=await supabaseRawClient.functions.invoke('admin-reset-portal-password',{
+        body:{p_school_id:schoolId,p_username:username,p_new_password:password}
+      });
       if(error)throw error;
-      msg.className='small text-success';msg.textContent='Password reset successfully.';
+      if(resetResult?.error)throw new Error(resetResult.error);
+      if(resetResult?.auth_identity==='created'){
+        msg.className='small text-success';msg.textContent='Portal password reset and internal login identity created successfully.';
+      }else if(resetResult?.auth_identity==='updated'){
+        msg.className='small text-success';msg.textContent='Portal password and internal Supabase login password synchronized successfully.';
+      }else{
+        msg.className='small text-success';msg.textContent='Password reset completed. Verify staff login with the new password.';
+      }
       document.getElementById('adminResetPassword').value='';document.getElementById('adminResetPasswordConfirm').value='';
       setTimeout(()=>bootstrap.Modal.getInstance(document.getElementById('adminPasswordResetModal'))?.hide(),900);
     }catch(err){msg.className='small text-danger';msg.textContent=String(err?.message||err)+' — Check that the users table allows this update.';}
@@ -15128,18 +15141,29 @@ window.printTimetableChart=function(){
     await syncSeniorSubjectsToResults(cls);
   }
   async function seedSeniorDefaultSelections(cls,studentList){
-    // V212: Defaults are initial templates only. Never fill individual missing slots
-    // for a student who already has saved selections; doing so can resurrect old
-    // default subjects when a list is reopened. Seed defaults only for students
-    // who have no active subject-selection rows at all in this school/session/class.
+    // Defaults are initial templates only. This helper is called only by admin
+    // views; read-only teacher views must never attempt background writes.
+    // Check ALL rows (including inactive history), because the table's unique
+    // constraint can still reject a duplicate slot when an older row is inactive.
     const group=seniorGroupForClass(cls);if(!group||!currentSchoolId||!Array.isArray(studentList)||!studentList.length)return;
-    const defaults=seniorDefaultRowsForGroup(group);const ids=studentList.map(s=>String(s.adm_no));
-    const {data:existing,error}=await supabaseClient.from('student_subject_selections').select('adm_no,subject_slot,subject_name').eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('active',true).in('adm_no',ids);if(error)throw error;
-    const studentsWithAnySelection=new Set((existing||[]).map(x=>String(x.adm_no)));
-    const rows=[];
+    const defaults=seniorDefaultRowsForGroup(group);const ids=[...new Set(studentList.map(s=>String(s.adm_no||'').trim()).filter(Boolean))];
+    if(!ids.length)return;
+    const {data:existing,error}=await supabaseClient.from('student_subject_selections')
+      .select('adm_no,subject_slot,subject_name,active')
+      .eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).in('adm_no',ids);
+    if(error)throw error;
+    // Never re-seed a student if ANY row already exists for that student/session/class.
+    // This avoids violating student_subject_selections_uq when historical inactive
+    // rows occupy the same unique key, and avoids resurrecting old default subjects.
+    const studentsWithAnySelection=new Set((existing||[]).map(x=>String(x.adm_no||'').trim()));
+    const rows=[];const rowKeys=new Set();
     studentList.forEach(st=>{
-      if(studentsWithAnySelection.has(String(st.adm_no)))return;
-      defaults.forEach(x=>rows.push({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:String(st.adm_no),class_name:cls,section:st.section||null,group_name:group,subject_slot:x.slot,subject_code:x.code||null,subject_name:x.name,active:true}));
+      const adm=String(st.adm_no||'').trim();if(!adm||studentsWithAnySelection.has(adm))return;
+      defaults.forEach(x=>{
+        const key=[currentSchoolId,ACADEMIC_SESSION,adm,cls,String(x.slot)].join('|');
+        if(rowKeys.has(key))return;rowKeys.add(key);
+        rows.push({school_id:currentSchoolId,session:ACADEMIC_SESSION,adm_no:adm,class_name:cls,section:st.section||null,group_name:group,subject_slot:x.slot,subject_code:x.code||null,subject_name:x.name,active:true});
+      });
     });
     if(rows.length){const r=await supabaseClient.from('student_subject_selections').insert(rows);if(r.error)throw r.error;}
   }
@@ -15295,7 +15319,9 @@ window.printTimetableChart=function(){
       if(requestId!==studentSubjectsLoadRequest||cls!==(document.getElementById('studentSubjectsClass')?.value||'')||sec!==(document.getElementById('studentSubjectsSection')?.value||''))return;
       const studentList=students||[];
       if(!studentList.length){studentSubjectsRowsCache=[];document.getElementById('studentSubjectsCount').textContent='Showing 0 students';body.innerHTML='<tr><td colspan="14" class="text-center text-muted py-4">No students found in this class/section.</td></tr>';return;}
-      await seedSeniorDefaultSelections(cls,studentList);
+      // Teacher 54 and other teacher accounts can be View Only here. Loading
+      // this screen must not write/seed records for a read-only login.
+      if(!isTeacher) await seedSeniorDefaultSelections(cls,studentList);
       if(requestId!==studentSubjectsLoadRequest||cls!==(document.getElementById('studentSubjectsClass')?.value||'')||sec!==(document.getElementById('studentSubjectsSection')?.value||''))return;
       const ids=studentList.map(s=>String(s.adm_no));let selections=[];
       if(ids.length){const {data:selectionData,error:se}=await supabaseClient.from('student_subject_selections').select('id,school_id,session,adm_no,class_name,section,subject_slot,subject_code,subject_name,active').eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('active',true).in('adm_no',ids).order('id',{ascending:false});if(se){if(/relation .*student_subject_selections.* does not exist|could not find the table .*student_subject_selections/i.test(se.message||'')){const a=document.getElementById('studentSubjectsSetupAlert');if(a)a.style.display='block';throw new Error('The student_subject_selections table is not created yet. Run the supplied SQL setup file once.');}throw se;}const a=document.getElementById('studentSubjectsSetupAlert');if(a)a.style.display='none';selections=selectionData||[];}
