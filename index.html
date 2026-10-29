@@ -304,7 +304,7 @@
     .rc-coscholastic td{height:5mm;font-size:7.8px;}
     .rc-total-row td{font-weight:800;background:#f1f5f9;}
     .rc-remarks{height:13mm;border:1px solid #333;padding:3px;}
-    .result-mark-below-pass{background-color:#dc3545 !important;color:#fff !important;border-color:#b02a37 !important;font-weight:700;}
+    .result-mark-below-pass{background-color:#fff !important;color:#dc3545 !important;border-color:#ced4da !important;font-weight:700;}
     .result-mark-inline-error{display:block;color:#dc3545;font-size:11px;font-weight:700;line-height:1.2;margin-top:3px;}
     .result-mark-input-error{border-color:#dc3545 !important;box-shadow:0 0 0 .12rem rgba(220,53,69,.15) !important;}
     .rc-grade-scale th{width:8%;background:#fff;color:#111;font-size:8px;}.rc-grade-scale td{font-size:7.2px;text-align:center;}
@@ -755,6 +755,34 @@ select.form-select.teacher-result-grade {
 }
 </style>
 
+<style id="mobileGradeBoxExpandedFix">
+/* Grade fields must be comfortably readable on phones; avoid Bootstrap's compact select sizing. */
+select.teacher-result-grade, select.result-entry-grade, select.form-select.teacher-result-grade, select.form-select.result-entry-grade {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 150px !important;
+  min-height: 56px !important;
+  height: 56px !important;
+  font-size: 18px !important;
+  line-height: 1.4 !important;
+  padding: 12px 42px 12px 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+@media (max-width: 768px) {
+  select.teacher-result-grade, select.result-entry-grade, select.form-select.teacher-result-grade, select.form-select.result-entry-grade {
+    min-width: 170px !important;
+    min-height: 60px !important;
+    height: 60px !important;
+    font-size: 18px !important;
+    padding: 14px 42px 14px 14px !important;
+  }
+  .result-entry-table td, .teacher-result-table td { vertical-align: middle !important; }
+}
+@media print {
+  .result-list-school-header { display:flex !important; flex-direction:row !important; align-items:center !important; }
+}
+</style>
 </head>
 <body>
 
@@ -6050,6 +6078,15 @@ function portalModuleAction(tabId, action) {
           .eq('school_id',currentSchoolId).eq('class_name',cls).eq('active',true);
         if(freshQ.error)throw freshQ.error;
         const freshRows=Array.isArray(freshQ.data)?freshQ.data:[];
+        // Prefer the same shared allocation mapping used by Admin so Teacher and Admin
+        // resolve the identical class/subject evaluation type, including joined subject names.
+        let sharedAllocations=[];
+        try { sharedAllocations=await getResultAllocations(cls); } catch(sharedEvalError) { console.warn('Shared evaluation allocation lookup failed:',sharedEvalError); }
+        const sharedMatch=(sharedAllocations||[]).find(r=>normalizeResultSubjectKey(r.subject_name||r.result_subject_master?.subject_name||'')===normalizeResultSubjectKey(subject));
+        if(sharedMatch && ['grade','marks'].includes(String(sharedMatch.evaluation_type||'').trim().toLowerCase())){
+          mode=String(sharedMatch.evaluation_type).trim().toLowerCase();
+          alloc={...(alloc||{}),...sharedMatch,subject_name:sharedMatch.subject_name||sharedMatch.result_subject_master?.subject_name||subject};
+        }
         const subjectIds=[...new Set(freshRows.map(r=>Number(r.subject_id)).filter(n=>Number.isFinite(n)&&n>0))];
         let masterRows=[];
         if(subjectIds.length){
@@ -6064,7 +6101,7 @@ function portalModuleAction(tabId, action) {
           const persisted=String(freshAlloc.evaluation_type||'').trim().toLowerCase();
           if(persisted==='grade'||persisted==='marks')mode=persisted;
           if(mode){const modes=getResultEvalModes();modes[resultEvalKey(cls,subject)]=mode;localStorage.setItem(RESULT_EVAL_KEY,JSON.stringify(modes));}
-        }else{
+        }else if(!sharedMatch){
           mode=getResultEvaluationMode(cls,subject);
         }
       }else mode=getResultEvaluationMode(cls,subject);
@@ -6072,6 +6109,13 @@ function portalModuleAction(tabId, action) {
       console.error('Fresh teacher evaluation mode read failed:',evalErr);
       mode=getResultEvaluationMode(cls,subject);
     }
+    // Use the persisted allocation mode as the final source of truth in Teacher login.
+    // Admin and Teacher must render the same Grade/Marks control even if this browser's
+    // localStorage contains an older evaluation mode.
+    const teacherPersistedMode=String(alloc?.evaluation_type||alloc?.evaluation_mode||'').trim().toLowerCase();
+    if(['grade','marks'].includes(teacherPersistedMode)) mode=teacherPersistedMode;
+    if(isAlwaysGradeSubject(subject)) mode='grade';
+
     // Enforce the school rule in the Teacher UI as well as Admin: these subjects
     // must never fall back to numeric Marks in classes 11 and 12.
     if(isForcedSeniorGradeSubject(cls,subject)){
@@ -6095,13 +6139,13 @@ function portalModuleAction(tabId, action) {
         teacherStudents=teacherStudents.filter(s=>allowed.has(String(s.adm_no)));
       }catch(e){console.warn('Additional subject teacher assignment read failed:',e);teacherStudents=[];}
     }
-    const ids=teacherStudents.map(x=>x.adm_no).filter(Boolean),teacherMarksResult=ids.length?await supabaseClient.from('exam_marks').select('*').in('adm_no',ids).eq('term_name',term):{data:[],error:null};
+    const ids=teacherStudents.map(x=>x.adm_no).filter(Boolean),teacherMarksResult=ids.length?await supabaseClient.from('exam_marks').select('*').eq('school_id',currentSchoolId).in('adm_no',ids).eq('term_name',term):{data:[],error:null};
     if(teacherMarksResult.error)throw teacherMarksResult.error;
     const marks=(teacherMarksResult.data||[]).filter(x=>normalizeResultSubjectKey(x.subject_name)===normalizeResultSubjectKey(subject));
     cacheResultGradesFromRows(marks);
     const mm={};(marks||[]).forEach(x=>mm[x.adm_no]=x);
     body.innerHTML=teacherStudents.map((x,i)=>{
-      const m=mm[x.adm_no],grade=getSavedResultGrade(x.adm_no,term,subject),absent=getSavedResultAbsent(x.adm_no,term,subject);
+      const m=mm[x.adm_no],grade=(RESULT_GRADE_LIST.includes(String(m?.grade_obtained||'').trim())?String(m.grade_obtained).trim():getSavedResultGrade(x.adm_no,term,subject)),absent=getSavedResultAbsent(x.adm_no,term,subject);
       const assignedToStudent=!teacherIsSenior || !!teacherSeniorMap[String(x.adm_no)]?.names?.has(teacherSubjectKey);
       const disabled=!canEdit||absent||!assignedToStudent;
       const result=mode==='grade'
@@ -6199,7 +6243,11 @@ function portalModuleAction(tabId, action) {
     const singleTeacherFullClassEdit=await teacherIssingleTeacherForClass(cls,sec);
     const ownsTimetableSubject=await teacherOwnsTimetableSubject(cls,sec,subject);
     if(!singleTeacherFullClassEdit&&(!assigned||assigned.can_edit===false||!ownsTimetableSubject)){__erpAlert('View-only: marks/grades can be saved only by the Subject Teacher assigned to this subject, except Single Teacher / No Periods who can edit all subjects of their own class.');await loadTeacherResultMarks();return;}
-    const ra=await getResultAllocations(cls),alloc=ra.find(x=>String(x.subject_name||x.result_subject_master?.subject_name||'').trim()===String(subject).trim()),mode=getResultEvaluationMode(cls,subject);
+    const ra=await getResultAllocations(cls),alloc=ra.find(x=>normalizeResultSubjectKey(x.subject_name||x.result_subject_master?.subject_name)===normalizeResultSubjectKey(subject));
+    let mode=getResultEvaluationMode(cls,subject);
+    const persistedMode=String(alloc?.evaluation_type||alloc?.evaluation_mode||'').trim().toLowerCase();
+    if(['grade','marks'].includes(persistedMode))mode=persistedMode;
+    if(isAlwaysGradeSubject(subject)||isForcedSeniorGradeSubject(cls,subject))mode='grade';
     showPortalOperationLoading('Saving Marks','Saving marks, grades and attendance…');
     try{
       document.querySelectorAll('.teacher-result-absent[data-assigned="1"]').forEach(cb=>saveResultAbsent(cb.dataset.adm,term,subject,cb.checked));
@@ -7181,7 +7229,7 @@ function portalModuleAction(tabId, action) {
       const d=await fetchResultDataset(cls,sec,mode),area=document.getElementById('resultListPrintArea');
       setPortalOperationProgress(58,`Loaded ${d.records.length} students · preparing result rows…`);
       if(!d.subjects.length){area.innerHTML='<div class="alert alert-warning">No subjects are allocated for this class.</div>';return;}
-      let h=`<div class="result-print-list"><div class="text-center mb-2"><img src="${escapeHtml(document.getElementById('headerLogo').src)}" style="height:48px"><h4 class="fw-bold mb-0">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</h4><div class="fw-bold">${resultListHeader(mode)}</div><small>Class: ${escapeHtml(cls)}${sec?' | Section: '+escapeHtml(sec):' | All Sections'}</small></div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Sr.</th><th>Roll No</th><th>Adm No</th><th>Student Name</th><th>Section</th>`;
+      let h=`<div class="result-print-list"><div class="d-flex align-items-center justify-content-center gap-3 mb-2 result-list-school-header"><img src="${escapeHtml(document.getElementById('headerLogo').src)}" style="height:48px;width:48px;object-fit:contain;flex:0 0 48px"><div class="text-center"><h4 class="fw-bold mb-0">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</h4><div class="fw-bold">${resultListHeader(mode)}</div><small>Class: ${escapeHtml(cls)}${sec?' | Section: '+escapeHtml(sec):' | All Sections'}</small></div></div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Sr.</th><th>Roll No</th><th>Adm No</th><th>Student Name</th><th>Section</th>`;
       const subjectLabel=s=>escapeHtml(s.name)+(s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':'');
       d.subjects.forEach(s=>h+=`<th>${subjectLabel(s)}<br><small>${s.evaluation==='grade'?'Grade T1/T2/Final':'T1/T2/Final / Max'}</small></th>`);
       h+=`<th>Total</th><th>Percentage</th><th>Position</th><th>Result</th></tr></thead><tbody>`;
