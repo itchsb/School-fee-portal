@@ -6144,6 +6144,22 @@ function portalModuleAction(tabId, action) {
   function isAlwaysGradeSubject(subject){return ALWAYS_GRADE_SUBJECTS.has(String(subject||'').trim().replace(/\s+/g,' ').toUpperCase())}
   function getResultEvaluationMode(cls,subject){
     if(isAlwaysGradeSubject(subject)) return 'grade';
+    const target=String(subject||'').trim().replace(/\\s+/g,' ').toUpperCase();
+    // Database-backed allocation values take priority over localStorage. This is
+    // essential for 11th/12th where each browser/user has a different local cache.
+    const caches=[];
+    try{if(Array.isArray(resultTotalsAllocationCache))caches.push(resultTotalsAllocationCache);}catch(_e){}
+    try{if(Array.isArray(resultAllocationCache))caches.push(resultAllocationCache);}catch(_e){}
+    for(const rows of caches){
+      const row=rows.find(a=>String(a.class_name||cls)===String(cls||'') &&
+        String(a.subject_name||a.result_subject_master?.subject_name||'').trim().replace(/\\s+/g,' ').toUpperCase()===target);
+      const persisted=String(row?.evaluation_type||row?.evaluation_mode||'').trim().toLowerCase();
+      if(persisted==='grade'||persisted==='marks'){
+        const all=getResultEvalModes();all[resultEvalKey(cls,subject)]=persisted;
+        try{localStorage.setItem(RESULT_EVAL_KEY,JSON.stringify(all));}catch(_e){}
+        return persisted;
+      }
+    }
     const saved=getResultEvalModes()[resultEvalKey(cls,subject)];
     return saved==='grade'?'grade':'marks';
   }
@@ -6518,10 +6534,22 @@ function portalModuleAction(tabId, action) {
             .eq('school_id',currentSchoolId).eq('session',ACADEMIC_SESSION).eq('class_name',cls).eq('subject_slot',9).eq('active',true);
           additionalNames=new Set((ss||[]).map(x=>String(x.subject_name||'').trim().toUpperCase()).filter(Boolean));
         }catch(_e){}
-        return sortResultSubjects((fresh||[]).filter(x=>x.active!==false).map(x=>{
+        const ordered=sortResultSubjects((fresh||[]).filter(x=>x.active!==false).map(x=>{
           const nm=String(x.subject_name||x.result_subject_master?.subject_name||'').trim();
           return {...x,is_additional:additionalNames.has(nm.toUpperCase())};
         }),cls);
+        // Persisted evaluation_type from Supabase is the source of truth across
+        // admin, teachers and other users; refresh each user's local cache from it.
+        try{
+          const modes=getResultEvalModes();
+          ordered.forEach(x=>{
+            const nm=String(x.subject_name||x.result_subject_master?.subject_name||'').trim();
+            const ev=String(x.evaluation_type||x.evaluation_mode||'').trim().toLowerCase();
+            if(nm&&(ev==='grade'||ev==='marks'))modes[resultEvalKey(cls,nm)]=ev;
+          });
+          localStorage.setItem(RESULT_EVAL_KEY,JSON.stringify(modes));
+        }catch(_e){}
+        return ordered;
       }catch(e){
         console.error('Senior subject/result synchronization failed:',e);
         try{
