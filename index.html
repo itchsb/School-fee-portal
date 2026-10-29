@@ -5598,7 +5598,7 @@ function portalModuleAction(tabId, action) {
       setPortalOperationProgress(58,`Loaded ${d.records?.length||0} students · preparing result rows…`);
       if(!d.records?.length){area.innerHTML='<div class="alert alert-info">No result records found.</div>';return;}
       let out=`<div class="result-print-list"><div class="text-center fw-bold mb-2">${erpEsc(cls)} — Section ${erpEsc(sec)} — ${erpEsc(resultListHeader(mode))}</div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Roll</th><th>Adm No</th><th>Student</th>`;
-      d.subjects.forEach(col=>out+=`<th>${erpEsc(col.name)}<br><small>${col.evaluation==='grade'?'Grade':'Marks'}</small></th>`);
+      d.subjects.forEach(col=>out+=`<th>${erpEsc(col.name)}${col.is_additional?' <span class="badge bg-warning text-dark">Additional</span>':''}<br><small>${col.is_additional?'Additional':(col.evaluation==='grade'?'Grade':'Marks')}</small></th>`);
       out+='<th>Total</th><th>Percentage</th><th>Position</th><th>Result</th></tr></thead><tbody>';
       d.records.forEach(r=>{
         const byName=new Map((r.subjects||[]).map(s=>[normalizeResultSubjectKey(s.name),s]));
@@ -5637,7 +5637,7 @@ function portalModuleAction(tabId, action) {
       setPortalOperationProgress(58,`Loaded ${d.records?.length||0} students · formatting slips…`);
       if(!d.records?.length){area.innerHTML='<div class="alert alert-warning">No students found.</div>';return;}
       const logoSrc=escapeHtml(document.getElementById('headerLogo')?.src||'');
-      const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':''}</td><td class="text-center">${mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=Number(stat?.pct??0);return `<div class="result-slip-item"><div class="result-slip-header"><img src="${logoSrc}" alt="School Logo"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct.toFixed(2)}%</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
+      const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':''}</td><td class="text-center">${x.is_additional?'Additional':mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=Number(stat?.pct??0);return `<div class="result-slip-item"><div class="result-slip-header"><img src="${logoSrc}" alt="School Logo"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct.toFixed(2)}%</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
       const pages=[];for(let i=0;i<d.records.length;i+=6){pages.push(`<div class="result-slips-page result-slips-grid-page">${d.records.slice(i,i+6).map(renderSlip).join('')}</div>`);if(i%18===0)setPortalOperationProgress(Math.min(92,65+Math.round((i/d.records.length)*25)),`Formatting slips ${Math.min(i+6,d.records.length)} of ${d.records.length}…`);}area.innerHTML=pages.join('');
       const printBtn=document.getElementById('teacherInchargeSlipPrintBtn');if(printBtn)printBtn.disabled=false;
       setPortalOperationProgress(100,'Result slips generated successfully.');
@@ -6179,23 +6179,56 @@ function portalModuleAction(tabId, action) {
     try{window.__persistResultEvaluationMode?.(cls,subject,value);}catch(e){console.warn('Could not queue evaluation mode persistence',e);}
   }
   window.__persistResultEvaluationMode=async function(cls,subject,mode){
-    if(!currentSchoolId||!cls||!subject||!supabaseClient)return false;
-    const isGrade=mode==='grade';
-    const allocations=await getResultAllocations(cls);
-    const matches=(allocations||[]).filter(a=>String(a.subject_name||a.result_subject_master?.subject_name||'').trim().toUpperCase()===String(subject).trim().toUpperCase());
-    if(!matches.length)throw new Error('Subject allocation not found; evaluation type remains cached locally only.');
+    if(!currentSchoolId||!cls||!subject||!supabaseClient)throw new Error('Missing school, class, subject, or Supabase context.');
+    const value=mode==='grade'?'grade':'marks';
+    const target=String(subject).trim().replace(/\\s+/g,' ').toUpperCase();
+    // All active class allocations are stored in result_class_subjects. The UI may
+    // label a student-selected slot-9 subject as Additional, but that does not make
+    // its allocation row live in result_additional_class_subjects.
+    const allocations=await rpcResultAllocations(cls);
+    const matches=(allocations||[]).filter(a=>{
+      const name=String(a.subject_name||a.result_subject_master?.subject_name||'').trim().replace(/\\s+/g,' ').toUpperCase();
+      return name===target;
+    });
+    if(!matches.length)throw new Error('No matching row was found in result_class_subjects for '+subject+' in '+cls+'. Reload the class subjects and retry.');
+    let saved=0;
     for(const a of matches){
-      // In Classes 11/12, additional status comes from student_subject_selections slot 9;
-      // the class-level subject allocation itself remains in result_class_subjects.
-      const table=(seniorGroupForClass(cls)||!a.is_additional)?'result_class_subjects':'result_additional_class_subjects';
-      let q=supabaseClient.from(table).update({evaluation_type:isGrade?'grade':'marks'}).eq('school_id',currentSchoolId).eq('class_name',cls);
-      if(a.id!==undefined&&a.id!==null&&Number.isFinite(Number(a.id))&&!String(a.id).startsWith('student-subject-'))q=q.eq('id',Number(a.id));
-      else if(a.subject_id!==undefined&&a.subject_id!==null&&Number.isFinite(Number(a.subject_id)))q=q.eq('subject_id',Number(a.subject_id));
-      else throw new Error('Cannot identify the database subject allocation row. Reload Subjects and retry.');
-      const {data,error}=await q.select('id').limit(1);
+      let q=supabaseClient.from('result_class_subjects')
+        .update({evaluation_type:value})
+        .eq('school_id',currentSchoolId)
+        .eq('class_name',cls);
+      const id=Number(a.id), sid=Number(a.subject_id);
+      if(a.id!==undefined&&a.id!==null&&String(a.id).trim()!==''&&Number.isFinite(id)&&!String(a.id).startsWith('student-subject-')){
+        q=q.eq('id',id);
+      } else if(Number.isFinite(sid)&&sid>0){
+        q=q.eq('subject_id',sid);
+      } else {
+        throw new Error('Allocation has no usable database id or subject_id for '+subject+'.');
+      }
+      const {data,error}=await q.select('id,evaluation_type').limit(1);
       if(error)throw error;
-      if(!data?.length)throw new Error('Evaluation type was not saved to the subject allocation. Check allocation row, evaluation_type column and update permission.');
+      if(data?.length){
+        if(String(data[0].evaluation_type||'').toLowerCase()!==value)throw new Error('Supabase returned a row, but evaluation_type did not verify as '+value+'.');
+        saved+=data.length;
+        continue;
+      }
+      // Some RPC/fallback rows have synthetic IDs; retry with class + subject_id.
+      if(Number.isFinite(sid)&&sid>0){
+        const retry=await supabaseClient.from('result_class_subjects').update({evaluation_type:value})
+          .eq('school_id',currentSchoolId).eq('class_name',cls).eq('subject_id',sid).eq('active',true)
+          .select('id,evaluation_type').limit(1);
+        if(retry.error)throw retry.error;
+        if(retry.data?.length&&String(retry.data[0].evaluation_type||'').toLowerCase()===value){saved+=retry.data.length;continue;}
+      }
+      throw new Error('No allocation row was updated. Check that result_class_subjects has this active class/subject row and that the current user has UPDATE permission under Supabase RLS.');
     }
+    if(!saved)throw new Error('Supabase did not confirm the evaluation type update.');
+    // Read-after-write verification makes the success message trustworthy.
+    const verify=await supabaseClient.from('result_class_subjects').select('id,evaluation_type')
+      .eq('school_id',currentSchoolId).eq('class_name',cls).eq('active',true);
+    if(verify.error)throw verify.error;
+    const ok=(verify.data||[]).some(r=>String(r.evaluation_type||'').toLowerCase()===value);
+    if(!ok)throw new Error('Update request completed but the saved evaluation type could not be verified.');
     return true;
   };
 
@@ -6393,7 +6426,7 @@ function portalModuleAction(tabId, action) {
     // against result_subject_master so the displayed subject name never depends
     // on a stale/empty browser cache. No rows are inserted, updated, or deleted.
     let q=supabaseClient.from('result_class_subjects')
-      .select('id,class_name,subject_id,term1_max,term2_max,final_max,active,school_id')
+      .select('id,class_name,subject_id,term1_max,term2_max,final_max,evaluation_type,active,school_id')
       .eq('class_name',cls)
       .eq('active',true)
       .order('id',{ascending:true});
@@ -6873,7 +6906,7 @@ function portalModuleAction(tabId, action) {
     const rankMetric=r=>{const st=rankStat(r);return st?.total==null||st?.status==='Incomplete'?null:Number(st.total);};
     const sectionKey=r=>String(r.student.section||'').trim().toLowerCase();
     const rankable=[...records].sort((a,b)=>{const sa=sectionKey(a),sb=sectionKey(b);if(sa!==sb)return sa.localeCompare(sb);const ast=rankStat(a),bst=rankStat(b),ap=rankMetric(a),bp=rankMetric(b),an=Number(ast?.max)||0,bn=Number(bst?.max)||0,ar=(ap!=null&&an)?ap/an:null,br=(bp!=null&&bn)?bp/bn:null;if(ar==null&&br!=null)return 1;if(ar!=null&&br==null)return -1;if(ar!=null&&br!=null){const diff=br-ar;if(Math.abs(diff)>0.000001)return diff;}const ra=Number(a.student.roll_no),rb=Number(b.student.roll_no);if(Number.isFinite(ra)&&Number.isFinite(rb))return ra-rb;if(Number.isFinite(ra))return -1;if(Number.isFinite(rb))return 1;return String(a.student.name||'').localeCompare(String(b.student.name||''));});
-    let currentSection=null,lastRatio=null,rank=0,counted=0;rankable.forEach(r=>{const secKey=sectionKey(r),stat=rankStat(r),marks=rankMetric(r),mx=Number(stat?.max)||0,ratio=(marks!=null&&mx)?marks/mx:null;if(secKey!==currentSection){currentSection=secKey;lastRatio=null;rank=0;counted=0;}if(ratio!=null){counted++;if(lastRatio===null||Math.abs(ratio-lastRatio)>0.000001)rank=counted;r.position=rank;r.topRank=r.position<=3;r.badgeRank=r.position<=3?r.position:null;lastRatio=ratio;}else{r.position='-';r.topRank=false;r.badgeRank=null;}});
+    let currentSection=null,lastRatio=null,rank=0,counted=0;rankable.forEach(r=>{const secKey=sectionKey(r),stat=rankStat(r),marks=rankMetric(r),mx=Number(stat?.max)||0,ratio=(marks!=null&&mx)?marks/mx:null;if(secKey!==currentSection){currentSection=secKey;lastRatio=null;rank=0;counted=0;}if(ratio!=null){if(lastRatio===null||Math.abs(ratio-lastRatio)>0.000001)rank++;counted++;r.position=rank;r.topRank=r.position<=3;r.badgeRank=r.position<=3?r.position:null;lastRatio=ratio;}else{r.position='-';r.topRank=false;r.badgeRank=null;}});
     const displayRecords=[...records].sort((a,b)=>{const ra=Number(a.student.roll_no),rb=Number(b.student.roll_no);if(Number.isFinite(ra)&&Number.isFinite(rb))return ra-rb;if(Number.isFinite(ra))return -1;if(Number.isFinite(rb))return 1;return String(a.student.name||'').localeCompare(String(b.student.name||''));});
     displayRecords.forEach(r=>{if(mode==='Final Result')r.status=r.finalTerm.status;});
     return {students:studentRows,subjects:subjects,records:displayRecords};
@@ -7007,7 +7040,7 @@ function portalModuleAction(tabId, action) {
       setPortalOperationProgress(58,`Loaded ${d.records.length} students · preparing result rows…`);
       if(!d.subjects.length){area.innerHTML='<div class="alert alert-warning">No subjects are allocated for this class.</div>';return;}
       let h=`<div class="result-print-list"><div class="text-center mb-2"><img src="${escapeHtml(document.getElementById('headerLogo').src)}" style="height:48px"><h4 class="fw-bold mb-0">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</h4><div class="fw-bold">${resultListHeader(mode)}</div><small>Class: ${escapeHtml(cls)}${sec?' | Section: '+escapeHtml(sec):' | All Sections'}</small></div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Sr.</th><th>Roll No</th><th>Adm No</th><th>Student Name</th><th>Section</th>`;
-      const subjectLabel=s=>escapeHtml(s.name)+(s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':'');
+      const subjectLabel=s=>escapeHtml(s.name)+(s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':'');
       d.subjects.forEach(s=>h+=`<th>${subjectLabel(s)}<br><small>${s.evaluation==='grade'?'Grade T1/T2/Final':'T1/T2/Final / Max'}</small></th>`);
       h+=`<th>Total</th><th>Percentage</th><th>Position</th><th>Result</th></tr></thead><tbody>`;
       d.records.forEach((r,i)=>{const byName=new Map((r.subjects||[]).map(s=>[normalizeResultSubjectKey(s.name),s]));h+=`<tr><td>${i+1}</td><td>${escapeHtml(r.student.roll_no||'-')}</td><td>${escapeHtml(r.student.adm_no)}</td><td class="fw-bold">${escapeHtml(r.student.name)}</td><td>${escapeHtml(r.student.section||'-')}</td>`;d.subjects.forEach(col=>{const s=byName.get(normalizeResultSubjectKey(col.name));if(!s){h+='<td class="text-center text-muted">—</td>';return;}const failedMark=(v,mx,ab)=>!ab&&v!==null&&v!==''&&Number(mx)>0&&(Number(v)/Number(mx)*100)<33;const redClass=s.evaluation==='grade'?'':(mode==='Final Result'?(s.marks||[]).some((v,j)=>failedMark(v,s.max,s.absent?.[j])):failedMark(s.marks?.[0],s.max,s.absent));h+=`<td class="text-center ${redClass?'text-danger fw-bold':''}">${mode==='Final Result'?`${s.evaluation==='grade'?s.grades.map((g,j)=>s.absent[j]?'AB':(g||'-')).join(' / '):`${s.absent[0]?'AB':(s.marks[0]??'')} / ${s.absent[1]?'AB':(s.marks[1]??'')} / ${s.absent[2]?'AB':(s.marks[2]??'')}${s.is_additional?'':' / '+s.max}`}`:`${s.evaluation==='grade'?(s.absent?'AB':s.grade):`${s.absent?'AB':(s.marks[0]??'')}${s.is_additional?'':' / '+s.max}`}`}</td>`;});h+=`<td class="fw-bold">${r.total==null?'Not Calculated':r.total+' / '+r.max}</td><td class="fw-bold">${r.pct==null?'—':r.pct.toFixed(2)+'%'}</td><td class="fw-bold">${r.position}</td><td class="fw-bold ${r.status==='Pass'?'text-success':'text-danger'}">${r.status}</td></tr>`;});
@@ -7089,7 +7122,7 @@ function portalModuleAction(tabId, action) {
       const total=gradeMode?'Grade':(Number(t1.marks?.[0]||0)+Number(t2.marks?.[0]||0)+Number(tf.marks?.[0]||0));
       const finalGrade=gradeMode?(tf.absent?'AB':(tf.grade||'-')):reportGradeFromFinalPct(tf.max?Number(tf.marks?.[0]||0)/tf.max*100:0);
       body+=`<tr>
-        <td class="text-center">${i+1}</td><td>${escapeHtml(s.name)}${s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':''}</td>
+        <td class="text-center">${i+1}</td><td>${escapeHtml(s.name)}${s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':''}</td>
         <td class="text-center">${gradeMode?'Grade':s.t1}</td><td class="text-center">${gradeMode?(t1.absent?'AB':(t1.grade||'-')):fmtMark(t1.marks?.[0],t1.absent)}</td>
         <td class="text-center">${gradeMode?'Grade':s.t2}</td><td class="text-center">${gradeMode?(t2.absent?'AB':(t2.grade||'-')):fmtMark(t2.marks?.[0],t2.absent)}</td>
         <td class="text-center">${gradeMode?'Grade':s.final}</td><td class="text-center">${gradeMode?(tf.absent?'AB':(tf.grade||'-')):fmtMark(tf.marks?.[0],tf.absent)}</td>
@@ -7228,7 +7261,7 @@ function portalModuleAction(tabId, action) {
             ?(mode==='Final Result'?(s.absent?.[2]?'AB':(s.grades?.[2]||'-')):(s.absent?'AB':(s.grade||'-')))
             :(mode==='Final Result'?(s.absent?.[2]?'AB':(s.marks?.[2]??'')):(s.absent?'AB':(s.marks?.[0]??'')));
           const mx=s.evaluation==='grade'?'Grade':(mode==='Final Result'?s.final:s.max);
-          rows+=`<tr><td>${i+1}</td><td>${escapeHtml(s.name)}</td><td class="text-center">${mx}</td><td class="text-center fw-bold">${val}</td></tr>`;
+          rows+=`<tr><td>${i+1}</td><td>${escapeHtml(s.name)}${s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':''}</td><td class="text-center">${s.is_additional?'Additional':mx}</td><td class="text-center fw-bold">${val}</td></tr>`;
         });
         const stat=mode==='Final Result'?r.finalTerm:r;
         const pct=Number(stat?.pct??0);
@@ -13354,7 +13387,7 @@ async function getResultAdditionalSubjectNames(cls){
     return set;
   }catch(e){return new Set();}
 }
-function additionalSubjectBadgeHtml(){return '<span class="badge bg-warning text-dark ms-1">Additional Subject</span>';}
+function additionalSubjectBadgeHtml(){return '<span class="badge bg-warning text-dark ms-1">Additional</span>';}
 
 async function getExamDateSheetSubjects(cls){
   const key=String(cls||'').trim();
@@ -13607,7 +13640,7 @@ async function printExamDateSheet(){
         if(ga!==gb)return ga?1:-1;
         return resultSubjectOrderRank(aa)-resultSubjectOrderRank(bb);
       });
-      const vals=rows.map(r=>{const subj=String(r.subject_name||'').trim();if(!subj)return '';const mode=String(r.paper_mode||'').trim().toUpperCase();const tag=printAdditionalNames[c]?.has(subj.toUpperCase())?' <span class="badge bg-warning text-dark ms-1">Additional Subject</span>':'';return erpEsc(subj)+tag+(mode?' ('+erpEsc(mode)+')':'');}).filter(Boolean);
+      const vals=rows.map(r=>{const subj=String(r.subject_name||'').trim();if(!subj)return '';const mode=String(r.paper_mode||'').trim().toUpperCase();const tag=printAdditionalNames[c]?.has(subj.toUpperCase())?' <span class="badge bg-warning text-dark ms-1">Additional</span>':'';return erpEsc(subj)+tag+(mode?' ('+erpEsc(mode)+')':'');}).filter(Boolean);
       html+='<td>'+ (vals.length?vals.map(v=>'<div style="font-weight:600;line-height:1.15;margin:1px 0">'+v+'</div>').join(''):'') +'</td>';
     });
     html+='</tr>';
