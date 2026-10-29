@@ -4637,7 +4637,7 @@ select.teacher-result-grade, select.result-entry-grade, select.form-select.teach
     }
   });
 
-  async function resolveSchool(schoolCode){
+  async function resolveSchool(schoolCode, options={}){
     const code = String(schoolCode || '').trim().toUpperCase();
     if(!code) throw new Error('School Code is required.');
 
@@ -4651,12 +4651,15 @@ select.teacher-result-grade, select.result-entry-grade, select.form-select.teach
     if(!data) throw new Error('School not found or inactive. Please check the School Code.');
 
     let profile=null;
-    // After authentication, RLS permits a member/master to read the profile.
-    // Before authentication the profile is optional; branding falls back to schools.
-    try{
-      const pr=await supabaseRawClient.from('school_profiles').select('*').eq('school_id',data.id).maybeSingle();
-      if(!pr.error) profile=pr.data;
-    }catch(_){}
+    // School profile lookup is optional and adds a network round-trip before login.
+    // Skip it on the login-critical path; the public schools row already contains
+    // the fallback branding, so authentication can proceed without waiting for it.
+    if(!options.skipProfile){
+      try{
+        const pr=await supabaseRawClient.from('school_profiles').select('*').eq('school_id',data.id).maybeSingle();
+        if(!pr.error) profile=pr.data;
+      }catch(_){}
+    }
 
     currentSchool = {...data, ...(profile || {})};
     currentSchoolId = data.id;
@@ -5688,7 +5691,7 @@ function portalModuleAction(tabId, action) {
     showPortalOperationLoading('Generating Result List','Loading students, subjects, marks, rankings and results…');
     try{
       setPortalOperationProgress(12,'Verifying your incharge class and section…');
-      const d=await fetchResultDataset(cls,sec,mode);
+      const d=await fetchResultDataset(cls,sec,mode,{includePhotos:false});
       setPortalOperationProgress(58,`Loaded ${d.records?.length||0} students · preparing result rows…`);
       if(!d.records?.length){area.innerHTML='<div class="alert alert-info">No result records found.</div>';return;}
       let out=`<div class="result-print-list"><div class="text-center fw-bold mb-2">${erpEsc(cls)} — Section ${erpEsc(sec)} — ${erpEsc(resultListHeader(mode))}</div><div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>Roll</th><th>Adm No</th><th>Student</th>`;
@@ -5713,7 +5716,7 @@ function portalModuleAction(tabId, action) {
           }
           out+=`<td class="text-center ${failed?'text-danger fw-bold':''}">${val}</td>`;
         });
-        out+=`<td>${r.total==null?'Not Calculated':`${r.total} / ${r.max}`}</td><td>${r.pct==null?'—':`${Number(r.pct).toFixed(2)}%`}</td><td>${erpEsc(r.position??'-')}</td><td>${erpEsc(r.status||'Incomplete')}</td></tr>`;
+        out+=`<td>${r.total==null?(r.failCount>1?'':'Not Calculated'):`${r.total} / ${r.max}`}</td><td>${r.pct==null?(r.failCount>1?'':'—'):`${Number(r.pct).toFixed(2)}%`}</td><td>${erpEsc(r.position??'-')}</td><td>${erpEsc(r.status||'Incomplete')}</td></tr>`;
       });
       area.innerHTML=out+'</tbody></table></div>';
       setPortalOperationProgress(100,'Result list generated successfully.');
@@ -5727,11 +5730,11 @@ function portalModuleAction(tabId, action) {
     showPortalOperationLoading('Generating Result Slips','Preparing result slips for your incharge class…');
     try{
       setPortalOperationProgress(12,'Verifying class, section and selected term…');
-      const d=await fetchResultDataset(cls,sec,mode),area=document.getElementById('teacherInchargeResultSlipsPrintArea');
+      const d=await fetchResultDataset(cls,sec,mode,{includePhotos:false}),area=document.getElementById('teacherInchargeResultSlipsPrintArea');
       setPortalOperationProgress(58,`Loaded ${d.records?.length||0} students · formatting slips…`);
       if(!d.records?.length){area.innerHTML='<div class="alert alert-warning">No students found.</div>';return;}
       const logoSrc=escapeHtml(document.getElementById('headerLogo')?.src||'');
-      const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':''}</td><td class="text-center">${x.is_additional?'Additional':mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=Number(stat?.pct??0);return `<div class="result-slip-item"><div class="result-slip-header"><img src="${logoSrc}" alt="School Logo"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct.toFixed(2)}%</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
+      const renderSlip=(r)=>{let rows='';(r.subjects||[]).forEach((x,i)=>{const val=x.evaluation==='grade'?(mode==='Final Result'?(x.grades?.[2]||'-'):(x.grade||'-')):(mode==='Final Result'?(x.marks?.[2]??'-'):(x.marks?.[0]??'-'));const mx=x.evaluation==='grade'?'Grade':(mode==='Final Result'?x.final:x.max);rows+=`<tr><td>${i+1}</td><td>${escapeHtml(x.name)}${x.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':''}</td><td class="text-center">${x.is_additional?'Additional':mx}</td><td class="text-center fw-bold">${val}</td></tr>`;});const stat=mode==='Final Result'?r.finalTerm:r,pct=stat?.pct==null?null:Number(stat.pct);return `<div class="result-slip-item"><div class="result-slip-header"><img src="${logoSrc}" alt="School Logo"><div class="result-slip-school">I.T. Senior Secondary School, Bhagwanpura (Tarn Taran)</div></div><div class="text-center fw-bold mb-1" style="font-size:9px">MARKS SLIP — ${escapeHtml(mode)}</div><div class="result-slip-meta"><div class="row g-0"><div class="col-6"><b>Student:</b> ${escapeHtml(r.student.name)}</div><div class="col-6"><b>Roll No:</b> ${escapeHtml(r.student.roll_no||'-')}</div><div class="col-6"><b>Admission No:</b> ${escapeHtml(r.student.adm_no)}</div><div class="col-6"><b>Class / Section:</b> ${escapeHtml(cls)} / ${escapeHtml(r.student.section||'-')}</div></div></div><table class="table table-bordered table-sm"><thead class="table-dark"><tr><th>#</th><th>Subject</th><th>Maximum / Type</th><th>Marks / Grade</th></tr></thead><tbody>${rows}</tbody></table><div class="row text-center fw-bold" style="font-size:8px"><div class="col-4">Total: ${stat?.failCount>1?'':(stat?.total??'-')} / ${stat?.max??'-'}</div><div class="col-4">Percentage: ${pct==null?'':pct.toFixed(2)+'%'}</div><div class="col-4">Position: ${escapeHtml(r.position??'-')}</div></div><div class="text-center fw-bold mt-1 mb-1" style="font-size:9px;border:1px solid ${String(stat?.status||'Incomplete').toLowerCase()==='pass'?'#198754':'#dc3545'};padding:2px;color:${String(stat?.status||'Incomplete').toLowerCase()==='pass'?'#198754':'#dc3545'}">Status: ${escapeHtml(String(stat?.status||'Incomplete').toUpperCase())}</div><div class="text-end result-slip-footer border-top">Class Incharge / Principal</div></div>`;};
       const pages=[];for(let i=0;i<d.records.length;i+=6){pages.push(`<div class="result-slips-page result-slips-grid-page">${d.records.slice(i,i+6).map(renderSlip).join('')}</div>`);if(i%18===0)setPortalOperationProgress(Math.min(92,65+Math.round((i/d.records.length)*25)),`Formatting slips ${Math.min(i+6,d.records.length)} of ${d.records.length}…`);}area.innerHTML=pages.join('');
       const printBtn=document.getElementById('teacherInchargeSlipPrintBtn');if(printBtn)printBtn.disabled=false;
       setPortalOperationProgress(100,'Result slips generated successfully.');
@@ -7026,15 +7029,24 @@ function portalModuleAction(tabId, action) {
   // Shared dataset builder for Result List and Report Cards.
   // Kept in one place so both report modules use the same class/section,
   // subject allocation, marks, totals and ranking logic.
-  async function fetchResultDataset(cls,sec,mode){
+  async function fetchResultDataset(cls,sec,mode,options={}){
     if(!cls) return {students:[],subjects:[],records:[]};
     let studentQuery=supabaseClient.from('students').select('*').eq('class_name',cls).order('roll_no',{ascending:true,nullsFirst:false}).order('name',{ascending:true});
     if(sec) studentQuery=studentQuery.eq('section',sec);
     if(currentUser?.type==='student'&&currentUser?.associatedId) studentQuery=studentQuery.eq('adm_no',currentUser.associatedId);
     const {data:students,error:studentError}=await studentQuery;if(studentError)throw studentError;
     const studentRows=students||[];if(!studentRows.length)return {students:[],subjects:[],records:[]};
-    const photoMap=await fetchStudentPhotoMap(studentRows.map(s=>s.adm_no));
-    for(const st of studentRows){const pr=photoMap[String(st.adm_no)]||{};st.student_photo_url=await getStudentPhotoUrl(pr,'student',3600);st.father_photo_url=await getStudentPhotoUrl(pr,'father',3600);st.mother_photo_url=await getStudentPhotoUrl(pr,'mother',3600);}
+    // Marks slips and result lists do not render student/family photos. Avoid
+    // photo-table and per-photo signed-URL requests for those views; this was
+    // causing the slip generator to stay on its loading animation for a long time.
+    if(options.includePhotos!==false){
+      const photoMap=await fetchStudentPhotoMap(studentRows.map(s=>s.adm_no));
+      await Promise.all(studentRows.map(async st=>{
+        const pr=photoMap[String(st.adm_no)]||{};
+        const urls=await Promise.all([getStudentPhotoUrl(pr,'student',3600),getStudentPhotoUrl(pr,'father',3600),getStudentPhotoUrl(pr,'mother',3600)]);
+        st.student_photo_url=urls[0];st.father_photo_url=urls[1];st.mother_photo_url=urls[2];
+      }));
+    }
     const allocations=await getResultAllocations(cls);
     const evalCache=getResultEvalModes();
     const subjects=allocations.map(a=>{
@@ -7063,7 +7075,7 @@ function portalModuleAction(tabId, action) {
       return subjects.filter(sub=>sm.names.has(normalizeResultSubjectKey(sub.name))).map(sub=>({...sub,is_additional:sm.additional.has(normalizeResultSubjectKey(sub.name))})).sort((a,b)=>Number(!!a.is_additional)-Number(!!b.is_additional));
     }
     function buildTerm(st,term){
-      let total=0,max=0,failCount=0,marksPendingCount=0;
+      let total=0,max=0,failCount=0,failedSubjectObtained=0,marksPendingCount=0;
       const studentSubjects=studentEligibleSubjects(st);
       const subjectRows=studentSubjects.map(sub=>{
         const key=`${st.adm_no}|${term}|${normalizeResultSubjectKey(sub.name)}`,ob=markPresentMap[key]?markMap[key]:null,mx=resultMaxFor(sub,term),isGrade=sub.evaluation==='grade',absent=getSavedResultAbsent(st.adm_no,term,sub.name),grade=isGrade?getSavedResultGrade(st.adm_no,term,sub.name):resultGrade(mx?ob/mx*100:0);
@@ -7075,13 +7087,21 @@ function portalModuleAction(tabId, action) {
           if(countsInTotals&&mx>0&&!absent&&!markPresentMap[key])marksPendingCount++;
           passed=absent?true:(ob===null?true:(mx>0&&((ob/mx)*100)>=33));
         }
-        if(countsInTotals&&!isGrade&&!passed&&markPresentMap[key])failCount++;
+        if(countsInTotals&&!isGrade&&!passed&&markPresentMap[key]){failCount++;failedSubjectObtained+=Number(ob)||0;}
         if(countsInTotals&&!isGrade){max+=mx;if(!absent&&ob!==null)total+=ob;}
         return {...sub,marks:[ob],grade,total:isGrade||sub.is_additional?0:ob,max:isGrade||sub.is_additional?0:mx,absent,passed};
       });
-      const overallMax=max;let totalDisplay=marksPendingCount>0?null:total,pct=(marksPendingCount===0&&overallMax)?(total/overallMax)*100:null,status;
-      if(marksPendingCount>0)status='Incomplete';
-      else if(failCount===0)status='Pass';else if(failCount===1)status=(overallMax&&pct>=33)?'Pass':'Fail';else{status='Failed';}
+      const overallMax=max;
+      // For exactly one failed main marks-based subject, exclude that subject's
+      // obtained marks while retaining its maximum marks in the denominator.
+      // With more than one failed subject, totals and percentage are intentionally blank.
+      const adjustedTotal=failCount===1?Math.max(0,total-failedSubjectObtained):total;
+      let totalDisplay=(marksPendingCount>0||failCount>1)?null:adjustedTotal;
+      let pct=(marksPendingCount===0&&failCount<2&&overallMax)?(adjustedTotal/overallMax)*100:null,status;
+      if(failCount>1)status='Fail';
+      else if(marksPendingCount>0)status='Incomplete';
+      else if(failCount===0)status='Pass';
+      else status=(overallMax&&pct>=33)?'Pass':'Fail';
       return {subjects:subjectRows,total:totalDisplay,max:overallMax,pct,status,failCount,marksPendingCount,missingGradeCount:0};
     }
     const records=studentRows.map(st=>{
@@ -7089,7 +7109,7 @@ function portalModuleAction(tabId, action) {
       const eligibleSubjects=studentEligibleSubjects(st);
       const subjectRows=mode==='Final Result'?eligibleSubjects.map(sub=>{const a=t1.subjects.find(x=>x.name===sub.name),b=t2.subjects.find(x=>x.name===sub.name),c=tf.subjects.find(x=>x.name===sub.name);return {...sub,t1:sub.is_additional?0:sub.t1,t2:sub.is_additional?0:sub.t2,final:sub.is_additional?0:sub.final,marks:[a?.marks[0]??null,b?.marks[0]??null,c?.marks[0]??null],grades:[a?.grade||'',b?.grade||'',c?.grade||''],absent:[!!a?.absent,!!b?.absent,!!c?.absent],passed:[!!a?.passed,!!b?.passed,!!c?.passed],max:sub.is_additional?0:(c?.max||0)};}):mode==='1st Term'?t1.subjects:mode==='2nd Term'?t2.subjects:tf.subjects;
       const stat=mode==='Final Result'?tf:(mode==='1st Term'?t1:mode==='2nd Term'?t2:tf),cosTerm=mode==='1st Term'?'1st Term':mode==='2nd Term'?'2nd Term':'Final Term',cos=cosMap[`${st.adm_no}|${cosTerm}`]||{};
-      return {student:st,subjects:subjectRows,total:stat.total,max:stat.max,pct:stat.pct,status:stat.status,position:'-',term1:t1,term2:t2,finalTerm:tf,coscholastic:cos};
+      return {student:st,subjects:subjectRows,total:stat.total,max:stat.max,pct:stat.pct,status:stat.status,failCount:stat.failCount,marksPendingCount:stat.marksPendingCount,position:'-',term1:t1,term2:t2,finalTerm:tf,coscholastic:cos};
     });
     // Rank by the result term currently being displayed, not always by Final Term.
     const rankStat=r=>mode==='1st Term'?r.term1:mode==='2nd Term'?r.term2:r.finalTerm;
@@ -7233,7 +7253,7 @@ function portalModuleAction(tabId, action) {
       const subjectLabel=s=>escapeHtml(s.name)+(s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':'');
       d.subjects.forEach(s=>h+=`<th>${subjectLabel(s)}<br><small>${s.evaluation==='grade'?'Grade T1/T2/Final':'T1/T2/Final / Max'}</small></th>`);
       h+=`<th>Total</th><th>Percentage</th><th>Position</th><th>Result</th></tr></thead><tbody>`;
-      d.records.forEach((r,i)=>{const byName=new Map((r.subjects||[]).map(s=>[normalizeResultSubjectKey(s.name),s]));h+=`<tr><td>${i+1}</td><td>${escapeHtml(r.student.roll_no||'-')}</td><td>${escapeHtml(r.student.adm_no)}</td><td class="fw-bold">${escapeHtml(r.student.name)}</td><td>${escapeHtml(r.student.section||'-')}</td>`;d.subjects.forEach(col=>{const s=byName.get(normalizeResultSubjectKey(col.name));if(!s){h+='<td class="text-center text-muted">—</td>';return;}const failedMark=(v,mx,ab)=>!ab&&v!==null&&v!==''&&Number(mx)>0&&(Number(v)/Number(mx)*100)<33;const redClass=s.evaluation==='grade'?'':(mode==='Final Result'?(s.marks||[]).some((v,j)=>failedMark(v,s.max,s.absent?.[j])):failedMark(s.marks?.[0],s.max,s.absent));h+=`<td class="text-center ${redClass?'text-danger fw-bold':''}">${mode==='Final Result'?`${s.evaluation==='grade'?s.grades.map((g,j)=>s.absent[j]?'AB':(g||'-')).join(' / '):`${s.absent[0]?'AB':(s.marks[0]??'')} / ${s.absent[1]?'AB':(s.marks[1]??'')} / ${s.absent[2]?'AB':(s.marks[2]??'')}${s.is_additional?'':' / '+s.max}`}`:`${s.evaluation==='grade'?(s.absent?'AB':s.grade):`${s.absent?'AB':(s.marks[0]??'')}${s.is_additional?'':' / '+s.max}`}`}</td>`;});h+=`<td class="fw-bold">${r.total==null?'Not Calculated':r.total+' / '+r.max}</td><td class="fw-bold">${r.pct==null?'—':r.pct.toFixed(2)+'%'}</td><td class="fw-bold">${r.position}</td><td class="fw-bold ${r.status==='Pass'?'text-success':'text-danger'}">${r.status}</td></tr>`;});
+      d.records.forEach((r,i)=>{const byName=new Map((r.subjects||[]).map(s=>[normalizeResultSubjectKey(s.name),s]));h+=`<tr><td>${i+1}</td><td>${escapeHtml(r.student.roll_no||'-')}</td><td>${escapeHtml(r.student.adm_no)}</td><td class="fw-bold">${escapeHtml(r.student.name)}</td><td>${escapeHtml(r.student.section||'-')}</td>`;d.subjects.forEach(col=>{const s=byName.get(normalizeResultSubjectKey(col.name));if(!s){h+='<td class="text-center text-muted">—</td>';return;}const failedMark=(v,mx,ab)=>!ab&&v!==null&&v!==''&&Number(mx)>0&&(Number(v)/Number(mx)*100)<33;const redClass=s.evaluation==='grade'?'':(mode==='Final Result'?(s.marks||[]).some((v,j)=>failedMark(v,s.max,s.absent?.[j])):failedMark(s.marks?.[0],s.max,s.absent));h+=`<td class="text-center ${redClass?'text-danger fw-bold':''}">${mode==='Final Result'?`${s.evaluation==='grade'?s.grades.map((g,j)=>s.absent[j]?'AB':(g||'-')).join(' / '):`${s.absent[0]?'AB':(s.marks[0]??'')} / ${s.absent[1]?'AB':(s.marks[1]??'')} / ${s.absent[2]?'AB':(s.marks[2]??'')}${s.is_additional?'':' / '+s.max}`}`:`${s.evaluation==='grade'?(s.absent?'AB':s.grade):`${s.absent?'AB':(s.marks[0]??'')}${s.is_additional?'':' / '+s.max}`}`}</td>`;});h+=`<td class="fw-bold">${r.total==null?(r.failCount>1?'':'Not Calculated'):r.total+' / '+r.max}</td><td class="fw-bold">${r.pct==null?(r.failCount>1?'':'—'):r.pct.toFixed(2)+'%'}</td><td class="fw-bold">${r.position}</td><td class="fw-bold ${r.status==='Pass'?'text-success':'text-danger'}">${r.status}</td></tr>`;});
       h+=`</tbody></table></div></div>`;area.innerHTML=h;setPortalOperationProgress(100,`Complete · ${d.records.length} students processed`);
     }catch(e){__erpAlert('Error generating result list: '+e.message);}finally{hidePortalOperationLoading();}
   }
@@ -7320,15 +7340,15 @@ function portalModuleAction(tabId, action) {
       </tr>`;
     });
     return `<table class="rc-table rc-academic-table"><thead><tr><th rowspan="2">S.No.</th><th rowspan="2">SUBJECT</th><th colspan="2">TERM I</th><th colspan="2">TERM II</th><th colspan="2">TERM III</th><th rowspan="2">GRADE</th></tr><tr><th>MAX</th><th>OBT.</th><th>MAX</th><th>OBT.</th><th>MAX</th><th>OBT.</th></tr></thead><tbody>${body}
-      <tr class="rc-grand-total"><td colspan="2">GRAND TOTAL</td><td>${r.term1.max||0}</td><td>${r.term1.total==null?0:r.term1.total}</td><td>${r.term2.max||0}</td><td>${r.term2.total==null?0:r.term2.total}</td><td>${r.finalTerm.max||0}</td><td>${r.finalTerm.total==null?0:r.finalTerm.total}</td><td>${reportGradeForStat(r.finalTerm)}</td></tr>
+      <tr class="rc-grand-total"><td colspan="2">GRAND TOTAL</td><td>${r.term1.max||0}</td><td>${r.term1.total==null?'':r.term1.total}</td><td>${r.term2.max||0}</td><td>${r.term2.total==null?'':r.term2.total}</td><td>${r.finalTerm.max||0}</td><td>${r.finalTerm.total==null?'':r.finalTerm.total}</td><td>${reportGradeForStat(r.finalTerm)}</td></tr>
     </tbody></table>`;
   }
 
   function reportSummaryHtml(r){
-    const finalPct=r.finalTerm.pct==null?0:r.finalTerm.pct;
+    const finalPct=r.finalTerm.pct;
     return `<div class="rc-section-title">RESULT SUMMARY</div><table class="rc-table rc-summary-table"><tbody>
-      <tr><th>Term I Percentage</th><td>${fmtPct(r.term1.pct)}</td><th>Term II Percentage</th><td>${fmtPct(r.term2.pct)}</td><th>Term III Percentage</th><td>${fmtPct(r.finalTerm.pct)}</td></tr>
-      <tr><th>Final Percentage</th><td>${fmtPct(finalPct)}</td><th>Overall Grade</th><td>${reportGradeForStat(r.finalTerm)}</td><th>Overall Result</th><td class="fw-bold">${reportResultText(r.finalTerm)}</td></tr>
+      <tr><th>Term I Percentage</th><td>${r.term1.pct==null?'':fmtPct(r.term1.pct)}</td><th>Term II Percentage</th><td>${r.term2.pct==null?'':fmtPct(r.term2.pct)}</td><th>Term III Percentage</th><td>${r.finalTerm.pct==null?'':fmtPct(r.finalTerm.pct)}</td></tr>
+      <tr><th>Final Percentage</th><td>${finalPct==null?'':fmtPct(finalPct)}</td><th>Overall Grade</th><td>${reportGradeForStat(r.finalTerm)}</td><th>Overall Result</th><td class="fw-bold">${reportResultText(r.finalTerm)}</td></tr>
       <tr><th>Rank</th><td colspan="5" class="fw-bold">${r.position==='-'?'—':('Rank '+escapeHtml(String(r.position)))}</td></tr>
     </tbody></table>`;
   }
@@ -7454,7 +7474,7 @@ function portalModuleAction(tabId, action) {
           rows+=`<tr><td>${i+1}</td><td>${escapeHtml(s.name)}${s.is_additional?' <span class="badge bg-warning text-dark ms-1">Additional</span>':''}</td><td class="text-center">${s.is_additional?'Additional':mx}</td><td class="text-center fw-bold">${val}</td></tr>`;
         });
         const stat=mode==='Final Result'?r.finalTerm:r;
-        const pct=Number(stat?.pct??0);
+        const pct=stat?.pct==null?null:Number(stat.pct);
         return `<div class="result-slip-item">
           <div class="result-slip-header">
             <img src="${logoSrc}" alt="School Logo">
@@ -7474,10 +7494,11 @@ function portalModuleAction(tabId, action) {
             <tbody>${rows}</tbody>
           </table>
           <div class="row text-center fw-bold" style="font-size:8px">
-            <div class="col-4">Total: ${stat?.total??'-'} / ${stat?.max??'-'}</div>
-            <div class="col-4">Percentage: ${pct.toFixed(2)}%</div>
+            <div class="col-4">Total: ${stat?.failCount>1?'':(stat?.total??'-')} / ${stat?.max??'-'}</div>
+            <div class="col-4">Percentage: ${pct==null?'':pct.toFixed(2)+'%'}</div>
             <div class="col-4">Position: ${escapeHtml(r.position??'-')}</div>
           </div>
+          <div class="text-center fw-bold mt-1 mb-1" style="font-size:9px;border:1px solid ${String(stat?.status||'Incomplete').toLowerCase()==='pass'?'#198754':'#dc3545'};padding:2px;color:${String(stat?.status||'Incomplete').toLowerCase()==='pass'?'#198754':'#dc3545'}">Status: ${escapeHtml(String(stat?.status||'Incomplete').toUpperCase())}</div>
           <div class="text-end result-slip-footer border-top">Class Teacher / Principal</div>
         </div>`;
       };
@@ -8064,7 +8085,7 @@ function portalModuleAction(tabId, action) {
     if(error)throw error;
     const rows=[...new Map((Array.isArray(data)?data:(data?[data]:[])).map(x=>[x.school_code,x])).values()];
     if(rows.length!==1)throw new Error(rows.length?'This login identifier is linked to more than one school. Ask the Master Administrator to assign a unique email/mobile login.':'This email or mobile number is not registered with any active school.');
-    return await resolveSchool(rows[0].school_code);
+    return await resolveSchool(rows[0].school_code,{skipProfile:true});
   }
 
   window.setLoginMode = function setLoginMode(mode){
@@ -8348,7 +8369,7 @@ function portalModuleAction(tabId, action) {
   async function handleLoginSubmit(e){
     e.preventDefault();
     const username=document.getElementById('loginUsername').value.trim(),password=document.getElementById('loginPassword').value;
-    const loginBtn=document.getElementById('loginBtn');loginBtn.disabled=true;loginBtn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i> Authenticating...';
+    const loginBtn=document.getElementById('loginBtn');loginBtn.disabled=true;loginBtn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i> Connecting securely...';
     try{
       if(loginMode==='master'){
         await handleMasterLogin(username,password);
