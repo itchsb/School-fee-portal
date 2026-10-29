@@ -5508,7 +5508,7 @@ function portalModuleAction(tabId, action) {
     const previousRows=rows.filter(r=>r.session&&String(r.session)!==currentSession);
     const photoBox=(url,label)=>`<div class="student-profile-photo-card text-center mb-3"><div class="fw-bold small mb-1">${label}</div>${url?`<img src="${url}" alt="${label}" class="student-profile-photo">`:'<div class="border rounded p-4 text-muted small mx-auto" style="width:105px">No photo</div>'}</div>`;
     const field=(label,value)=>`<div class="student-profile-field border-bottom py-2"><div class="small text-muted fw-bold">${label}</div><div class="fw-semibold">${value}</div></div>`;
-    const resultTable=(title,data,empty='No result available.')=>`<div class="mt-3"><h6 class="fw-bold text-primary">${title}</h6>${data.length?`<div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-light"><tr><th>Session</th><th>Term</th><th>Subject</th><th>Marks / Grade</th><th>Maximum</th></tr></thead><tbody>${data.map(r=>`<tr><td>${erpEsc(r.session||currentSession)}</td><td>${erpEsc(r.term_name||'-')}</td><td>${erpEsc(r.subject_name||'-')}</td><td class="fw-bold">${erpEsc(r.grade ?? r.marks_obtained ?? '-')}</td><td>${erpEsc(r.max_marks??'-')}</td></tr>`).join('')}</tbody></table></div>`:`<div class="alert alert-light border small">${empty}</div>`}</div>`;
+    const resultTable=(title,data,empty='No result available.')=>`<div class="mt-3"><h6 class="fw-bold text-primary">${title}</h6>${data.length?`<div class="table-responsive"><table class="table table-bordered table-sm"><thead class="table-light"><tr><th>Session</th><th>Term</th><th>Subject</th><th>Marks / Grade</th><th>Maximum</th></tr></thead><tbody>${data.map(r=>`<tr><td>${erpEsc(r.session||currentSession)}</td><td>${erpEsc(r.term_name||'-')}</td><td>${erpEsc(r.subject_name||'-')}</td><td class="fw-bold">${erpEsc(r.grade_obtained ?? r.grade ?? r.marks_obtained ?? '-')}</td><td>${erpEsc(r.max_marks??'-')}</td></tr>`).join('')}</tbody></table></div>`:`<div class="alert alert-light border small">${empty}</div>`}</div>`;
     body.innerHTML=`<div class="row g-4 align-items-start"><div class="col-md-8"><div class="pe-md-3">${field('Name',erpEsc(s.name))}${field('Roll No',erpEsc(s.roll_no||'-'))}${field('Admission No',erpEsc(s.adm_no))}${field('Class / Section',`${erpEsc(s.class_name)} / ${erpEsc(s.section||'-')}`)}${field('Father',erpEsc(s.father_name||'-'))}${field('Mother',erpEsc(s.mother_name||'-'))}${field('Contact 1',erpEsc(s['contact 1']||'-'))}${field('Contact 2',erpEsc(s['contact 2']||'-'))}${field('Date of Birth',erpEsc(s.dob||'-'))}${field('Village / Town',erpEsc(s.village_town||s.village||'-'))}${field('Admission Date',erpEsc(s.doa||'-'))}</div></div><div class="col-md-4 border-start"><div class="student-profile-photo-panel"><div class="fw-bold text-primary mb-2"><i class="fas fa-images me-1"></i> Photos</div>${photoBox(studentPhoto,'Student Photo')}${photoBox(fatherPhoto,"Father's Photo")}${photoBox(motherPhoto,"Mother's Photo")}</div></div></div>${resultTable('Current Session — Term Results',currentRows)}${resultTable('Previous Academic Year Results',previousRows,'No previous-year result is available in the result database.')}${rErr?`<div class="alert alert-warning small mt-2">Previous/result history could not be fully loaded: ${erpEsc(rErr.message)}</div>`:''}`;
     new bootstrap.Modal(document.getElementById('teacherStudentProfileModal')).show();
   }
@@ -5990,7 +5990,10 @@ function portalModuleAction(tabId, action) {
         teacherStudents=teacherStudents.filter(s=>allowed.has(String(s.adm_no)));
       }catch(e){console.warn('Additional subject teacher assignment read failed:',e);teacherStudents=[];}
     }
-    const ids=teacherStudents.map(x=>x.adm_no).filter(Boolean),{data:marks}=ids.length?await supabaseClient.from('exam_marks').select('*').in('adm_no',ids).eq('term_name',term).eq('subject_name',subject):{data:[]};
+    const ids=teacherStudents.map(x=>x.adm_no).filter(Boolean),teacherMarksResult=ids.length?await supabaseClient.from('exam_marks').select('*').in('adm_no',ids).eq('term_name',term):{data:[],error:null};
+    if(teacherMarksResult.error)throw teacherMarksResult.error;
+    const marks=(teacherMarksResult.data||[]).filter(x=>normalizeResultSubjectKey(x.subject_name)===normalizeResultSubjectKey(subject));
+    cacheResultGradesFromRows(marks);
     const mm={};(marks||[]).forEach(x=>mm[x.adm_no]=x);
     body.innerHTML=teacherStudents.map((x,i)=>{
       const m=mm[x.adm_no],grade=getSavedResultGrade(x.adm_no,term,subject),absent=getSavedResultAbsent(x.adm_no,term,subject);
@@ -6242,7 +6245,29 @@ function portalModuleAction(tabId, action) {
   }
   function getResultGrades(){try{return JSON.parse(localStorage.getItem(RESULT_GRADE_KEY)||'{}')}catch(e){return {}}}
   function resultGradeKey(adm,term,subject){return [adm,term,subject].map(x=>String(x||'')).join('|')}
-  function getSavedResultGrade(adm,term,subject){const g=getResultGrades()[resultGradeKey(adm,term,subject)];return RESULT_GRADE_LIST.includes(g)?g:''}
+  function getSavedResultGrade(adm,term,subject){
+    const all=getResultGrades(), direct=all[resultGradeKey(adm,term,subject)];
+    if(RESULT_GRADE_LIST.includes(direct))return direct;
+    // Subject labels can differ by capitalization/extra spaces between teacher entry,
+    // allocations and report-card data. Resolve the persisted grade using normalized keys.
+    const wanted=[String(adm||'').trim(),String(term||'').trim().toLowerCase(),normalizeResultSubjectKey(subject)].join('|');
+    for(const [key,value] of Object.entries(all)){
+      const parts=String(key).split('|');
+      if(parts.length>=3 && String(parts[0]).trim()===String(adm||'').trim() && String(parts[1]).trim().toLowerCase()===String(term||'').trim().toLowerCase() && normalizeResultSubjectKey(parts.slice(2).join('|'))===normalizeResultSubjectKey(subject) && RESULT_GRADE_LIST.includes(value))return value;
+    }
+    return '';
+  }
+  function cacheResultGradesFromRows(rows){
+    const all=getResultGrades();
+    (rows||[]).forEach(m=>{
+      const grade=String(m.grade_obtained||m.grade||'').trim();
+      if(!m.adm_no||!m.term_name||!m.subject_name||!RESULT_GRADE_LIST.includes(grade))return;
+      all[resultGradeKey(m.adm_no,m.term_name,m.subject_name)]=grade;
+      all[[String(m.adm_no).trim(),String(m.term_name).trim().toLowerCase(),normalizeResultSubjectKey(m.subject_name)].join('|')]=grade;
+    });
+    localStorage.setItem(RESULT_GRADE_KEY,JSON.stringify(all));
+    return all;
+  }
   function saveResultGrade(adm,term,subject,grade){
     const g=getResultGrades(),k=resultGradeKey(adm,term,subject);
     if(RESULT_GRADE_LIST.includes(grade))g[k]=grade;else delete g[k];
@@ -6254,23 +6279,50 @@ function portalModuleAction(tabId, action) {
   }
   window.__persistResultGrade=async function(adm,term,subject,grade){
     if(!currentSchoolId||!adm||!term||!subject||!supabaseClient)throw new Error('Missing school/student/term/subject context.');
-    const normalizedGrade=RESULT_GRADE_LIST.includes(grade)?grade:null;
-    const keyQuery=()=>supabaseClient.from('exam_marks').select('id')
-      .eq('school_id',currentSchoolId).eq('adm_no',String(adm)).eq('term_name',String(term)).eq('subject_name',String(subject)).limit(1);
-    const {data:existing,error:findError}=await keyQuery();
+    const normalizedGrade=RESULT_GRADE_LIST.includes(String(grade||''))?String(grade):null;
+    // Read all rows for this student/term in this school, then normalize the subject
+    // name. Exact-string matching alone caused grades to be inserted as duplicate rows
+    // when the subject label differed only by case or spacing.
+    const {data:rows,error:findError}=await supabaseClient.from('exam_marks')
+      .select('id,adm_no,term_name,subject_name,school_id,grade_obtained')
+      .eq('school_id',currentSchoolId).eq('adm_no',String(adm)).eq('term_name',String(term));
     if(findError)throw findError;
-    let result;
-    if(existing?.length){
-      result=await supabaseClient.from('exam_marks').update({grade_obtained:normalizedGrade})
-        .eq('id',existing[0].id).eq('school_id',currentSchoolId).select('id').limit(1);
-    }else{
-      // Keep marks blank for grade-only entries; never manufacture zero marks.
-      result=await supabaseClient.from('exam_marks').insert({school_id:currentSchoolId,adm_no:String(adm),term_name:String(term),subject_name:String(subject),marks_obtained:null,max_marks:null,grade_obtained:normalizedGrade}).select('id').limit(1);
+    const target=normalizeResultSubjectKey(subject);
+    const matches=(rows||[]).filter(r=>normalizeResultSubjectKey(r.subject_name)===target);
+    if(matches.length){
+      for(const row of matches){
+        if(row.id===undefined||row.id===null)throw new Error('Existing exam_marks row has no id; cannot update grade safely.');
+        const {data,error}=await supabaseClient.from('exam_marks').update({grade_obtained:normalizedGrade})
+          .eq('id',row.id).eq('school_id',currentSchoolId).select('id').limit(1);
+        if(error)throw error;
+        if(!data?.length)throw new Error('Grade update was not confirmed by Supabase. Check exam_marks UPDATE policy for this user.');
+      }
+      return true;
     }
-    if(result.error)throw result.error;
-    if(!result.data?.length)throw new Error('Supabase did not confirm the grade save. Check Row Level Security policies for exam_marks.');
-    return true;
+    // Clearing a grade for a student with no saved row requires no database insert.
+    if(!normalizedGrade)return true;
+    const payload={school_id:currentSchoolId,adm_no:String(adm),term_name:String(term),subject_name:String(subject),marks_obtained:null,max_marks:null,grade_obtained:normalizedGrade};
+    let {data,error}=await supabaseClient.from('exam_marks').insert(payload).select('id').limit(1);
+    if(!error&&data?.length)return true;
+    // Some installations have an integer primary-key sequence that is stale, or an id
+    // column without a usable default. Retry only with a generated integer ID when the
+    // returned error is consistent with that schema problem.
+    let lastError=error||new Error('Supabase did not return a saved grade row.');
+    const retryable=/exam_marks_pkey|null value in column ["']id["']|not-null constraint.*id/i.test(String(lastError.message||lastError));
+    if(retryable){
+      for(let attempt=0;attempt<12;attempt++){
+        let candidate;
+        if(globalThis.crypto?.getRandomValues){const a=new Uint32Array(1);globalThis.crypto.getRandomValues(a);candidate=(a[0]%2147483646)+1;}
+        else candidate=Math.floor(Math.random()*2147483646)+1;
+        const retry=await supabaseClient.from('exam_marks').insert({...payload,id:candidate}).select('id').limit(1);
+        if(!retry.error&&retry.data?.length)return true;
+        lastError=retry.error||lastError;
+        if(!/exam_marks_pkey|duplicate key value violates unique constraint|already exists/i.test(String(lastError.message||lastError)))break;
+      }
+    }
+    throw lastError;
   };
+
   function resultGradeSelectHtml(adm,term,subject,current){return '<select class="form-select form-select-sm result-entry-grade" data-adm="'+escapeHtml(adm)+'" data-term="'+escapeHtml(term)+'" data-subject="'+escapeHtml(subject)+'"><option value="">Select Grade</option>'+RESULT_GRADE_LIST.map(g=>'<option value="'+g+'" '+(g===current?'selected':'')+'>'+g+'</option>').join('')+'</select>'}
   function openResultModule(id,btn){if(!hasPermission(id,'view')){__erpAlert('You do not have View permission for this result menu.');return;}switchNavTab('resultTab',btn);loadResultManagerClasses();setTimeout(()=>switchResultSubTab(id,null),0)}
 
@@ -6553,6 +6605,8 @@ function portalModuleAction(tabId, action) {
     }
     const adms=filtered.map(s=>s.adm_no).filter(Boolean);
     const q=adms.length?await supabaseClient.from('exam_marks').select('*').in('adm_no',adms).eq('term_name',term).eq('subject_name',subject):{data:[]};
+    if(q.error)throw q.error;
+    cacheResultGradesFromRows(q.data||[]);
     const map={};(q.data||[]).forEach(m=>map[m.adm_no]=m);
     meta.innerHTML='<b>'+escapeHtml(cls)+' — '+escapeHtml(subject)+'</b> | '+escapeHtml(term)+' | Evaluation: <b>'+(mode==='grade'?'Grade (A+, A, B, C, D, E)':'Marks')+'</b> | <b>Pass: 33%</b>';
     body.innerHTML='';
@@ -6776,7 +6830,7 @@ function portalModuleAction(tabId, action) {
     const admNos=studentRows.map(s=>s.adm_no).filter(Boolean);
     const seniorMap=await getSeniorStudentSubjectMap(cls,admNos);
     const {data:marks,error:marksError}=await supabaseClient.from('exam_marks').select('*').in('adm_no',admNos);if(marksError)throw marksError;
-    const persistedGrades=getResultGrades();(marks||[]).forEach(m=>{if(m.grade_obtained&&RESULT_GRADE_LIST.includes(String(m.grade_obtained)))persistedGrades[resultGradeKey(m.adm_no,m.term_name,m.subject_name)]=String(m.grade_obtained);});localStorage.setItem(RESULT_GRADE_KEY,JSON.stringify(persistedGrades));
+    cacheResultGradesFromRows(marks||[]);
     const {data:cosData,error:cosError}=await supabaseClient.from('co_scholastic_assessments').select('*').in('adm_no',admNos);if(cosError)throw cosError;
     const cosMap={};(cosData||[]).forEach(a=>{cosMap[`${a.adm_no}|${String(a.term_name||'').trim()}`]=a;});
     const markMap={},markPresentMap={};(marks||[]).forEach(m=>{const key=`${m.adm_no}|${String(m.term_name||'').trim()}|${normalizeResultSubjectKey(m.subject_name)}`;markMap[key]=(m.marks_obtained===null||m.marks_obtained===undefined||String(m.marks_obtained).trim()==='')?null:Number(m.marks_obtained);markPresentMap[key]=markMap[key]!==null&&Number.isFinite(markMap[key]);});
