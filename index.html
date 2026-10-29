@@ -689,6 +689,72 @@ document.addEventListener('click',function(e){const el=e.target.closest('button,
 .res-upload-status-complete{background:#dff5e6;color:#176b3a;border:1px solid #a7d9b8}
 </style>
 
+
+<style id="mobileGradeAbsentUsabilityFix">
+/* Mobile-friendly grade selectors: larger tap target and readable selected value. */
+.result-entry-grade,
+.teacher-result-grade,
+select.form-select.result-entry-grade,
+select.form-select.teacher-result-grade {
+  min-height: 46px !important;
+  height: auto !important;
+  font-size: 16px !important;
+  line-height: 1.35 !important;
+  padding: 10px 34px 10px 12px !important;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  touch-action: manipulation;
+}
+/* Make absent checkbox easy to tap on phones without triggering text entry. */
+.result-entry-absent,
+.teacher-result-absent {
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  margin: 0 6px 0 2px !important;
+  flex: 0 0 24px;
+  cursor: pointer;
+  touch-action: manipulation;
+  accent-color: #dc2626;
+}
+.form-check:has(.result-entry-absent),
+.form-check:has(.teacher-result-absent) {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  touch-action: manipulation;
+}
+.result-entry-absent + label,
+.teacher-result-absent + label {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+@media (max-width: 768px) {
+  .result-entry-grade,
+  .teacher-result-grade {
+    min-height: 50px !important;
+    font-size: 16px !important;
+    padding: 12px 36px 12px 12px !important;
+  }
+  .result-entry-absent,
+  .teacher-result-absent {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 
@@ -5973,7 +6039,46 @@ function portalModuleAction(tabId, action) {
 
     let ra=[];
     try{ra=await getResultAllocations(cls);}catch(e){console.error(e);}
-    const alloc=ra.find(x=>String(x.subject_name||x.result_subject_master?.subject_name||'').trim()===String(subject).trim()),mode=getResultEvaluationMode(cls,subject),max=resultMaxFor(alloc,term);
+    let alloc=ra.find(x=>normalizeResultSubjectKey(x.subject_name||x.result_subject_master?.subject_name)===normalizeResultSubjectKey(subject));
+    // Teacher Result must use the same persisted evaluation_type as Admin, not a
+    // stale per-browser cache. Read the current class allocation directly from Supabase.
+    let mode='marks';
+    try{
+      if(supabaseClient&&currentSchoolId){
+        const freshQ=await supabaseClient.from('result_class_subjects')
+          .select('id,class_name,subject_id,term1_max,term2_max,final_max,evaluation_type,active,school_id')
+          .eq('school_id',currentSchoolId).eq('class_name',cls).eq('active',true);
+        if(freshQ.error)throw freshQ.error;
+        const freshRows=Array.isArray(freshQ.data)?freshQ.data:[];
+        const subjectIds=[...new Set(freshRows.map(r=>Number(r.subject_id)).filter(n=>Number.isFinite(n)&&n>0))];
+        let masterRows=[];
+        if(subjectIds.length){
+          const mr=await supabaseClient.from('result_subject_master').select('id,subject_name,school_id').in('id',subjectIds).eq('school_id',currentSchoolId);
+          if(mr.error)throw mr.error;
+          masterRows=mr.data||[];
+        }
+        const masterById=new Map(masterRows.map(m=>[String(m.id),m.subject_name]));
+        const freshAlloc=freshRows.find(r=>normalizeResultSubjectKey(masterById.get(String(r.subject_id))||'')===normalizeResultSubjectKey(subject));
+        if(freshAlloc){
+          alloc={...(alloc||{}),...freshAlloc,subject_name:masterById.get(String(freshAlloc.subject_id))||subject};
+          const persisted=String(freshAlloc.evaluation_type||'').trim().toLowerCase();
+          if(persisted==='grade'||persisted==='marks')mode=persisted;
+          if(mode){const modes=getResultEvalModes();modes[resultEvalKey(cls,subject)]=mode;localStorage.setItem(RESULT_EVAL_KEY,JSON.stringify(modes));}
+        }else{
+          mode=getResultEvaluationMode(cls,subject);
+        }
+      }else mode=getResultEvaluationMode(cls,subject);
+    }catch(evalErr){
+      console.error('Fresh teacher evaluation mode read failed:',evalErr);
+      mode=getResultEvaluationMode(cls,subject);
+    }
+    // Enforce the school rule in the Teacher UI as well as Admin: these subjects
+    // must never fall back to numeric Marks in classes 11 and 12.
+    if(isForcedSeniorGradeSubject(cls,subject)){
+      mode='grade';
+      try{const modes=getResultEvalModes();modes[resultEvalKey(cls,subject)]='grade';localStorage.setItem(RESULT_EVAL_KEY,JSON.stringify(modes));}catch(_e){}
+    }
+    const max=resultMaxFor(alloc,term);
     let teacherStudents=[];
     const {data:st,error}=await supabaseClient.from('students').select('adm_no,name,roll_no,section').eq('class_name',cls).eq('section',sec).order('roll_no',{ascending:true,nullsFirst:false}).order('name');
     if(error){body.innerHTML=`<tr><td colspan="9" class="text-danger">${erpEsc(error.message)}</td></tr>`;return;}
@@ -6002,7 +6107,7 @@ function portalModuleAction(tabId, action) {
       const result=mode==='grade'
         ?`<select class="form-select form-select-sm teacher-result-grade" data-adm="${erpEsc(x.adm_no)}" data-assigned="${assignedToStudent?'1':'0'}" ${(!canEdit||!assignedToStudent)?'disabled':''}><option value="">${assignedToStudent?'Select Grade':'Not allotted'}</option>${assignedToStudent?RESULT_GRADE_LIST.map(g=>`<option value="${g}" ${grade===g?'selected':''}>${g}</option>`).join(''):''}</select>`
         :`<input type="number" class="form-control form-control-sm teacher-result-mark${m?.marks_obtained!==undefined&&m?.marks_obtained!==null&&max>0&&(Number(m.marks_obtained)/max*100)<33?' result-mark-below-pass':''}" data-adm="${erpEsc(x.adm_no)}" data-subject="${erpEsc(subject)}" data-max="${max}" data-assigned="${assignedToStudent?'1':'0'}" value="${assignedToStudent?(m?.marks_obtained??''):''}" placeholder="${assignedToStudent?'':'Not allotted'}" min="0" max="${max}" step="0.01" ${disabled?'disabled':''} oninput="validateResultMarkInput(this)" onkeydown="if(event.keyCode===13){event.preventDefault();moveToNextResultMark(this);}">`;
-      const absentBox=`<div class="form-check d-flex align-items-center gap-1"><input class="form-check-input teacher-result-absent" data-adm="${erpEsc(x.adm_no)}" data-assigned="${assignedToStudent?'1':'0'}" ${absent?'checked':''} ${(!canEdit||!assignedToStudent)?'disabled':''} onchange="toggleTeacherResultAbsent(this)"><label class="form-check-label fw-bold ${assignedToStudent?'text-danger':'text-muted'}">${assignedToStudent?'Absent':'Not allotted'}</label></div>`;
+      const absentBox=`<div class="form-check d-flex align-items-center gap-1"><input type="checkbox" class="form-check-input teacher-result-absent" data-adm="${erpEsc(x.adm_no)}" data-assigned="${assignedToStudent?'1':'0'}" ${absent?'checked':''} ${(!canEdit||!assignedToStudent)?'disabled':''} onchange="toggleTeacherResultAbsent(this)"><label class="form-check-label fw-bold ${assignedToStudent?'text-danger':'text-muted'}" style="cursor:pointer;touch-action:manipulation;min-height:36px;display:flex;align-items:center;padding:4px 6px">${assignedToStudent?'Absent':'Not allotted'}</label></div>`;
       return `<tr class="${assignedToStudent?'':'table-light'}"><td>${i+1}</td><td class="fw-bold">${erpEsc(x.roll_no||'-')}</td><td>${erpEsc(x.adm_no)}</td><td class="fw-bold">${erpEsc(x.name)}</td><td>${erpEsc(x.section||'-')}</td><td>${mode==='grade'?'Grade':'Marks'}</td><td class="text-center">${mode==='grade'?'—':max}</td><td>${result}</td><td>${absentBox}</td></tr>`;
     }).join('')||'<tr><td colspan="9" class="text-center text-muted">No students found.</td></tr>';
   }
@@ -6142,8 +6247,15 @@ function portalModuleAction(tabId, action) {
   function getResultEvalModes(){try{return JSON.parse(localStorage.getItem(RESULT_EVAL_KEY)||'{}')}catch(e){return {}}}
   function resultEvalKey(cls,subject){return String(cls||'')+'|'+String(subject||'')}
   function isAlwaysGradeSubject(subject){return ALWAYS_GRADE_SUBJECTS.has(String(subject||'').trim().replace(/\s+/g,' ').toUpperCase())}
+  // These three senior-secondary subjects are Grade-evaluated for every user,
+  // regardless of stale browser cache or a Marks value left in an old allocation.
+  function isForcedSeniorGradeSubject(cls,subject){
+    if(!isSeniorResultClass(cls)) return false;
+    const n=String(subject||'').trim().replace(/\s+/g,' ').toUpperCase().replace(/&/g,'AND').replace(/\s+/g,' ');
+    return ['COMPUTER SCIENCE','ENTREPRENEURSHIP','EVS AND SELF'].includes(n);
+  }
   function getResultEvaluationMode(cls,subject){
-    if(isAlwaysGradeSubject(subject)) return 'grade';
+    if(isAlwaysGradeSubject(subject)||isForcedSeniorGradeSubject(cls,subject)) return 'grade';
     const target=String(subject||'').trim().replace(/\\s+/g,' ').toUpperCase();
     // Database-backed allocation values take priority over localStorage. This is
     // essential for 11th/12th where each browser/user has a different local cache.
@@ -6880,10 +6992,12 @@ function portalModuleAction(tabId, action) {
     const subjects=allocations.map(a=>{
       const name=a.subject_name||a.result_subject_master?.subject_name||'';
       const persisted=String(a.evaluation_type||a.evaluation_mode||'').toLowerCase();
-      if(name && ['grade','marks'].includes(persisted) && !isAlwaysGradeSubject(name)){
+      if(name && isForcedSeniorGradeSubject(cls,name)){
+        evalCache[resultEvalKey(cls,name)]='grade';
+      } else if(name && ['grade','marks'].includes(persisted) && !isAlwaysGradeSubject(name)){
         evalCache[resultEvalKey(cls,name)]=persisted;
       }
-      return {id:a.subject_id,name,evaluation:isAlwaysGradeSubject(name)?'grade':(['grade','marks'].includes(persisted)?persisted:getResultEvaluationMode(cls,name)),t1:Number(a.term1_max??a.t1??0)||0,t2:Number(a.term2_max??a.t2??0)||0,final:Number(a.final_max??a.final??0)||0,is_additional:!!a.is_additional};
+      return {id:a.subject_id,name,evaluation:(isAlwaysGradeSubject(name)||isForcedSeniorGradeSubject(cls,name))?'grade':(['grade','marks'].includes(persisted)?persisted:getResultEvaluationMode(cls,name)),t1:Number(a.term1_max??a.t1??0)||0,t2:Number(a.term2_max??a.t2??0)||0,final:Number(a.final_max??a.final??0)||0,is_additional:!!a.is_additional};
     }).filter(s=>s.name);
     localStorage.setItem(RESULT_EVAL_KEY,JSON.stringify(evalCache));
     // Keep additional subjects after all main subjects in every result output.
